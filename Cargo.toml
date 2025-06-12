@@ -1,6 +1,32 @@
 [package]
 name = "ontologizer"
-version = "0.1.0"
+version = "0.1.1"
+keywords = ["Ontologizer", "Gene Ontology"]
+description = "todo"
 edition = "2024"
+license = "MIT"
+readme = "README.md"
+
+[lib]
+name = "ontologizer"
+path = "src/lib.rs"
+
+[[bin]]
+name = "onto"
+path = "bin/main.rs"
+required-features = ["cli"]
+
+[features]
+default = []   # Do not enable CLI by default
+cli = ["dep:clap"]  # Enable clap only when the CLI feature is enabled
 
 [dependencies]
+ontolius = "0.5.3"
+clap = { version = "4.5.35", features = ["derive"], optional = true }
+
+
+[dev-dependencies]
+rstest = "0.25.0"
+
+
+
