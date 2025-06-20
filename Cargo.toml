@@ -23,6 +23,7 @@ cli = ["dep:clap"]  # Enable clap only when the CLI feature is enabled
 [dependencies]
 ontolius = "0.5.3"
 clap = { version = "4.5.35", features = ["derive"], optional = true }
+float_eq = "1.0.1"
 
 
 [dev-dependencies]
