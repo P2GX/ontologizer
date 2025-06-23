@@ -4,6 +4,7 @@ use std::cmp::min;
 
 
 
+
 pub struct Hypergeometric {
     // log factorial
     lfactorial: Vec<f64>,
@@ -136,6 +137,7 @@ impl Hypergeometric {
 		// It is not possible to draw more white balls from an urn containing M white balls. Hence the probability is 0.
 		if x > m {
             return Ok(0 as f64);
+
         }
 		// it is also not possible to draw more white balls than the number of draws. Probability is 0
 		if x > k {
@@ -146,7 +148,7 @@ impl Hypergeometric {
             return Ok(0 as f64);
         }
         // #way to choose x white balls + #ways to choose k-x black balls less #ways to choose k balls from total (m+n)
-        let result = self.lNchooseK(m,x)? + self.lNchooseK(n,k-x)? - self.lNchooseK(m+n,k)?;
+    let result = self.lNchooseK(m,x)? + self.lNchooseK(n,k-x)? - self.lNchooseK(m+n,k)?;
         Ok(result.exp())
 	}
 
@@ -203,8 +205,9 @@ impl Hypergeometric {
 #[cfg(test)]
 mod test {
     use float_eq::float_eq;
+    use rstest::rstest;
     use super::*;
-q
+
 
     #[test]
     fn test_lfactorial() {
@@ -286,6 +289,30 @@ q
         let our_n_choose_k = result.unwrap();
         assert!(float_eq!(1 as f64, our_n_choose_k, rmax <= 1e-6));
     }
+    /// Tests Hypergeometric::dhyper against reference values from R's dhyper()
+    #[rstest] 
+    #[case(3, 4, 14, 5, 0.04248366)] // valid case
+    #[case(4,20,45,10,0.2204457)] 
+    #[case(5,6,40,7,8.74363e-05)] 
+    #[case(10, 10, 0, 10, 1.0)] // edge case: only white balls in urn, all drawn → P = 1
+    #[case(0, 0, 10, 10, 1.0)] // edge case: only black balls in urn, all drawn → P = 1
+    #[case(4, 3, 14, 5, 0.0)] // invalid case: x > m (drawing more white balls than available)
+    #[case(6, 8, 14, 5, 0.0)] // invalid case: x > k (drawing more white balls than total draws)
+    #[case(0, 4, 2, 5, 0.0)] // invalid case: k - x > n (drawing more black balls than available)
+    fn test_dhyper_cases(
+        #[case] x: usize,
+        #[case] m: usize,
+        #[case] n: usize,
+        #[case] k: usize,
+        #[case] expected: f64
+    ) {
+        let mut hgeom = Hypergeometric::new();
+        let result = hgeom.dhyper(x, m, n, k).unwrap();
+        assert!(
+            float_eq!(result, expected, rmax <= 1e-6),
+            "Expected {}, got {:.15}", expected, result
+        );
+    }
 
     #[test]
     fn test_phyper() {
@@ -294,6 +321,7 @@ q
         // assertTrue(result > 0.0069 && result < 0.0070); -- from ontologizer code.
         println!("{}", result.unwrap());
     }
+
 
 
 }
