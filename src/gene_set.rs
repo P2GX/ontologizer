@@ -23,7 +23,7 @@ impl GeneSet {
         &self.unrecognized_gene_symbols
     }
 
-    pub fn amount_of_genes(&self) -> usize {
+    pub fn gene_count(&self) -> usize {
         self.gene_symbols.len() + self.unrecognized_gene_symbols.len()
     }
 }
