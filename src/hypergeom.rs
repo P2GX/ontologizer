@@ -310,5 +310,17 @@ mod test {
         let result = hgeom.phyper(2, 1526, 4, 190, false);
         // assertTrue(result > 0.0069 && result < 0.0070); -- from ontologizer code.
         println!("{}", result.unwrap());
+
+        let mut hgeom = Hypergeometric::new();
+        let result = hgeom.phyper(67-1, 8376, 599, 262, false);
+        // assertTrue(result > 0.0069 && result < 0.0070); -- from ontologizer code.
+        println!("{}", result.unwrap());
+
+             let mut hgeom = Hypergeometric::new();
+        let result = hgeom.phyper(72-1, 8376, 899, 262, false);
+        // assertTrue(result > 0.0069 && result < 0.0070); -- from ontologizer code.
+        println!("{}", result.unwrap());
+
+        
     }
 }
