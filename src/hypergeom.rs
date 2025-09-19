@@ -38,12 +38,12 @@ impl Hypergeometric {
 
     #[allow(non_snake_case)]
     fn support(&mut self, n: usize, K: usize, N: usize) -> (usize, usize) {
-        // Compute the support of the distribution.
-        let lo = max(0isize, (n as isize) + (K as isize) - (N as isize)) as usize;
+        // Compute the support of the distributio, i.e. the range of values for which P(k) != 0.
+        let k_min = max(0isize, (n as isize) + (K as isize) - (N as isize)) as usize;
         // Example: n=100, N=200, K=120 -> cannot draw less than 20 successes
-        let up = min(n, K);
+        let k_max = min(n, K);
         // Example: n=100, K=80, -> cannot draw more than 80 successes
-        (lo, up)
+        (k_min, k_max)
     }
 
     /// dhyper: Probability density function of the hypergeometric distribution.
@@ -59,8 +59,8 @@ impl Hypergeometric {
     pub fn dhyper(&mut self, k: usize, n: usize, K: usize, N: usize) -> Result<f64, String> {
         // Domain checks
         if n > N || K > N { return Ok(0.0); }
-        let (lo, up) = self.support(n, K, N);
-        if k < lo || k > up {
+        let (k_min, k_max) = self.support(n, K, N);
+        if k < k_min || k > k_max {
             return Ok(0.0);
         }
         let log_prob = self.log_n_choose_k(K, k)? + self.log_n_choose_k(N-K, n-k)? - self.log_n_choose_k(N, n)?;
@@ -103,11 +103,11 @@ impl Hypergeometric {
     pub fn phyper(&mut self, k: usize, n: usize, K: usize, N: usize, lower_tail: bool) -> Result<f64, String> {
         // Domain checks
         if n > N || K > N { return Ok(0.0); }
-        let (lo, up) = self.support(n, K, N);
-        if k < lo {
+        let (k_min, k_max) = self.support(n, K, N);
+        if k < k_min {
             return Ok(0.0);
         }
-        if k > up {
+        if k > k_max {
             return Ok(1.0);
         }
 
@@ -121,7 +121,7 @@ impl Hypergeometric {
         // let upper_len = up - k;
 
         if lower_tail {
-            for x in lo..=k{
+            for x in k_min..=k{
                 let tx = self.dhyper(x, n, K, N)?;
                 y = tx - c;
                 t = lower_sum + y;
@@ -130,7 +130,7 @@ impl Hypergeometric {
             }
             Ok(lower_sum)
         } else {
-            for x in k+1..=up{
+            for x in k+1..=k_max {
                 let tx = self.dhyper(x, n, K, N)?;
                 y = tx - c;
                 t = upper_sum + y;
