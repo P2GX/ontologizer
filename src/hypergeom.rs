@@ -36,9 +36,10 @@ impl Hypergeometric {
         Ok(result)
     }
 
+    #[allow(non_snake_case)]
     fn support(&mut self, n: usize, K: usize, N: usize) -> (usize, usize) {
         // Compute the support of the distribution.
-        let lo = max(0 as isize, (n as isize) + (K as isize) - (N as isize)) as usize;
+        let lo = max(0isize, (n as isize) + (K as isize) - (N as isize)) as usize;
         // Example: n=100, N=200, K=120 -> cannot draw less than 20 successes
         let up = min(n, K);
         // Example: n=100, K=80, -> cannot draw more than 80 successes
@@ -54,6 +55,7 @@ impl Hypergeometric {
     /// - `N`: total number of items
     ///
     /// Returns `P(X = k)`, the probability of observing exactly `k` successes in `n` draws.
+    #[allow(non_snake_case)]
     pub fn dhyper(&mut self, k: usize, n: usize, K: usize, N: usize) -> Result<f64, String> {
         // Domain checks
         if n > N || K > N { return Ok(0.0); }
@@ -67,6 +69,7 @@ impl Hypergeometric {
 
     /// Forward term ratio r_fwd(k) = t(k+1)/t(k)
     /// where t(k) = P(X=k) for Hypergeometric(n, K, N)
+    #[allow(non_snake_case)]
     fn ratio_forward(&mut self, k: usize, n: usize, K: usize, N: usize) -> f64 {
         // (K - x)/(x + 1) * (n - x)/(N - K - n + x + 1)
         let a = (K - k) as f64 / (k + 1) as f64;
@@ -77,6 +80,7 @@ impl Hypergeometric {
 
     /// Backward term ratio r_back(k) = t(k-1)/t(k)
     /// where t(k) = P(X=k) for Hypergeometric(n, K, N)
+    #[allow(non_snake_case)]
     fn ratio_backward(&mut self, k: usize, n: usize, K: usize, N: usize) -> f64 {
         // x/(K - x + 1) * (N - K - n + x)/(n - x + 1)
         let a = k as f64 / (K - k + 1) as f64;
@@ -95,6 +99,7 @@ impl Hypergeometric {
     /// - `lower_tail`` if true, then P(X &lt;= x) is calculated, otherwise P(X &gt; x) is calculated.
     ///
     /// Returns `P(X >= k)` or `P(X < k)`, the probability of observing up to (or less than) `k` successes in `n` draws.
+    #[allow(non_snake_case)]
     pub fn phyper(&mut self, k: usize, n: usize, K: usize, N: usize, lower_tail: bool) -> Result<f64, String> {
         // Domain checks
         if n > N || K > N { return Ok(0.0); }
@@ -112,8 +117,8 @@ impl Hypergeometric {
         let mut y;
         let mut t;
 
-        let lower_len = k - lo + 1;
-        let upper_len = up - k;
+        // let lower_len = k - lo + 1;
+        // let upper_len = up - k;
 
         if lower_tail {
             for x in lo..=k{
@@ -258,7 +263,7 @@ mod test {
         let result = hgeom.dhyper(10, 10, 10, 10);
         assert!(result.is_ok());
         let our_n_choose_k = result.unwrap();
-        assert!(float_eq!(1 as f64, our_n_choose_k, rmax <= 1e-6));
+        assert!(float_eq!( 1f64 , our_n_choose_k, rmax <= 1e-6));
     }
     /// Tests Hypergeometric::dhyper against reference values from R's dhyper()
     #[rstest]
@@ -270,6 +275,7 @@ mod test {
     #[case(4, 5, 3, 17, 0.0)] // invalid case: x > m (drawing more white balls than available)
     #[case(6, 5, 8, 22, 0.0)] // invalid case: x > k (drawing more white balls than total draws)
     #[case(0, 5, 4, 6, 0.0)] // invalid case: k - x > n (drawing more black balls than available)
+    #[allow(non_snake_case)]
     fn test_dhyper_cases(
         #[case] k: usize,
         #[case] n: usize,
