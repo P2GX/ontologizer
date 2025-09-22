@@ -21,13 +21,13 @@ default = []   # Do not enable CLI by default
 cli = ["dep:clap"]  # Enable clap only when the CLI feature is enabled
 
 [dependencies]
-ontolius = "0.5.3"
-clap = { version = "4.5.35", features = ["derive"], optional = true }
+ontolius = "0.5.4"
+clap = { version = "4.5.47", features = ["derive"], optional = true }
 float_eq = "1.0.1"
 oboannotation = { git = "https://github.com/P2GX/oboannotation.git", tag = "v0.1.2" }
 
 [dev-dependencies]
-rstest = "0.25.0"
+rstest = "0.26.1"
 
 
 
