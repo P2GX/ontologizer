@@ -13,6 +13,7 @@ use std::{
 pub struct GeneSet {
     gene_symbols: HashSet<String>,
     unrecognized_gene_symbols: HashSet<String>,
+    del_duplicates: usize,
 }
 
 impl GeneSet {
@@ -25,6 +26,10 @@ impl GeneSet {
 
     pub fn gene_count(&self) -> usize {
         self.gene_symbols.len() + self.unrecognized_gene_symbols.len()
+    }
+
+    pub fn del_duplicates(&self) -> usize {
+        self.del_duplicates
     }
 }
 
@@ -55,17 +60,23 @@ pub fn build_gene_set(gene_list: Vec<String>, annotations: &GoAnnotations) -> Ge
 
     let mut gene_symbols = HashSet::new();
     let mut unrecognized_gene_symbols = HashSet::new();
+    let mut deleted_duplicates: usize = 0;
 
     for gene in gene_list {
         if annotation_map.contains_key(&gene) {
-            gene_symbols.insert(gene);
+            if !gene_symbols.insert(gene) {
+                deleted_duplicates += 1;
+            }
         } else {
-            unrecognized_gene_symbols.insert(gene);
+             if !unrecognized_gene_symbols.insert(gene) {
+                deleted_duplicates += 1;
+            }
         }
     }
     GeneSet {
         gene_symbols: gene_symbols,
         unrecognized_gene_symbols: unrecognized_gene_symbols,
+        del_duplicates: deleted_duplicates,
     }
 }
 
@@ -122,9 +133,11 @@ mod test {
         let gene_set = build_gene_set(gene_list, &annotations);
 
         eprintln!(
-            "Built gene set with {} recognized genes and {} unrecognized genes",
+            "Built gene set with {} recognized genes, {} unrecognized genes and {} deleted duplicates",
             gene_set.gene_symbols.len(),
-            gene_set.unrecognized_gene_symbols.len()
+            gene_set.unrecognized_gene_symbols.len(),
+            gene_set.del_duplicates()
+
         );
 
         assert!(
