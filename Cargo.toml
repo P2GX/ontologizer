@@ -21,6 +21,8 @@ default = []   # Do not enable CLI by default
 cli = ["dep:clap"]  # Enable clap only when the CLI feature is enabled
 
 [dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
 ontolius = "0.5.4"
 clap = { version = "4.5.47", features = ["derive"], optional = true }
 float_eq = "1.0.1"

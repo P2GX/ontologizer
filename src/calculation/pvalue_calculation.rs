@@ -9,5 +9,6 @@ pub trait PValueCalculation {
         annotation_container: &AnnotationContainer,
         study: &GeneSet,
         population: &GeneSet,
-    ) -> AnalysisResults;
+         results: &mut AnalysisResults,
+    ) -> ();
 }

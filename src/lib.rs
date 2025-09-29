@@ -4,7 +4,7 @@
 //! 
 //! 
 mod hypergeom;
-pub mod ontologizer;
+pub mod ontology;
 pub mod gene_set;
 pub mod calculation;
 pub mod annotations;

@@ -9,7 +9,7 @@ use ontolius::{
 };
 
 use super::pvalue_calculation::PValueCalculation;
-use super::results::{AnalysisResults, GOTermResult, MethodEnum, MtcEnum};
+use super::results::{AnalysisResults, GOTermResult, get_term_aspect};
 
 pub struct TermForTerm;
 impl PValueCalculation for TermForTerm {
@@ -19,9 +19,8 @@ impl PValueCalculation for TermForTerm {
         annotation_container: &AnnotationContainer,
         study: &GeneSet,
         population: &GeneSet,
-    ) -> AnalysisResults {
-        let start = Instant::now();
-        let mut results = AnalysisResults::new(MethodEnum::TermForTerm, MtcEnum::None); // Placeholder for MTC method
+        results: &mut AnalysisResults,
+    ) -> () {
         let study_genes = study.gene_symbols();
         let pop_genes = population.gene_symbols();
         let n = study_genes.len();
@@ -34,7 +33,7 @@ impl PValueCalculation for TermForTerm {
                 let nt = gene_set_intersection(study_genes, &annotated_genes).len(); // Eigentlich ist die Funktion (Schnittmenge) überflüssig, da die study_annotations map schon die nt Werte enthält
                 let mt = annotated_genes.len();
                 let mut hypergeom = Hypergeometric::new();
-                let raw_p_value = hypergeom.phyper(nt - 1, m, mt, n, false).unwrap();
+                let raw_p_value = hypergeom.phyper(nt - 1, n, mt, m, false).unwrap();
 
                 let term_id = go.term_by_id(term);
                 let result = GOTermResult::new(
@@ -43,16 +42,13 @@ impl PValueCalculation for TermForTerm {
                     (nt as u32, mt as u32, n as u32, m as u32),
                     raw_p_value as f32,
                     raw_p_value as f32, // use raw pvalue as default
+                    get_term_aspect(go, term),
                 );
 
                 results.add_result(result);
             }
         }
         results.sort_by_p_value();
-        let duration = start.elapsed();
-        eprintln!("P-value calculation took: {:?}", duration);
-
-        results
     }
 }
 // Computes the intersection of a gene set with the set of genes annotated to a specific GO term.
@@ -73,11 +69,13 @@ mod test {
     use super::*;
     use crate::{
         gene_set::{build_gene_set, load_gene_file},
-        ontologizer::Ontologizer,
+        ontology::Ontologizer, statistics::bonferroni::Bonferroni,
     };
+    use crate::calculation::results::{AnalysisResults, MtcEnum, MethodEnum};
+    use crate::statistics::mtc::MultipleTestingCorrection;
 
     #[test]
-    #[ignore]
+    // #[ignore]
     fn test_go_analysis() {
         // Paths to the necessary files
         // These paths should be adjusted based on your local setup
@@ -86,6 +84,7 @@ mod test {
         let pop_set_path = "tests/data/population.txt";
         let study_set_path = "tests/data/study.txt";
 
+        let mtc_method = MtcEnum::Bonferroni;
         // Load the GO ontology
         let go = Ontologizer::new(go_path);
         let go_ref = go.ontology();
@@ -105,11 +104,10 @@ mod test {
         // Build map that contains all GO terms annotated in the population set and their associated genes (in population set).
         annotation_container.build_term_genes_map(&pop_set, go_ref);
 
-        
+        let mut results = AnalysisResults::new(MethodEnum::TermForTerm, mtc_method);
 
-        let analysis_method = TermForTerm;
-        let results =
-            analysis_method.calculate_p_values(go_ref, &annotation_container, &study_set, &pop_set);
+        TermForTerm.calculate_p_values(go_ref, &annotation_container, &study_set, &pop_set, &mut results);
+        Bonferroni.adjust_pvalues(&mut results);
         results
             .write_tsv("tests/data/enrichment_results.tsv")
             .expect("Failed to write results");

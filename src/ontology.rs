@@ -1,6 +1,6 @@
 use ontolius::{
     io::OntologyLoaderBuilder,
-    ontology::{OntologyTerms, csr::FullCsrOntology},
+    ontology::{MetadataAware, OntologyTerms, csr::FullCsrOntology},
 };
 
 pub struct Ontologizer {
@@ -23,6 +23,10 @@ impl Ontologizer {
     pub fn ontology(&self) -> &FullCsrOntology {
         &self.ontology
     }
+
+    pub fn version(&self) -> String {
+        self.ontology.version().to_string()
+    }
 }
 // region:    --- Tests
 
@@ -39,17 +43,6 @@ mod tests {
         let ontologizer = Ontologizer::new(go_path);
 
         assert!(ontologizer.term_count() == 7);
-
-        Ok(())
-    }
-
-    #[test]
-    #[ignore]
-    fn test2() -> Result<()> {
-        let x = 2;
-        let y = 3;
-
-        assert!(x + y == 5);
 
         Ok(())
     }
