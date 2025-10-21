@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use crate::{annotations::AnnotationContainer, geneset::GeneSet, hypergeom::Hypergeometric};
+use crate::{annotations::AnnotationIndex, geneset::GeneSet, hypergeom::Hypergeometric};
 
 use ontolius::{
     ontology::{OntologyTerms, csr::FullCsrOntology},
@@ -15,13 +15,13 @@ impl PValueCalculation for TermForTerm {
     fn calculate_p_values(
         &self,
         go: &FullCsrOntology,
-        annotation_container: &AnnotationContainer,
+        annotation_container: &AnnotationIndex,
         study: &GeneSet,
         population: &GeneSet,
         results: &mut AnalysisResults,
     ) -> () {
-        let study_genes = study.recognized_gene_symbols();
-        let pop_genes = population.recognized_gene_symbols();
+        let study_genes = study.recognized_genes();
+        let pop_genes = population.recognized_genes();
         let n = study_genes.len();
         let m = pop_genes.len();
 
@@ -87,7 +87,7 @@ mod test {
         let go_ref = go.ontology();
 
         // Load the GOA annotations
-        let mut annotation_container = AnnotationContainer::new(gaf_path);
+        let mut annotation_container = AnnotationIndex::new(gaf_path);
 
         // Load the population and study gene sets
         let study_gene_symbols = load_gene_set(study_set_path).expect("Failed to parse study gene set");
@@ -99,9 +99,9 @@ mod test {
 
         // Build map that contains all GO terms annotated in the study set and their counts.
         // (we only want to analyze terms that are annotated in the study set)
-        annotation_container.build_study_annotations(&study_gene_set, go_ref);
+        annotation_container.compute_term_counts(&study_gene_set, go_ref);
         // Build map that contains all GO terms annotated in the population set and their associated genes (in population set).
-        annotation_container.build_term_genes_map(&pop_gene_set, go_ref);
+        annotation_container.build_terms_to_genes(&pop_gene_set, go_ref);
 
         let mut results = AnalysisResults::new(MethodEnum::TermForTerm, mtc_method);
 

@@ -5,8 +5,9 @@
 //! 
 mod hypergeom;
 pub mod ontology;
-pub mod gene_set;
+pub mod geneset;
 pub mod calculation;
 pub mod annotations;
 pub mod statistics;
+mod mgsa;
 

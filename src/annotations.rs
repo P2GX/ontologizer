@@ -12,21 +12,24 @@ use ontolius::{
 use std::time::Instant;
 
 // Contains all GO annotations and provides methods to build annotation maps specific to the study and population sets.
-pub struct AnnotationContainer {
-    pub annotations: GoAnnotations, // Contains all GO annotations loaded from the GAF file
-    pub annotation_map: HashMap<GeneSymbol, HashSet<TermId>>, // Maps genes to directly annotated GO terms
-    study_annotations: HashMap<TermId, usize>, // Maps GO terms annotated in the study set to their counts in the study set (nt)
-    term_genes_map: HashMap<TermId, HashSet<GeneSymbol>>, // Maps GO terms annotated in the population set to their associated genes in the population set
+pub struct AnnotationIndex {
+    pub annotations: GoAnnotations, // All GO annotations loaded from the GAF file
+    pub genes_to_terms: HashMap<GeneSymbol, HashSet<TermId>>,
+    pub terms_to_genes: HashMap<TermId, HashSet<GeneSymbol>>,
+    pub population_term_counts: HashMap<TermId, usize>, // Counts of all terms annotated in the population set
+    pub study_term_counts: HashMap<TermId, usize>, // Counts of all terms annotated in the study set
 }
 
-impl AnnotationContainer {
+impl AnnotationIndex {
     pub fn new(gaf_path: &str) -> Self {
+        // Load annotations from GAF file
         let loader = GoGafAnnotationLoader;
         let annotations = loader
             .load_from_path(gaf_path)
             .expect("Could not load GAF file");
 
-        let annotation_map: HashMap<GeneSymbol, HashSet<TermId>> = get_annotation_map(&annotations)
+
+        let genes_to_terms: HashMap<GeneSymbol, HashSet<TermId>> = get_annotation_map(&annotations)
             .into_iter()
             .filter_map(|(k, v)| {
                 match GeneSymbol::new(&k) {
@@ -39,49 +42,48 @@ impl AnnotationContainer {
             })
             .collect();
 
+        let terms_to_genes : HashMap<TermId, HashSet<GeneSymbol>> = invert_annotation_map(&genes_to_terms);
+        
         Self {
             annotations,
-            annotation_map: annotation_map,
-            study_annotations: HashMap::new(),
-            term_genes_map: HashMap::new(),
+            genes_to_terms,
+            terms_to_genes,
+            population_term_counts: HashMap::new(),
+            study_term_counts: HashMap::new(),
         }
     }
 
-    // Builds a hashmap of all GO terms annotated in the study set and their counts.
-    // This way, we know which terms we actually need to analyze.
-    pub fn build_study_annotations(&mut self, study_set: &GeneSet, go: &FullCsrOntology) {
-        let mut study_annotated_terms = HashMap::new();
-        for gene in study_set.recognized_gene_symbols() {
-            let mut unique_terms = HashSet::new();
-
-            for term in self.annotation_map.get(gene).unwrap() {
-                unique_terms.extend(go.iter_term_and_ancestor_ids(term).cloned());
+    // Builds a hashmap of GO terms annotated to a gene set and their counts.
+    pub fn compute_term_counts(&mut self, gene_set: &GeneSet, go: &FullCsrOntology) {
+        let mut counts = HashMap::new();
+        for gene in gene_set.recognized_genes() {
+            let mut terms = HashSet::new();
+            for term in self.genes_to_terms.get(gene).unwrap() {
+                terms.extend(go.iter_term_and_ancestor_ids(term).cloned()); // true-path rule
             }
-
-            for term in unique_terms {
-                *study_annotated_terms.entry(term).or_insert(0) += 1;
+            for term in terms {
+                *counts.entry(term).or_insert(0) += 1;
             }
         }
-
-        self.study_annotations = study_annotated_terms;
+        self.study_term_counts = counts;
     }
+
 
     // Builds a map of all GO terms that are annotated to genes in the population set and their associated genes.
     // We iterate through all genes in the population set and check which terms they are directly annotated to.
     // For each of these directly annotated terms and all of their ancestors, we add the term and the gene to the map.
     // This means for each term the length of the gene set is mt
-    pub fn build_term_genes_map(&mut self, pop_set: &GeneSet, go: &FullCsrOntology) {
-        let mut term_to_genes: HashMap<TermId, HashSet<GeneSymbol>> = HashMap::new();
-        let start = Instant::now();
+    pub fn build_terms_to_genes(&mut self, pop_set: &GeneSet, go: &FullCsrOntology) {
+        let mut terms_to_genes: HashMap<TermId, HashSet<GeneSymbol>> = HashMap::new();
 
-        for gene in pop_set.recognized_gene_symbols() {
-            if let Some(direct_terms) = self.annotation_map.get(gene) {
+        for gene in pop_set.recognized_genes() {
+            if let Some(direct_terms) = self.genes_to_terms.get(gene) {
                 let mut seen_terms = HashSet::new();
                 for term in direct_terms {
                     for ancestor in go.iter_term_and_ancestor_ids(term) {
                         // Verhindert mehrfaches Einfügen für denselben Term
                         if seen_terms.insert(ancestor.clone()) {
-                            term_to_genes
+                            terms_to_genes
                                 .entry(ancestor.clone())
                                 .or_insert_with(HashSet::new)
                                 .insert(gene.clone());
@@ -90,23 +92,49 @@ impl AnnotationContainer {
                 }
             }
         }
-        eprintln!("Building term to genes map took: {:?}", start.elapsed());
-        self.term_genes_map = term_to_genes;
+        self.terms_to_genes = terms_to_genes;
     }
 
     pub fn study_annotations(&self) -> &HashMap<TermId, usize> {
-        &self.study_annotations
+        &self.study_term_counts
     }
 
     pub fn annotation_map(&self) -> &HashMap<GeneSymbol, HashSet<TermId>> {
-        &self.annotation_map
+        &self.genes_to_terms
     }
 
     pub fn term_genes_map(&self) -> &HashMap<TermId, HashSet<GeneSymbol>> {
-        &self.term_genes_map
+        &self.terms_to_genes
     }
 
     pub fn annotations(&self) -> &GoAnnotations {
         &self.annotations
     }
 }
+
+ fn invert_annotation_map(map: &HashMap<GeneSymbol, HashSet<TermId>>) -> HashMap<TermId, HashSet<GeneSymbol>> {
+     let mut inv_map : HashMap<TermId, HashSet<GeneSymbol>> = HashMap::new();
+     for (gene, terms) in map {
+         for term in terms {
+             inv_map.entry(term.clone()).or_default().insert(gene.clone());
+         }
+     }
+     inv_map
+}
+
+/* pub fn get_inverted_annotation_map(annotations: &GoAnnotations) -> HashMap<String, HashSet<TermId>> {
+    let mut inv_annot_map = HashMap::new();
+    for ann in &annotations.annotations {
+        if ann.is_negated() {
+            continue;
+        }
+        let symbol = ann.gene_product_symbol.clone();
+        let tid = ann.gene_ontology_id.clone();
+        // Insert into HashMap, creating a new HashSet if necessary
+        inv_annot_map
+            .entry(tid)
+            .or_insert_with(|| HashSet::new())
+            .insert(symbol); //
+    }
+    inv_annot_map
+} */

@@ -43,10 +43,10 @@ pub struct GeneSet {
 }
 
 impl GeneSet {
-    pub fn recognized_gene_symbols(&self) -> &HashSet<GeneSymbol> {
+    pub fn recognized_genes(&self) -> &HashSet<GeneSymbol> {
         &self.recognized
     }
-    pub fn unrecognized_gene_symbols(&self) -> &HashSet<GeneSymbol> {
+    pub fn unrecognized_genes(&self) -> &HashSet<GeneSymbol> {
         &self.unrecognized
     }
 

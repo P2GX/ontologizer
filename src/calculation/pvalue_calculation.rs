@@ -1,14 +1,14 @@
-use crate::annotations::AnnotationContainer;
+use crate::annotations::AnnotationIndex;
 use crate::calculation::results::AnalysisResults;
-use crate::gene_set::GeneSet;
+use crate::geneset::GeneSet;
 use ontolius::ontology::csr::FullCsrOntology;
 pub trait PValueCalculation {
     fn calculate_p_values(
         &self,
         go: &FullCsrOntology,
-        annotation_container: &AnnotationContainer,
+        annotation_container: &AnnotationIndex,
         study: &GeneSet,
         population: &GeneSet,
-         results: &mut AnalysisResults,
+        results: &mut AnalysisResults,
     ) -> ();
 }
