@@ -1,5 +1,5 @@
-use super::mtc::MultipleTestingCorrection;
-use crate::calculation::results::AnalysisResults;
+use super::MultipleTestingCorrection;
+use crate::frequentist::results::AnalysisResults;
 
 pub struct BonferroniHolm;
 

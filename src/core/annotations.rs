@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::geneset::{GeneSet, GeneSymbol};
+use crate::core::geneset::{GeneSet, GeneSymbol};
 use oboannotation::{
     go::{GoAnnotations, GoGafAnnotationLoader, stats::get_annotation_map},
     io::AnnotationLoader,
@@ -9,7 +9,6 @@ use ontolius::{
     TermId,
     ontology::{HierarchyWalks, csr::FullCsrOntology},
 };
-use std::time::Instant;
 
 // Contains all GO annotations and provides methods to build annotation maps specific to the study and population sets.
 pub struct AnnotationIndex {

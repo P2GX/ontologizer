@@ -2,10 +2,9 @@
 
 #[cfg(test)]
 mod test {
-    use oboannotation::go::GoAnnotations;
-    use crate::annotations::AnnotationIndex;
-    use crate::geneset::{load_gene_set, separate_gene_set};
-    use crate::ontology::Ontologizer;
+    use crate::core::AnnotationIndex;
+    use crate::core::{load_gene_set, separate_gene_set};
+    use crate::core::Ontologizer;
     use super::*;
 
 

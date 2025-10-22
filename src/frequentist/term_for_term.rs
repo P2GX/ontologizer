@@ -1,14 +1,15 @@
 use std::collections::HashSet;
 
-use crate::{annotations::AnnotationIndex, geneset::GeneSet, hypergeom::Hypergeometric};
+use crate::frequentist::hypergeom::Hypergeometric;
 
 use ontolius::{
-    ontology::{OntologyTerms, csr::FullCsrOntology},
+    ontology::{csr::FullCsrOntology, OntologyTerms},
     term::MinimalTerm,
 };
-use crate::geneset::GeneSymbol;
-use super::pvalue_calculation::PValueCalculation;
-use super::results::{AnalysisResults, GOTermResult, get_term_aspect};
+use crate::core::AnnotationIndex;
+use crate::core::{GeneSet, GeneSymbol};
+use crate::frequentist::PValueCalculation;
+use super::results::{get_term_aspect, AnalysisResults, GOTermResult};
 
 pub struct TermForTerm;
 impl PValueCalculation for TermForTerm {
@@ -66,10 +67,11 @@ fn gene_set_intersection(
 mod test {
 
     use super::*;
-    use crate::{ontology::Ontologizer, statistics::bonferroni::Bonferroni};
-    use crate::calculation::results::{AnalysisResults, MtcEnum, MethodEnum};
-    use crate::geneset::{load_gene_set, separate_gene_set};
-    use crate::statistics::mtc::MultipleTestingCorrection;
+    use crate::frequentist::mtc::{Bonferroni, MultipleTestingCorrection};
+
+    use crate::frequentist::results::{AnalysisResults, MethodEnum, MtcEnum};
+    use crate::core::{load_gene_set, separate_gene_set};
+    use crate::core::Ontologizer;
 
     #[test]
     // #[ignore]
