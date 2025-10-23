@@ -5,12 +5,12 @@ use std::{
     time::Instant,
 };
 
-use serde::Serialize;
 use ontolius::{
+    TermId,
     common::go::{BIOLOGICAL_PROCESS, CELLULAR_COMPONENT, MOLECULAR_FUNCTION},
     ontology::{HierarchyQueries, csr::FullCsrOntology},
-    TermId,
 };
+use serde::Serialize;
 
 // This module provides the results of enrichment analysis, including methods to write results to a TSV file.
 // Every entry in the results corresponds to one GO term
@@ -108,7 +108,7 @@ pub struct GOTermResult {
     counts: (u32, u32, u32, u32), // nt, mt, n, m (annotated genes in study, annotated genes in population, total genes in study, total genes in population)
     p_val: f32,                   // raw p-value
     adj_pval: f32,
-    aspect: &'static str,         // Aspect of the GO term: BP, MF, CC
+    aspect: &'static str, // Aspect of the GO term: BP, MF, CC
 }
 
 impl GOTermResult {
@@ -138,7 +138,7 @@ impl GOTermResult {
         &self.p_val
     }
 
-     pub fn adj_pval(&self) -> f32 {
+    pub fn adj_pval(&self) -> f32 {
         self.adj_pval
     }
 
@@ -180,7 +180,6 @@ pub enum MtcEnum {
     BenjaminiHochberg,
     None, // No multiple testing correction
 }
-
 
 impl MethodEnum {
     pub fn new(name: String) -> Self {

@@ -1,8 +1,8 @@
-mod geneset;
 mod annotations;
+mod geneset;
 mod ontology;
 
-pub use geneset::{GeneSymbol, GeneSet, load_gene_set, separate_gene_set};
+pub use geneset::{GeneSet, GeneSymbol, load_gene_set, separate_gene_set};
 
 pub use annotations::AnnotationIndex;
 

@@ -20,7 +20,6 @@ impl GeneSymbol {
         }
         let s = s.trim();
         let mut out = s.to_owned();
-        out.make_ascii_uppercase();
         Some(Self(out))
     }
 
@@ -34,7 +33,6 @@ impl AsRef<str> for GeneSymbol {
         &self.0
     }
 }
-
 
 #[derive(Debug)]
 pub struct GeneSet {
@@ -57,15 +55,14 @@ impl GeneSet {
 
 // Loads gene symbols from a text file. Each line in the file should contain a single gene symbol.
 pub fn load_gene_set(path: &str) -> Result<HashSet<GeneSymbol>, String> {
-    let file = File::open(path)
-        .map_err(|err| format!("Failed to open file '{}': {}", path, err))?;
+    let file =
+        File::open(path).map_err(|err| format!("Failed to open file '{}': {}", path, err))?;
     let reader = BufReader::new(file);
 
-    let mut genes : HashSet<GeneSymbol> = HashSet::new();
+    let mut genes: HashSet<GeneSymbol> = HashSet::new();
 
     for (i, line) in reader.lines().enumerate() {
-        let line = line
-            .map_err(|err| format!("Failed to read line {}: {}", i + 1, err))?;
+        let line = line.map_err(|err| format!("Failed to read line {}: {}", i + 1, err))?;
 
         // Normalize/filter (skips blanks/comments)
         match GeneSymbol::new(&line) {
@@ -76,7 +73,7 @@ pub fn load_gene_set(path: &str) -> Result<HashSet<GeneSymbol>, String> {
     Ok(genes)
 }
 
-pub fn separate_gene_set(annotations: &GoAnnotations, genes : HashSet<GeneSymbol>) -> GeneSet {
+pub fn separate_gene_set(annotations: &GoAnnotations, genes: HashSet<GeneSymbol>) -> GeneSet {
     let mut recognized: HashSet<GeneSymbol> = HashSet::new();
     let mut unrecognized: HashSet<GeneSymbol> = HashSet::new();
 
@@ -90,7 +87,10 @@ pub fn separate_gene_set(annotations: &GoAnnotations, genes : HashSet<GeneSymbol
             unrecognized.insert(sym);
         }
     }
-    GeneSet { recognized, unrecognized }
+    GeneSet {
+        recognized,
+        unrecognized,
+    }
 }
 
 #[cfg(test)]

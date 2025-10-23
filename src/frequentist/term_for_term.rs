@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use crate::frequentist::hypergeom::Hypergeometric;
+use crate::frequentist::hypergeo::Hypergeometric;
 
 use ontolius::{
     ontology::{csr::FullCsrOntology, OntologyTerms},
@@ -12,6 +12,7 @@ use crate::frequentist::PValueCalculation;
 use super::results::{get_term_aspect, AnalysisResults, GOTermResult};
 
 pub struct TermForTerm;
+#[allow(non_snake_case)]
 impl PValueCalculation for TermForTerm {
     fn calculate_p_values(
         &self,
@@ -22,24 +23,26 @@ impl PValueCalculation for TermForTerm {
         results: &mut AnalysisResults,
     ) -> () {
         let study_genes = study.recognized_genes();
-        let pop_genes = population.recognized_genes();
+        let population_genes = population.recognized_genes();
         let n = study_genes.len();
-        let m = pop_genes.len();
+        let N = population_genes.len();
 
-        for (term, nt) in annotation_container.study_annotations().iter() {
-            if *nt > 1 {
-                let annotated_genes = annotation_container.term_genes_map().get(term).unwrap();
+        let study_terms_count = annotation_container.term_counts_for_subset(study, go);
+        let population_terms_count = annotation_container.term_counts_for_subset(population, go);
 
-                let nt = gene_set_intersection(study_genes, &annotated_genes).len(); // Eigentlich ist die Funktion (Schnittmenge) überflüssig, da die study_annotations map schon die nt Werte enthält
-                let mt = annotated_genes.len();
+        for (term, &k) in study_terms_count.iter() {
+            if k > 1 {
+                let &K = population_terms_count.get(term).unwrap();
+
+                // let K = annotated_genes.len();
                 let mut hypergeom = Hypergeometric::new();
-                let raw_p_value = hypergeom.phyper(nt - 1, n, mt, m, false).unwrap();
+                let raw_p_value = hypergeom.phyper(k - 1, n, K, N, false).unwrap();
 
                 let term_id = go.term_by_id(term);
                 let result = GOTermResult::new(
                     term_id.unwrap().name().to_string(),
                     term.to_string(),
-                    (nt as u32, mt as u32, n as u32, m as u32),
+                    (k as u32, K as u32, n as u32, N as u32),
                     raw_p_value as f32,
                     raw_p_value as f32, // use raw pvalue as default
                     get_term_aspect(go, term),
@@ -89,21 +92,14 @@ mod test {
         let go_ref = go.ontology();
 
         // Load the GOA annotations
-        let mut annotation_container = AnnotationIndex::new(gaf_path);
+        let mut annotation_container = AnnotationIndex::new(gaf_path, go_ref);
 
         // Load the population and study gene sets
         let study_gene_symbols = load_gene_set(study_set_path).expect("Failed to parse study gene set");
-        let study_gene_set = separate_gene_set(&annotation_container.annotations(), study_gene_symbols);
+        let study_gene_set = separate_gene_set(&annotation_container.get_annotations(), study_gene_symbols);
 
         let pop_gene_symbols = load_gene_set(pop_set_path).expect("Failed to parse population gene set");
-        let pop_gene_set = separate_gene_set(&annotation_container.annotations(), pop_gene_symbols);
-
-
-        // Build map that contains all GO terms annotated in the study set and their counts.
-        // (we only want to analyze terms that are annotated in the study set)
-        annotation_container.compute_term_counts(&study_gene_set, go_ref);
-        // Build map that contains all GO terms annotated in the population set and their associated genes (in population set).
-        annotation_container.build_terms_to_genes(&pop_gene_set, go_ref);
+        let pop_gene_set = separate_gene_set(&annotation_container.get_annotations(), pop_gene_symbols);
 
         let mut results = AnalysisResults::new(MethodEnum::TermForTerm, mtc_method);
 
