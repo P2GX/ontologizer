@@ -1,5 +1,4 @@
-use std::cmp::{min, max};
-
+use std::cmp::{max, min};
 
 pub struct Hypergeometric {
     log_factorials: Vec<f64>,
@@ -11,7 +10,9 @@ impl Hypergeometric {
         // NOTE: log(0!) = 0 and log(1!) = 0
         log_facts.push(0.0); // log(0!)
         log_facts.push(0.0); // log(1!)
-        Hypergeometric { log_factorials: log_facts }
+        Hypergeometric {
+            log_factorials: log_facts,
+        }
     }
 
     pub fn log_factorial(&mut self, i: usize) -> Result<f64, String> {
@@ -58,12 +59,15 @@ impl Hypergeometric {
     #[allow(non_snake_case)]
     pub fn dhyper(&mut self, k: usize, n: usize, K: usize, N: usize) -> Result<f64, String> {
         // Domain checks
-        if n > N || K > N { return Ok(0.0); }
+        if n > N || K > N {
+            return Ok(0.0);
+        }
         let (k_min, k_max) = self.support(n, K, N);
         if k < k_min || k > k_max {
             return Ok(0.0);
         }
-        let log_prob = self.log_n_choose_k(K, k)? + self.log_n_choose_k(N-K, n-k)? - self.log_n_choose_k(N, n)?;
+        let log_prob = self.log_n_choose_k(K, k)? + self.log_n_choose_k(N - K, n - k)?
+            - self.log_n_choose_k(N, n)?;
         Ok(log_prob.exp())
     }
 
@@ -76,7 +80,6 @@ impl Hypergeometric {
         let b = (n - k) as f64 / (N - K - n + k + 1) as f64;
         a * b
     }
-
 
     /// Backward term ratio r_back(k) = t(k-1)/t(k)
     /// where t(k) = P(X=k) for Hypergeometric(n, K, N)
@@ -95,13 +98,22 @@ impl Hypergeometric {
     /// - `n`: number of draws
     /// - `K`: total number of success items
     /// - `N`: total number of items
-    /// - `lower_tail`` if true, then P(X &lt;= x) is calculated, otherwise P(X &gt; x) is calculated.
+    /// - `lower_tail` if true, then P(X <= x) is calculated, otherwise P(X > x) is calculated.
     ///
-    /// Returns `P(X >= k)` or `P(X < k)`, the probability of observing up to (or less than) `k` successes in `n` draws.
+    /// Returns `P(X <= k)` or `P(X > k)`, the probability of observing up to (or less than) `k` successes in `n` draws.
     #[allow(non_snake_case)]
-    pub fn phyper(&mut self, k: usize, n: usize, K: usize, N: usize, lower_tail: bool) -> Result<f64, String> {
+    pub fn phyper(
+        &mut self,
+        k: usize,
+        n: usize,
+        K: usize,
+        N: usize,
+        lower_tail: bool,
+    ) -> Result<f64, String> {
         // Domain checks
-        if n > N || K > N { return Ok(0.0); }
+        if n > N || K > N {
+            return Ok(0.0);
+        }
         let (k_min, k_max) = self.support(n, K, N);
         if k < k_min {
             return Ok(0.0);
@@ -120,7 +132,7 @@ impl Hypergeometric {
         // let upper_len = up - k;
 
         if lower_tail {
-            for x in k_min..=k{
+            for x in k_min..=k { // includes k
                 let tx = self.dhyper(x, n, K, N)?;
                 y = tx - c;
                 t = lower_sum + y;
@@ -129,7 +141,7 @@ impl Hypergeometric {
             }
             Ok(lower_sum)
         } else {
-            for x in k+1..=k_max {
+            for x in k + 1..=k_max { // excludes k
                 let tx = self.dhyper(x, n, K, N)?;
                 y = tx - c;
                 t = upper_sum + y;
@@ -262,11 +274,11 @@ mod test {
         let result = hgeom.dhyper(10, 10, 10, 10);
         assert!(result.is_ok());
         let our_n_choose_k = result.unwrap();
-        assert!(float_eq!( 1f64 , our_n_choose_k, rmax <= 1e-6));
+        assert!(float_eq!(1f64, our_n_choose_k, rmax <= 1e-6));
     }
     /// Tests Hypergeometric::dhyper against reference values from R's dhyper()
     #[rstest]
-    #[case(3, 5, 4, 18,  0.04248366)] // valid case
+    #[case(3, 5, 4, 18, 0.04248366)] // valid case
     #[case(4, 10, 20, 65, 0.2204457)]
     #[case(5, 7, 6, 46, 8.74363e-05)]
     #[case(10, 10, 10, 10, 1.0)] // edge case: only white balls in urn, all drawn → P = 1
@@ -274,7 +286,6 @@ mod test {
     #[case(4, 5, 3, 17, 0.0)] // invalid case: x > m (drawing more white balls than available)
     #[case(6, 5, 8, 22, 0.0)] // invalid case: x > k (drawing more white balls than total draws)
     #[case(0, 5, 4, 6, 0.0)] // invalid case: k - x > n (drawing more black balls than available)
-
     #[allow(non_snake_case)]
     fn test_dhyper_cases(
         #[case] k: usize,
