@@ -31,12 +31,20 @@ impl PValueCalculation for TermForTerm {
         let population_terms_count = annotation_container.term_counts_for_subset(population, go);
 
         for (term, &k) in study_terms_count.iter() {
-            if k > 1 {
                 let &K = population_terms_count.get(term).unwrap();
 
                 // let K = annotated_genes.len();
                 let mut hypergeom = Hypergeometric::new();
-                let raw_p_value = hypergeom.phyper(k - 1, n, K, N, false).unwrap();
+
+                let raw_p_value;
+                if k > 1 {
+                    raw_p_value = hypergeom.phyper(k - 1, n, K, N, false).unwrap();
+                }
+                else {
+                    continue;
+                    // todo!(this was previously skipped, correctly the p-value should be 1.0)
+                    raw_p_value = 1.0;
+                }
 
                 let term_id = go.term_by_id(term);
                 let result = GOTermResult::new(
@@ -50,7 +58,6 @@ impl PValueCalculation for TermForTerm {
 
                 results.add_result(result);
             }
-        }
         results.sort_by_p_value();
     }
 }

@@ -31,6 +31,3 @@ fn enforce_pvalue_monotony(analysis_results: &mut AnalysisResults) {
         prev = new_val;
     }
 }
-
-
-

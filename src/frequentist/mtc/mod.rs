@@ -5,13 +5,10 @@ pub trait MultipleTestingCorrection {
     fn name(&self) -> &'static str;
 }
 
-mod none;
-mod  bonferroni;
+mod bonferroni;
 mod bonferroni_holm;
+mod none;
 
-pub use none::None;
 pub use bonferroni::Bonferroni;
 pub use bonferroni_holm::BonferroniHolm;
-
-
-
+pub use none::None;

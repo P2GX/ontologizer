@@ -1,9 +1,8 @@
 //! Ontologizer
-//! 
-//! Lots of good documentation
-//! 
 //!
-pub mod frequentist;
-mod core;
+//! Lots of good documentation
+//!
+//!
 mod bayesian;
-
+mod core;
+pub mod frequentist;

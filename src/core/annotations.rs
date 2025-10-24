@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-
 use crate::core::geneset::{GeneSet, GeneSymbol};
 use oboannotation::{
     go::{GoAnnotations, GoGafAnnotationLoader, stats::get_annotation_map},
@@ -58,14 +57,33 @@ impl AnnotationIndex {
         }
     }
 
-    pub fn terms_to_genes_for_subset(&self, genes : &GeneSet, go: &FullCsrOntology)
-        -> HashMap<TermId, HashSet<GeneSymbol>>{
+    pub fn terms(&self) -> HashSet<TermId> {
+        self.terms_to_genes.keys().cloned().collect()
+    }
+
+    pub fn terms_for_subset(&self, genes: &GeneSet, ontology: &FullCsrOntology) -> HashSet<TermId> {
+
+        let mut terms_subset = HashSet::new();
+
+        for gene in genes.recognized_genes() {
+            for term in self.genes_to_terms.get(gene).unwrap() {
+                    for ancestor in ontology.iter_term_and_ancestor_ids(term) {
+                        terms_subset.insert(ancestor.clone());
+                    }
+                }
+            }
+        terms_subset
+    }
+
+
+    pub fn terms_to_genes_for_subset(&self, genes : &GeneSet, ontology: &FullCsrOntology)
+                                     -> HashMap<TermId, HashSet<GeneSymbol>>{
         let mut terms_to_genes: HashMap<TermId, HashSet<GeneSymbol>> = HashMap::new();
 
         for gene in genes.recognized_genes() {
             let mut terms = HashSet::new();
             for term in self.genes_to_terms.get(gene).unwrap() {
-                terms.extend(go.iter_term_and_ancestor_ids(term).cloned()); // true-path rule
+                terms.extend(ontology.iter_term_and_ancestor_ids(term).cloned()); // true-path rule
                 }
             for term in terms {
                 terms_to_genes
@@ -77,12 +95,12 @@ impl AnnotationIndex {
         terms_to_genes
     }
 
-    pub fn term_counts_for_subset(&self, genes : &GeneSet, go: &FullCsrOntology) -> HashMap<TermId, usize>{
+    pub fn term_counts_for_subset(&self, genes : &GeneSet, ontology: &FullCsrOntology) -> HashMap<TermId, usize>{
         let mut counts = HashMap::new();
         for gene in genes.recognized_genes() {
             let mut terms = HashSet::new();
             for term in self.genes_to_terms.get(gene).unwrap() {
-                terms.extend(go.iter_term_and_ancestor_ids(term).cloned()); // true-path rule
+                terms.extend(ontology.iter_term_and_ancestor_ids(term).cloned()); // true-path rule
             }
             for term in terms {
                 *counts.entry(term).or_insert(0) += 1;

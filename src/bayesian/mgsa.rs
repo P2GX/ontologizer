@@ -1,40 +1,139 @@
+use rand::Rng;
+use crate::bayesian::mcmc::Sampler;
+use crate::bayesian::mcmc::*;
+use crate::bayesian::types::{MgsaConfig, MgsaResult, MgsaParams, Problem, State};
+use crate::bayesian::utils::{init_hidden_states, init_obs_states, init_term_states, update_hidden_state};
+use crate::core::AnnotationIndex;
+use crate::bayesian::probs::*;
 
+pub fn run_mgsa(problem: &Problem, params : &MgsaParams, cfg: &MgsaConfig) -> MgsaResult {
+
+    // todo!(should allow to restrict to a subset of terms)
+    let obs_genes = problem.observed_genes();
+    let all_genes = problem.all_genes();
+
+    // todo!(should allow to restrict to a subset of terms - determined by genes)
+    let all_terms = problem.all_terms();
+
+    let mut result = MgsaResult::new(&all_terms);
+
+    // initial state: all terms off, hidden inferred from that
+    let mut init_term_states = init_term_states(&all_terms, params.q);
+    let mut init_hidden_states = init_hidden_states(&all_genes);
+    let obs_states = init_obs_states(&all_genes, &obs_genes);
+
+    update_hidden_state(&mut init_hidden_states, &init_term_states, &problem.ann);
+
+    let mut state = State {
+        terms: init_term_states,
+        hidden: init_hidden_states,
+    };
+
+    let mut state_p = state.clone();
+
+    let mut sampler = Sampler::new(); // todo!(allow to configure with parameters)
+    let a = params.alpha;
+    let b = params.beta;
+    let q = params.q;
+
+    // precompute current score
+    // todo!(in the entire code below: function signature should be optimized to utilize types.rs)
+    let mut log_post_t = log_posterior_unnorm(a, b, q, &obs_states, &state.hidden, &state.terms);
+    let mut neigh_t = neighborhood_size(&state.terms) as f64;
+
+    let mut rng = rand::rng();
+    for step in 0..cfg.steps {
+        if step % 1_000 == 0 {
+            println!("MGSA sampling step {}/{}", step, cfg.steps);
+        }
+                // propose terms to be altered
+        let term_move = sampler.draw_move(&state.terms);
+        // rebuild hidden from proposed terms
+        sampler.apply_move(&mut state_p.terms, &term_move);
+
+        // MH acceptance with neighborhood correction (toggle + swap moves)
+        let log_post_p = log_posterior_unnorm(a, b, q, &obs_states, &state_p.hidden, &state_p.terms);
+        let neigh_p = neighborhood_size(&state_p.terms) as f64;
+
+        // acceptance ratio in log-space:
+        // log a = (lp_prop - lp_curr) + log(neigh_curr/neigh_prop)
+        let log_a = (log_post_t - log_post_p) + neigh_t.ln() - neigh_p.ln();
+
+        let x: f64 = rng.random_range(0.0..1.0);
+
+        if x.ln() < log_a {
+            sampler.apply_move(&mut state.terms, &term_move);
+            log_post_t = log_post_p;
+            neigh_t = neigh_p;
+        }
+        else {
+            sampler.revert_move(&mut state_p.terms, &term_move);
+        }
+
+        if step >= cfg.burn_in {
+            result.update(&state);
+        }
+    }
+
+    result
+}
 
 #[cfg(test)]
 mod test {
-    use crate::core::AnnotationIndex;
-    use crate::core::{load_gene_set, separate_gene_set};
-    use crate::core::Ontologizer;
     use super::*;
-
+    use crate::bayesian::types::{MgsaParams, Problem};
+    use crate::core::AnnotationIndex;
+    use crate::core::Ontologizer;
+    use crate::core::{load_gene_set, separate_gene_set};
 
     #[test]
     fn test_mgsa() {
+        println!("Testing MGSA");
+
         let go_path = "tests/data/go-basic.json";
         let gaf_path = "tests/data/goa_human.gaf";
-        let pop_set_path = "tests/data/population.txt";
         let study_set_path = "tests/data/study.txt";
+        let pop_set_path = "tests/data/population.txt";
 
-        let gene_ontology = Ontologizer::new(go_path);
-
-        // Load the GOA annotations
-        let mut annotations = AnnotationIndex::new(gaf_path);
-
-        // Load the population and study gene sets
+        let ontologizer = Ontologizer::new(go_path);
+        let onto = ontologizer.ontology();
+        let mut ann = AnnotationIndex::new(gaf_path, onto);
 
         // Load the population and study gene sets
         let study_gene_symbols = load_gene_set(study_set_path).expect("Failed to parse study gene set");
-        let study_gene_set = separate_gene_set(&annotations.annotations(), study_gene_symbols);
+        let study_gene_set = separate_gene_set(&ann.get_annotations(), study_gene_symbols);
 
         let pop_gene_symbols = load_gene_set(pop_set_path).expect("Failed to parse population gene set");
-        let pop_gene_set = separate_gene_set(&annotations.annotations(), pop_gene_symbols);
+        let pop_gene_set = separate_gene_set(&ann.get_annotations(), pop_gene_symbols);
 
-        // Build map that contains all GO terms annotated in the study set and their counts.
-        // (we only want to analyze terms that are annotated in the study set)
-        annotations.compute_term_counts(&study_gene_set, gene_ontology.ontology());
-        // Build map that contains all GO terms annotated in the population set and their associated genes (in population set).
-        annotations.build_terms_to_genes(&pop_gene_set, gene_ontology.ontology());
+        // Fix term universe and order
+        // todo!(if a population is provided, limit the terms to those annotated to the population)
+        let terms = ann.terms();
+        let obs = study_gene_set.recognized_genes().clone();
 
-        // Mgsa.calculate_probabilities(gene_ontology.ontology(), &annotations, &study_gene_set, &pop_gene_set)
+
+        // Bind the problem view
+        let problem = Problem {
+            ann: &ann,
+            genes: obs
+        };
+
+        // Configure fixed parameters and MCMC
+        let params = MgsaParams {
+            alpha: 0.10,          // false positive rate
+            beta: 0.05,           // false negative rate
+            q: 0.2, // prior prob term is on
+        };
+
+        let cfg = MgsaConfig {
+            steps: 20_000,
+            burn_in: 10_000,
+        };
+
+        // Run sampler
+        println!("Running MGSA sampler");
+        let out = run_mgsa(&problem, &params, &cfg);
+
+        out.write_tsv("tests/data/enrichment_results_mgsa.tsv").expect("Failed to write results");
     }
 }
