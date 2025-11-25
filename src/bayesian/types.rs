@@ -1,11 +1,11 @@
+use crate::core::{AnnotationIndex, GeneSymbol};
+use anyhow::Result;
+use ontolius::TermId;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;
 use std::time::Instant;
-use anyhow::Result;
-use ontolius::TermId;
-use crate::core::{AnnotationIndex, GeneSymbol};
 
 /// Fixed MGSA model parameters.
 pub struct MgsaParams {
@@ -16,8 +16,8 @@ pub struct MgsaParams {
 
 /// Fixed problem definition. Only place that knows about AnnotationIndex.
 pub struct Problem<'a> {
-    pub ann : &'a AnnotationIndex,
-    pub genes : HashSet<GeneSymbol>
+    pub ann: &'a AnnotationIndex,
+    pub genes: HashSet<GeneSymbol>,
 }
 
 impl<'a> Problem<'a> {
@@ -34,7 +34,6 @@ impl<'a> Problem<'a> {
     }
 }
 
-
 /// MCMC configuration parameters.
 pub struct MgsaConfig {
     pub steps: u64,
@@ -46,7 +45,7 @@ pub struct MgsaConfig {
 /// Hidden gene states are derived on the fly when needed.
 #[derive(Clone)]
 pub struct State {
-    pub terms: HashMap<TermId, bool>,  // key set fixed after init; values flip
+    pub terms: HashMap<TermId, bool>, // key set fixed after init; values flip
     pub hidden: HashMap<GeneSymbol, bool>,
 }
 
@@ -54,10 +53,7 @@ impl State {
     pub fn new(terms: &HashSet<TermId>) -> Self {
         let terms = terms.iter().cloned().map(|t| (t, false)).collect();
         let hidden = HashMap::new();
-        Self {
-            terms,
-            hidden
-        }
+        Self { terms, hidden }
     }
 }
 
@@ -66,7 +62,6 @@ pub struct MgsaResult {
     pub counts: HashMap<TermId, usize>,
     pub samples: usize,
 }
-
 
 impl MgsaResult {
     pub fn new(terms: &HashSet<TermId>) -> Self {
@@ -112,7 +107,11 @@ impl MgsaResult {
         // Rows
         for (term, count, post) in rows {
             if post.is_finite() {
-                writeln!(writer, "{}\t{}\t{}\t{:.6e}", term, count, self.samples, post)?;
+                writeln!(
+                    writer,
+                    "{}\t{}\t{}\t{:.6e}",
+                    term, count, self.samples, post
+                )?;
             } else {
                 // samples == 0 case
                 writeln!(writer, "{}\t{}\t{}\tNA", term, count, self.samples)?;

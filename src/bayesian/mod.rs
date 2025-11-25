@@ -1,5 +1,5 @@
-mod mgsa;
 mod mcmc;
-mod types;
+mod mgsa;
 mod probs;
+mod types;
 mod utils;

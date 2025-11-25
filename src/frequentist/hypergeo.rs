@@ -132,7 +132,8 @@ impl Hypergeometric {
         // let upper_len = up - k;
 
         if lower_tail {
-            for x in k_min..=k { // includes k
+            for x in k_min..=k {
+                // includes k
                 let tx = self.dhyper(x, n, K, N)?;
                 y = tx - c;
                 t = lower_sum + y;
@@ -141,7 +142,8 @@ impl Hypergeometric {
             }
             Ok(lower_sum)
         } else {
-            for x in k + 1..=k_max { // excludes k
+            for x in k + 1..=k_max {
+                // excludes k
                 let tx = self.dhyper(x, n, K, N)?;
                 y = tx - c;
                 t = upper_sum + y;

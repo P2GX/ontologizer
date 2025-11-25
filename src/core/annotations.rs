@@ -1,4 +1,3 @@
-use std::collections::{HashMap, HashSet};
 use crate::core::geneset::{GeneSet, GeneSymbol};
 use oboannotation::{
     go::{GoAnnotations, GoGafAnnotationLoader, stats::get_annotation_map},
@@ -8,6 +7,7 @@ use ontolius::{
     TermId,
     ontology::{HierarchyWalks, csr::FullCsrOntology},
 };
+use std::collections::{HashMap, HashSet};
 
 // Contains all GO annotations and provides methods to build annotation maps specific to the study and population sets.
 pub struct AnnotationIndex {
@@ -24,8 +24,7 @@ impl AnnotationIndex {
             .load_from_path(gaf_path)
             .expect("Could not load GAF file");
 
-        let genes_to_terms: HashMap<GeneSymbol, HashSet<TermId>> =
-            get_annotation_map(&annotations)
+        let genes_to_terms: HashMap<GeneSymbol, HashSet<TermId>> = get_annotation_map(&annotations)
             .into_iter()
             .filter_map(|(k, v)| match GeneSymbol::new(&k) {
                 Some(sym) => Some((sym, v)),
@@ -53,7 +52,6 @@ impl AnnotationIndex {
             annotations,
             genes_to_terms,
             terms_to_genes,
-
         }
     }
 
@@ -62,40 +60,45 @@ impl AnnotationIndex {
     }
 
     pub fn terms_for_subset(&self, genes: &GeneSet, ontology: &FullCsrOntology) -> HashSet<TermId> {
-
         let mut terms_subset = HashSet::new();
 
         for gene in genes.recognized_genes() {
             for term in self.genes_to_terms.get(gene).unwrap() {
-                    for ancestor in ontology.iter_term_and_ancestor_ids(term) {
-                        terms_subset.insert(ancestor.clone());
-                    }
+                for ancestor in ontology.iter_term_and_ancestor_ids(term) {
+                    terms_subset.insert(ancestor.clone());
                 }
             }
+        }
         terms_subset
     }
 
-
-    pub fn terms_to_genes_for_subset(&self, genes : &GeneSet, ontology: &FullCsrOntology)
-                                     -> HashMap<TermId, HashSet<GeneSymbol>>{
+    pub fn terms_to_genes_for_subset(
+        &self,
+        genes: &GeneSet,
+        ontology: &FullCsrOntology,
+    ) -> HashMap<TermId, HashSet<GeneSymbol>> {
         let mut terms_to_genes: HashMap<TermId, HashSet<GeneSymbol>> = HashMap::new();
 
         for gene in genes.recognized_genes() {
             let mut terms = HashSet::new();
             for term in self.genes_to_terms.get(gene).unwrap() {
                 terms.extend(ontology.iter_term_and_ancestor_ids(term).cloned()); // true-path rule
-                }
+            }
             for term in terms {
                 terms_to_genes
                     .entry(term.clone())
                     .or_default()
                     .insert(gene.clone());
-                }
             }
+        }
         terms_to_genes
     }
 
-    pub fn term_counts_for_subset(&self, genes : &GeneSet, ontology: &FullCsrOntology) -> HashMap<TermId, usize>{
+    pub fn term_counts_for_subset(
+        &self,
+        genes: &GeneSet,
+        ontology: &FullCsrOntology,
+    ) -> HashMap<TermId, usize> {
         let mut counts = HashMap::new();
         for gene in genes.recognized_genes() {
             let mut terms = HashSet::new();

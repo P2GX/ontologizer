@@ -1,7 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use crate::core::{AnnotationIndex, GeneSymbol};
 use ontolius::TermId;
 use rand::Rng;
-use crate::core::{AnnotationIndex, GeneSymbol};
+use std::collections::{HashMap, HashSet};
 
 pub fn init_term_states(terms: &HashSet<TermId>, q: f64) -> HashMap<TermId, bool> {
     let mut rng = rand::rng();

@@ -1,15 +1,14 @@
-use std::collections::HashMap;
-use rand::{Rng, rngs::ThreadRng};
 use ontolius::TermId;
-
+use rand::{Rng, rngs::ThreadRng};
+use std::collections::HashMap;
 
 pub enum TermMove {
     Flip(TermId),
     Swap(TermId, TermId),
 }
 /// A sampler for the Bayesian network. Proposes a new state based on the current state.
-pub(crate) struct Sampler{
-    rng : ThreadRng
+pub(crate) struct Sampler {
+    rng: ThreadRng,
 }
 
 impl Sampler {
@@ -48,11 +47,21 @@ impl Sampler {
 
             for (tid, &on) in terms.iter() {
                 if on {
-                    if on_left == 0 { on_pick = Some(tid.clone()); } else { on_left -= 1; }
+                    if on_left == 0 {
+                        on_pick = Some(tid.clone());
+                    } else {
+                        on_left -= 1;
+                    }
                 } else {
-                    if off_left == 0 { off_pick = Some(tid.clone()); } else { off_left -= 1; }
+                    if off_left == 0 {
+                        off_pick = Some(tid.clone());
+                    } else {
+                        off_left -= 1;
+                    }
                 }
-                if on_pick.is_some() && off_pick.is_some() { break; }
+                if on_pick.is_some() && off_pick.is_some() {
+                    break;
+                }
             }
             TermMove::Swap(on_pick.unwrap(), off_pick.unwrap())
         }
@@ -62,11 +71,17 @@ impl Sampler {
     pub fn apply_move(&self, terms: &mut HashMap<TermId, bool>, mv: &TermMove) {
         match mv {
             TermMove::Flip(t) => {
-                if let Some(v) = terms.get_mut(&t) { *v = !*v; }
+                if let Some(v) = terms.get_mut(&t) {
+                    *v = !*v;
+                }
             }
             TermMove::Swap(t_on, t_off) => {
-                if let Some(v_on) = terms.get_mut(&t_on)  { *v_on  = false; }
-                if let Some(v_off)= terms.get_mut(&t_off) { *v_off = true;  }
+                if let Some(v_on) = terms.get_mut(&t_on) {
+                    *v_on = false;
+                }
+                if let Some(v_off) = terms.get_mut(&t_off) {
+                    *v_off = true;
+                }
             }
         }
     }
@@ -75,11 +90,17 @@ impl Sampler {
     pub fn revert_move(&self, terms: &mut HashMap<TermId, bool>, mv: &TermMove) {
         match mv {
             TermMove::Flip(t) => {
-                if let Some(v) = terms.get_mut(&t) { *v = !*v; }
+                if let Some(v) = terms.get_mut(&t) {
+                    *v = !*v;
+                }
             }
             TermMove::Swap(t_on, t_off) => {
-                if let Some(v_on) = terms.get_mut(&t_on)  { *v_on  = true;  }
-                if let Some(v_off)= terms.get_mut(&t_off) { *v_off = false; }
+                if let Some(v_on) = terms.get_mut(&t_on) {
+                    *v_on = true;
+                }
+                if let Some(v_off) = terms.get_mut(&t_off) {
+                    *v_off = false;
+                }
             }
         }
     }
@@ -92,5 +113,4 @@ mod tests {
     fn test_sampler() {
         unimplemented!("The process, you must trust.")
     }
-
 }
