@@ -1,28 +1,28 @@
 use std::collections::HashSet;
-use std::time::Instant;
 
-use crate::{annotations::AnnotationContainer, gene_set::GeneSet, hypergeom::Hypergeometric};
+use crate::frequentist::hypergeom::Hypergeometric;
 
 use ontolius::{
-    ontology::{OntologyTerms, csr::FullCsrOntology},
+    ontology::{csr::FullCsrOntology, OntologyTerms},
     term::MinimalTerm,
 };
-
-use super::pvalue_calculation::PValueCalculation;
-use super::results::{AnalysisResults, GOTermResult, get_term_aspect};
+use crate::core::AnnotationIndex;
+use crate::core::{GeneSet, GeneSymbol};
+use crate::frequentist::PValueCalculation;
+use super::results::{get_term_aspect, AnalysisResults, GOTermResult};
 
 pub struct TermForTerm;
 impl PValueCalculation for TermForTerm {
     fn calculate_p_values(
         &self,
         go: &FullCsrOntology,
-        annotation_container: &AnnotationContainer,
+        annotation_container: &AnnotationIndex,
         study: &GeneSet,
         population: &GeneSet,
         results: &mut AnalysisResults,
     ) -> () {
-        let study_genes = study.gene_symbols();
-        let pop_genes = population.gene_symbols();
+        let study_genes = study.recognized_genes();
+        let pop_genes = population.recognized_genes();
         let n = study_genes.len();
         let m = pop_genes.len();
 
@@ -53,9 +53,9 @@ impl PValueCalculation for TermForTerm {
 }
 // Computes the intersection of a gene set with the set of genes annotated to a specific GO term.
 fn gene_set_intersection(
-    gene_set: &HashSet<String>,
-    genes_annotated_to_term: &HashSet<String>,
-) -> HashSet<String> {
+    gene_set: &HashSet<GeneSymbol>,
+    genes_annotated_to_term: &HashSet<GeneSymbol>,
+) -> HashSet<GeneSymbol> {
     let intersection: HashSet<_> = gene_set
         .intersection(genes_annotated_to_term)
         .cloned()
@@ -67,12 +67,11 @@ fn gene_set_intersection(
 mod test {
 
     use super::*;
-    use crate::{
-        gene_set::{build_gene_set, load_gene_file},
-        ontology::Ontologizer, statistics::bonferroni::Bonferroni,
-    };
-    use crate::calculation::results::{AnalysisResults, MtcEnum, MethodEnum};
-    use crate::statistics::mtc::MultipleTestingCorrection;
+    use crate::frequentist::mtc::{Bonferroni, MultipleTestingCorrection};
+
+    use crate::frequentist::results::{AnalysisResults, MethodEnum, MtcEnum};
+    use crate::core::{load_gene_set, separate_gene_set};
+    use crate::core::Ontologizer;
 
     #[test]
     // #[ignore]
@@ -90,23 +89,25 @@ mod test {
         let go_ref = go.ontology();
 
         // Load the GOA annotations
-        let mut annotation_container = AnnotationContainer::new(gaf_path);
+        let mut annotation_container = AnnotationIndex::new(gaf_path);
 
         // Load the population and study gene sets
-        let study_set_list = load_gene_file(study_set_path).expect("Failed to load study list");
-        let study_set = build_gene_set(study_set_list, &annotation_container.annotations());
-        let pop_set_list = load_gene_file(pop_set_path).expect("Failed to load population list");
-        let pop_set = build_gene_set(pop_set_list, &annotation_container.annotations());
+        let study_gene_symbols = load_gene_set(study_set_path).expect("Failed to parse study gene set");
+        let study_gene_set = separate_gene_set(&annotation_container.annotations(), study_gene_symbols);
+
+        let pop_gene_symbols = load_gene_set(pop_set_path).expect("Failed to parse population gene set");
+        let pop_gene_set = separate_gene_set(&annotation_container.annotations(), pop_gene_symbols);
+
 
         // Build map that contains all GO terms annotated in the study set and their counts.
         // (we only want to analyze terms that are annotated in the study set)
-        annotation_container.build_study_annotations(&study_set, go_ref);
+        annotation_container.compute_term_counts(&study_gene_set, go_ref);
         // Build map that contains all GO terms annotated in the population set and their associated genes (in population set).
-        annotation_container.build_term_genes_map(&pop_set, go_ref);
+        annotation_container.build_terms_to_genes(&pop_gene_set, go_ref);
 
         let mut results = AnalysisResults::new(MethodEnum::TermForTerm, mtc_method);
 
-        TermForTerm.calculate_p_values(go_ref, &annotation_container, &study_set, &pop_set, &mut results);
+        TermForTerm.calculate_p_values(go_ref, &annotation_container, &study_gene_set, &pop_gene_set, &mut results);
         Bonferroni.adjust_pvalues(&mut results);
         results
             .write_tsv("tests/data/enrichment_results.tsv")

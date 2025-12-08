@@ -88,7 +88,6 @@ impl Hypergeometric {
         a * b
     }
 
-
     /// phyper - Cumulative density function of the hypergeometric distribution.
     ///
     /// Parameters
@@ -275,6 +274,7 @@ mod test {
     #[case(4, 5, 3, 17, 0.0)] // invalid case: x > m (drawing more white balls than available)
     #[case(6, 5, 8, 22, 0.0)] // invalid case: x > k (drawing more white balls than total draws)
     #[case(0, 5, 4, 6, 0.0)] // invalid case: k - x > n (drawing more black balls than available)
+
     #[allow(non_snake_case)]
     fn test_dhyper_cases(
         #[case] k: usize,
