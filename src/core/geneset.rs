@@ -10,9 +10,11 @@ use std::{
 
 // Tuple struct for gene symbols that ensure normalization (uppercase, trimmed, no comments)
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+
 pub struct GeneSymbol(String);
 
 impl GeneSymbol {
+    // Ensures that gene symbols do not start with '#' and have no leading or trailing whitespaces.
     pub fn new<S: AsRef<str>>(s: S) -> Option<Self> {
         let s = s.as_ref().trim_start();
         if s.is_empty() || s.starts_with('#') {
@@ -47,7 +49,6 @@ impl GeneSet {
     pub fn unrecognized_genes(&self) -> &HashSet<GeneSymbol> {
         &self.unrecognized
     }
-
     pub fn gene_count(&self) -> usize {
         self.recognized.len() + self.unrecognized.len()
     }

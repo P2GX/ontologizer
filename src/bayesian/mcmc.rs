@@ -6,6 +6,7 @@ pub enum TermMove {
     Flip(TermId),
     Swap(TermId, TermId),
 }
+
 /// A sampler for the Bayesian network. Proposes a new state based on the current state.
 pub(crate) struct Sampler {
     rng: ThreadRng,

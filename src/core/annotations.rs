@@ -12,8 +12,8 @@ use std::collections::{HashMap, HashSet};
 // Contains all GO annotations and provides methods to build annotation maps specific to the study and population sets.
 pub struct AnnotationIndex {
     pub annotations: GoAnnotations, // All GO annotations loaded from the GAF file
-    pub genes_to_terms: HashMap<GeneSymbol, HashSet<TermId>>, // all genes mapped to their annotated GO terms
     pub terms_to_genes: HashMap<TermId, HashSet<GeneSymbol>>, // all GO terms mapped to their annotated genes
+    pub genes_to_terms: HashMap<GeneSymbol, HashSet<TermId>>, // all genes mapped to their annotated GO terms
 }
 
 impl AnnotationIndex {
