@@ -1,18 +1,19 @@
-use crate::better_bayesian::observation::Observation;
-use crate::better_bayesian::state::{CountableState, State};
+use crate::better_bayesian::observation::{Genes, Observation};
+use crate::better_bayesian::proposer::ToggleSwap;
+use crate::better_bayesian::state::{CountableState, State, Terms};
 
 // A trait that connects *STATE* and *OBSERVATION* by assigning probabilities.
-pub trait Model<S: CountableState, O: Observation>{
-
+pub trait Model{
+    type State : State;
+    type Observation : Observation;
     // Log probability P(S) to find a State configuration
-    fn log_prior(&self, state: &S) -> f64;
+    fn log_prior(&self, state: &Self::State) -> f64;
 
     // Log probability P(O | S) to find an Observable configuration given a State configuration.
-    fn log_likelihood(&self, state : &S, observation : &O) -> f64;
+    fn log_likelihood(&self, state : &Self::State, observation : &Self::Observation) -> f64;
 
     // TODO: I am not sure if we can calculate this. But it would be very useful.
-    fn log_likelihood_ratio(&self, state : &S, observation : &O, m : S::Move) -> f64;
-
+    fn log_likelihood_ratio(&self, state : &Self::State, observation : &Self::Observation, m : <Self::State as State>::Move) -> f64;
 }
 
 struct OrModel{
@@ -22,10 +23,12 @@ struct OrModel{
     beta : f64 // The probability of a gene being incorrectly inactive.
 }
 
-impl<S : CountableState, O : Observation> Model<S, O> for OrModel {
+impl Model for OrModel {
+    type State = Terms;
+    type Observation = Genes;
 
     // Log probability P(T) to find a Term configuration
-    fn log_prior(&self, state : &S) -> f64{
+    fn log_prior(&self, state : &Terms) -> f64{
         let m0 = state.n_active() as f64;
         let m1 =  state.n_inactive() as f64;
 
@@ -33,11 +36,11 @@ impl<S : CountableState, O : Observation> Model<S, O> for OrModel {
     }
 
     // Log probability P(O | T) to find an observed Gene configuration given a Terms configuration.
-    fn log_likelihood(&self, state: &S, observation: &O) -> f64 {
+    fn log_likelihood(&self, state: &Terms, observation: &Genes) -> f64 {
         todo!()
     }
 
-    fn log_likelihood_ratio(&self, state: &S, observation: &O, m: S::Move) -> f64 {
+    fn log_likelihood_ratio(&self, state: &Terms, observation: &Genes, m: ToggleSwap) -> f64 {
         todo!()
     }
 }
