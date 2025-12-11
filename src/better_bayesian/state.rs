@@ -10,14 +10,14 @@ pub enum ToggleSwap {
 
 
 // A trait that guarantees that *STATE* knows how to sample itself by drawing and applying *MOVE*.
-pub trait State<R : Rng>{
+pub trait State{
     type Move;
 
-    fn propose(&self, rng : &mut R) -> Self::Move;
+    fn draw_move<R : Rng>(&self, rng : &mut R) -> Self::Move;
 
-    fn forward(&mut self, m : &Self::Move);
+    fn apply(&mut self, m : &Self::Move);
 
-    fn backward(&mut self, m : &Self::Move);
+    fn revert(&mut self, m : &Self::Move);
 }
 
 
@@ -30,7 +30,7 @@ struct Terms {
 }
 
 impl Terms{
-    fn new(self, terms : Vec<bool>) -> Terms{
+    fn new(terms : Vec<bool>) -> Terms{
         let m = terms.len();
         let m_on = terms.iter().filter(|&x| *x == true).count();
         let m_off = terms.iter().filter(|&x| *x == false).count();
@@ -38,11 +38,11 @@ impl Terms{
 
     }
 }
-impl<R : Rng> State<R> for Terms
+impl State for Terms
 {
     type Move = ToggleSwap;
 
-    fn propose(&self, rng : &mut R) -> ToggleSwap {
+    fn draw_move<R : Rng>(&self, rng : &mut R) -> ToggleSwap {
         // Every possible state transition is equally likely.
         let n = self.m + self.m_on * self.m_off;
         let x = rng.random_range(0..n);
@@ -63,7 +63,7 @@ impl<R : Rng> State<R> for Terms
         }
     }
 
-    fn forward(&mut self, m: & ToggleSwap) {
+    fn apply(&mut self, m: & ToggleSwap) {
         match *m {
             Toggle(i) => {
                 self.terms[i] = !self.terms[i]
@@ -75,7 +75,7 @@ impl<R : Rng> State<R> for Terms
         }
     }
 
-    fn backward(&mut self, m: & ToggleSwap) {
+    fn revert(&mut self, m: & ToggleSwap) {
         match *m {
             Toggle(i) => {
                 self.terms[i] = !self.terms[i]
@@ -92,7 +92,7 @@ impl<R : Rng> State<R> for Terms
 /// Maps a random number `k` to indices (index_on, index_off) in the terms vector.
 /// Assumption: k < m_on * m_off
 fn find_swap_indices(k : usize, m_on : usize, m_off : usize, terms: &[bool]) -> Option<(usize, usize)> {
-    if(k >= m_on * m_off){
+    if k >= m_on * m_off {
         return None;
     }
 
@@ -149,7 +149,7 @@ mod tests {
         assert_eq!(find_swap_indices(3, m_on, m_off, &terms).unwrap(), (3, 2));
 
         // Case k=4: target_on=0, target_off=2 -> Expect indices (3, 2)
-        assert_eq!(find_swap_indices(4, m_on, m_off, &terms).unwrap(), (3, 4));
+        assert_eq!(find_swap_indices(4, m_on, m_off, &terms).unwrap(), (0, 4));
 
         // Case k=5: target_on=1, target_off=2 -> Expect indices (3, 2)
         assert_eq!(find_swap_indices(5, m_on, m_off, &terms).unwrap(), (3, 4));
