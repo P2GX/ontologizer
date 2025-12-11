@@ -24,9 +24,9 @@ pub trait State{
 struct Terms {
     // Computational vector used by *ALGORITHM*. Mapping term indices to names by *ANNOTATIONS**
     terms : Vec<bool>, // maybe BitSet later
-    m : usize,
-    m_on : usize,
-    m_off : usize,
+    n: usize,
+    n_on: usize,
+    n_off: usize,
 }
 
 impl Terms{
@@ -34,8 +34,16 @@ impl Terms{
         let m = terms.len();
         let m_on = terms.iter().filter(|&x| *x == true).count();
         let m_off = terms.iter().filter(|&x| *x == false).count();
-        Terms {terms, m, m_on, m_off}
+        Terms {terms, n: m, n_on: m_on, n_off: m_off }
+    }
 
+    /// Returns true if the cached counts match the actual vector data (debug only).
+    fn check_consistency(&self) -> bool {
+        let actual_on = self.terms.iter().filter(|&&t| t).count();
+        let actual_off = self.terms.iter().filter(|&&t| !t).count();
+
+        // Return result rather than panicking, so we can use it in assert!
+        actual_on == self.n_on && actual_off == self.n_off
     }
 }
 impl State for Terms
@@ -44,47 +52,71 @@ impl State for Terms
 
     fn draw_move<R : Rng>(&self, rng : &mut R) -> ToggleSwap {
         // Every possible state transition is equally likely.
-        let n = self.m + self.m_on * self.m_off;
-        let x = rng.random_range(0..n);
+        let m = self.n + self.n_on * self.n_off;
+        let x = rng.random_range(0..m);
 
         // In m cases we flip the state of a single term.
-        if x < self.m {
+        if x < self.n {
             Toggle(x)
         }
         // in m_on * m_off cases we swap the states of two terms with different states.
         else {
             // map random number x to pairs of indices a, b
-            let k = x - self.m;
+            let k = x - self.n;
 
-            let (i, j) = find_swap_indices(k, self.m_on, self.m_off, &self.terms)
+            let (i, j) = find_swap_indices(k, self.n_on, self.n_off, &self.terms)
                 .expect("Swap index out of range");
 
             Swap(i, j)
         }
     }
 
+    /// Revert move and update n_on, n_off count
     fn apply(&mut self, m: & ToggleSwap) {
         match *m {
             Toggle(i) => {
-                self.terms[i] = !self.terms[i]
+                let is_now_on = !self.terms[i];
+                if is_now_on {
+                    self.n_on += 1;
+                    self.n_off -= 1;
+                }
+                else {
+                    self.n_on -= 1;
+                    self.n_off += 1;
+                }
+
+                self.terms[i] = is_now_on
             }
             Swap(i_on, i_off) => {
                 self.terms[i_on] = false;
                 self.terms[i_off] = true;
             }
         }
+        debug_assert!(self.check_consistency());
     }
 
+    /// Revert move and update n_on, n_off count
     fn revert(&mut self, m: & ToggleSwap) {
         match *m {
             Toggle(i) => {
-                self.terms[i] = !self.terms[i]
+                let is_now_on = !self.terms[i];
+                if is_now_on {
+                    self.n_on += 1;
+                    self.n_off -= 1;
+                }
+                else {
+                    self.n_on -= 1;
+                    self.n_off += 1;
+                }
+
+                self.terms[i] = is_now_on
             }
             Swap(i_on, i_off) => {
                 self.terms[i_on] = true;
                 self.terms[i_off] = false;
             }
         }
+        debug_assert!(self.check_consistency());
     }
 }
 
