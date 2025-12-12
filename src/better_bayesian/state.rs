@@ -1,37 +1,41 @@
-use ToggleSwap::*;
 use crate::better_bayesian::proposer::ToggleSwap;
+use ToggleSwap::*;
 
 // A trait that guarantees that *STATE* knows how to sample itself by drawing and applying *MOVE*.
-pub trait State{
+pub trait State {
     type Move;
-    type Value : Copy;
-    fn get(&self, i : usize) -> Self::Value;
-    fn apply(&mut self, m : &Self::Move);
-    fn revert(&mut self, m : &Self::Move);
+    type Value: Copy;
+    fn get(&self, i: usize) -> Self::Value;
+    fn n_all(&self) -> usize;
+    fn apply(&mut self, m: &Self::Move);
+    fn revert(&mut self, m: &Self::Move);
 }
 
 // A trait that guarantees that *STATE* takes boolean values (activer/inactive).
-pub trait CountableState : State{
-    fn n_all(&self) -> usize;
+pub trait CountableState: State<Value = bool> {
     fn n_active(&self) -> usize;
     fn n_inactive(&self) -> usize;
 }
 
-
 pub(crate) struct Terms {
     // Computational vector used by *ALGORITHM*. Mapping term indices to names by *ANNOTATIONS**
-    terms : Vec<bool>, // maybe BitSet later
+    terms: Vec<bool>, // maybe BitSet later
     n: usize,
     n_on: usize,
     n_off: usize,
 }
 
-impl Terms{
-    pub(crate) fn new(terms : Vec<bool>) -> Terms{
+impl Terms {
+    pub(crate) fn new(terms: Vec<bool>) -> Terms {
         let n = terms.len();
         let n_on = terms.iter().filter(|&x| *x == true).count();
         let n_off = terms.iter().filter(|&x| *x == false).count();
-        Terms {terms, n, n_on, n_off }
+        Terms {
+            terms,
+            n,
+            n_on,
+            n_off,
+        }
     }
 
     /// Returns true if the cached counts match the actual vector data (debug only).
@@ -44,23 +48,27 @@ impl Terms{
     }
 }
 
-impl State for Terms
-{
+impl State for Terms {
     type Move = ToggleSwap;
 
     type Value = bool;
 
-    fn get(&self, i: usize) -> bool { self.terms[i] }
+    fn get(&self, i: usize) -> bool {
+        self.terms[i]
+    }
+
+    fn n_all(&self) -> usize {
+        self.n
+    }
     /// Revert move and update n_on, n_off count
-    fn apply(&mut self, m: & ToggleSwap) {
+    fn apply(&mut self, m: &ToggleSwap) {
         match *m {
             Toggle(i) => {
                 let is_now_on = !self.terms[i];
                 if is_now_on {
                     self.n_on += 1;
                     self.n_off -= 1;
-                }
-                else {
+                } else {
                     self.n_on -= 1;
                     self.n_off += 1;
                 }
@@ -76,15 +84,14 @@ impl State for Terms
     }
 
     /// Revert move and update n_on, n_off count
-    fn revert(&mut self, m: & ToggleSwap) {
+    fn revert(&mut self, m: &ToggleSwap) {
         match *m {
             Toggle(i) => {
                 let is_now_on = !self.terms[i];
                 if is_now_on {
                     self.n_on += 1;
                     self.n_off -= 1;
-                }
-                else {
+                } else {
                     self.n_on -= 1;
                     self.n_off += 1;
                 }
@@ -101,9 +108,11 @@ impl State for Terms
 }
 
 impl CountableState for Terms {
-    fn n_all(&self) -> usize { self.n }
+    fn n_active(&self) -> usize {
+        self.n_on
+    }
 
-    fn n_active(&self) -> usize { self.n_on }
-
-    fn n_inactive(&self) -> usize { self.n_off }
+    fn n_inactive(&self) -> usize {
+        self.n_off
+    }
 }

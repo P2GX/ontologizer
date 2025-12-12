@@ -1,6 +1,6 @@
-use rand::Rng;
 use crate::better_bayesian::state::{CountableState, State};
 use ToggleSwap::{Swap, Toggle};
+use rand::Rng;
 
 pub trait Proposer<S: State> {
     /// Generates a potential move
@@ -10,7 +10,6 @@ pub trait Proposer<S: State> {
     fn log_proposal_ratio(&self, state: &S, m: &S::Move) -> f64;
 }
 
-
 #[derive(Clone, Copy)]
 pub enum ToggleSwap {
     Toggle(usize),
@@ -19,9 +18,9 @@ pub enum ToggleSwap {
 
 impl<S> Proposer<S> for ToggleSwap
 where
-    S : CountableState<Move = ToggleSwap, Value = bool>
+    S: CountableState<Move = ToggleSwap, Value = bool>,
 {
-    fn propose<R : Rng>(&self, state : &S, rng : &mut R) -> S::Move {
+    fn propose<R: Rng>(&self, state: &S, rng: &mut R) -> S::Move {
         // Every possible state transition is equally likely.
         let n = state.n_all();
         let na = state.n_active();
@@ -38,10 +37,7 @@ where
         else {
             // map random number x to pairs of indices a, b
             let k = x - n;
-
-            let (i, j) = find_swap_indices(k, state)
-                .expect("Swap index out of range");
-
+            let (i, j) = find_swap_indices(k, state).expect("Swap index out of range");
             Swap(i, j)
         }
     }
@@ -53,15 +49,15 @@ where
 
                 // Calculate the change in possible moves (delta).
 
-                // Active -> Inactive : new_n = current_n + n_on - n_off - 1
-                // Inactive -> Active : new_n = current_n + n_off - n_on - 1
+                // Active -> Inactive: new_n = current_n + n_on - n_off - 1
+                // Inactive -> Active: new_n = current_n + n_off - n_on - 1
                 let diff = state.n_active() as f64 - state.n_inactive() as f64;
                 // If terms[i] is true (Active->Inactive), we use 'diff-1'.
                 // If terms[i] is false (Inactive->Active), we use '-diff-1'.
                 let delta = if state.get(i) { diff } else { -diff } - 1.0;
 
                 let n_proposed = n_current + delta;
-                (n_current / n_proposed).ln()
+                (n_proposed / n_current).ln()
             }
             // Swapping preserves n_on and n_off, so the state space size N stays constant.
             // ln(N / N) = ln(1) = 0
@@ -72,9 +68,9 @@ where
 
 /// Maps a random number `k` to indices (index_on, index_off) in the terms vector.
 /// Assumption: k < m_on * m_off
-fn find_swap_indices<S>(k : usize, state : &S) -> Option<(usize, usize)>
+fn find_swap_indices<S>(k: usize, state: &S) -> Option<(usize, usize)>
 where
-    S: State<Value = bool> + CountableState
+    S: State<Value = bool> + CountableState,
 {
     let n = state.n_all();
     let na = state.n_active();
@@ -93,7 +89,7 @@ where
     let mut current_off_count = 0;
 
     // Scan the vector once to find the actual indices of "nth active" and "nth inactive" terms.
-    for i in 0..n{
+    for i in 0..n {
         if state.get(i) {
             if current_on_count == target_on_nth {
                 on_idx = Some(i);
@@ -132,7 +128,7 @@ mod tests {
         assert_eq!(find_swap_indices(2, &terms).unwrap(), (0, 2));
 
         // Case k=3: target_on=1, target_off=1 -> Expect indices (3, 2)
-        assert_eq!(find_swap_indices(3,&terms).unwrap(), (3, 2));
+        assert_eq!(find_swap_indices(3, &terms).unwrap(), (3, 2));
 
         // Case k=4: target_on=0, target_off=2 -> Expect indices (3, 2)
         assert_eq!(find_swap_indices(4, &terms).unwrap(), (0, 4));
