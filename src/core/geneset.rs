@@ -9,32 +9,7 @@ use std::{
 };
 
 // Tuple struct for gene symbols that ensure normalization (uppercase, trimmed, no comments)
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-
-pub struct GeneSymbol(String);
-
-impl GeneSymbol {
-    // Ensures that gene symbols do not start with '#' and have no leading or trailing whitespaces.
-    pub fn new<S: AsRef<str>>(s: S) -> Option<Self> {
-        let s = s.as_ref().trim_start();
-        if s.is_empty() || s.starts_with('#') {
-            return None;
-        }
-        let s = s.trim();
-        let mut out = s.to_owned();
-        Some(Self(out))
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
-
-impl AsRef<str> for GeneSymbol {
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
-}
+pub type GeneSymbol = String;
 
 #[derive(Debug)]
 pub struct GeneSet {
@@ -64,12 +39,10 @@ pub fn load_gene_set(path: &str) -> Result<HashSet<GeneSymbol>, String> {
 
     for (i, line) in reader.lines().enumerate() {
         let line = line.map_err(|err| format!("Failed to read line {}: {}", i + 1, err))?;
-
-        // Normalize/filter (skips blanks/comments)
-        match GeneSymbol::new(&line) {
-            Some(sym) => genes.insert(sym),
-            None => continue,
-        };
+        let gene = line.trim().to_string();
+        if !gene.is_empty() {
+            genes.insert(gene);
+        }
     }
     Ok(genes)
 }

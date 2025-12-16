@@ -152,44 +152,6 @@ impl Hypergeometric {
             }
             Ok(upper_sum)
         }
-
-        /*
-        let lower_len = k - lo + 1;
-        let upper_len = up - k;
-        // start at t(k) = P(X=k)
-        let mut tk = self.dhyper(k, n, K, N)?;
-        let mut k = k;
-        if lower_len <= upper_len {
-            // Sum lower tail: t(k) + t(k-1) + ... + t(lo)
-            let mut lower_sum = tk;
-            let mut c = 0;
-            let mut y = tk;
-            while k > lo {
-                // t(k-1) = t(k) * r_back(k)
-                tk = self.ratio_backward(k, n, K, N) * tk;
-                lower_sum += tk;
-                k -= 1;
-            }
-            if lower_tail {
-                Ok(lower_sum)
-            } else {
-                Ok(1.0 - lower_sum)
-            }
-        } else {
-            // sum upper tail: t(k+1) + ... + t(up)
-            let mut upper_sum = 0f64;
-            let mut k = k;
-            while k < up {
-                tk = self.ratio_forward(k, n, K, N) * tk;
-                upper_sum += tk;
-                k += 1;
-            }
-            if lower_tail {
-                Ok(1.0 - upper_sum)
-            } else {
-                Ok(upper_sum)
-            }
-        }*/
     }
 }
 
