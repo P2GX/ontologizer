@@ -1,9 +1,9 @@
 // MCMC
-use crate::better_bayesian::model::Model;
-use crate::better_bayesian::proposer::Proposer;
-use crate::better_bayesian::state::State;
+use crate::bayesian::model::Model;
+use crate::bayesian::proposer::Proposer;
+use crate::bayesian::state::State;
 use rand::Rng;
-use crate::better_bayesian::recorder::Recorder;
+use crate::bayesian::recorder::Recorder;
 
 pub trait Algorithm<M>
 where

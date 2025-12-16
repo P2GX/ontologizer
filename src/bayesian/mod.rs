@@ -1,5 +1,7 @@
-mod mcmc;
-mod mgsa;
-mod probs;
-mod types;
-mod utils;
+mod algorithm;
+mod model;
+mod observation;
+mod proposer;
+mod state;
+mod recorder;
+mod run;

@@ -1,4 +1,4 @@
-use crate::better_bayesian::state::{CountableState, State};
+use crate::bayesian::state::{CountableState, State};
 use ToggleSwap::{Swap, Toggle};
 use rand::Rng;
 
@@ -26,7 +26,7 @@ where
         let na = state.n_active();
         let ni = state.n_inactive();
 
-        let m = (n + na * ni);
+        let m = n + na * ni;
         let x = rng.random_range(0..m);
 
         // In m cases we flip the state of a single term.
@@ -113,10 +113,51 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::better_bayesian::state::Terms;
+
+    // State for testing without graph, logic, etc.
+    struct MockState {
+        values: Vec<bool>,
+        n_on: usize,
+    }
+
+    impl MockState {
+        fn new(values: Vec<bool>) -> Self {
+            let n_on = values.iter().filter(|&&v| v).count();
+            Self { values, n_on }
+        }
+    }
+
+    impl State for MockState {
+        type Move = ToggleSwap;
+        type Value = bool;
+
+        fn get(&self, i: usize) -> bool {
+            self.values[i]
+        }
+
+        fn n_all(&self) -> usize {
+            self.values.len()
+        }
+
+        // We don't even need to implement valid apply/revert logic
+        // because 'find_swap_indices' never calls them!
+        fn apply(&mut self, _m: &Self::Move) {}
+        fn revert(&mut self, _m: &Self::Move) {}
+    }
+
+    impl CountableState for MockState {
+        fn n_active(&self) -> usize {
+            self.n_on
+        }
+
+        fn n_inactive(&self) -> usize {
+            self.values.len() - self.n_on
+        }
+    }
+
     #[test]
     fn test_swap_indices_mapping() {
-        let terms = Terms::new(vec![true, false, false, true, false]);
+        let terms = MockState::new(vec![true, false, false, true, false]);
 
         // Case k=0: target_on=0, target_off=0 -> Expect indices (0, 1)
         assert_eq!(find_swap_indices(0, &terms).unwrap(), (0, 1));
@@ -141,7 +182,7 @@ mod tests {
     #[should_panic]
     fn test_out_of_bounds() {
         // If we ask for a k that implies more active terms than exist
-        let terms = Terms::new(vec![true, false]);
+        let terms = MockState::new(vec![true, false]);
         let m_on = 1;
         let m_off = 1;
 

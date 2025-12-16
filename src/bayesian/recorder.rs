@@ -1,4 +1,4 @@
-use crate::better_bayesian::state::{CountableState, State};
+use crate::bayesian::state::{CountableState, State};
 
 pub trait Recorder<S: State> {
     /// Initialize the recorder (e.g., allocate vectors based on state size)
