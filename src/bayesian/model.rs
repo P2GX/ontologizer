@@ -1,4 +1,4 @@
-use crate::bayesian::observation::{Observation};
+use crate::bayesian::observation::Observation;
 use crate::bayesian::proposer::ToggleSwap;
 use crate::bayesian::proposer::ToggleSwap::{Swap, Toggle};
 use crate::bayesian::state::{CountableState, State};
@@ -6,7 +6,7 @@ use crate::core::AnnotationIndex;
 use rand::Rng;
 
 // A trait that connects *STATE* and *OBSERVATION* by assigning probabilities.
-pub trait Model{
+pub trait Model {
     type State: State;
     type Observation: Observation;
 
@@ -41,15 +41,19 @@ pub trait Model{
 
 pub struct OrModel<'a, S, O> {
     annotations: &'a AnnotationIndex, // provides terms_to_genes and genes_to_terms.
-    p: f64,     // probability of term being active
-    alpha: f64, // probability of a gene being incorrectly observed active.
-    beta: f64,  // probability of a gene being incorrectly observed inactive.
+    p: f64,                           // probability of term being active
+    alpha: f64,                       // probability of a gene being incorrectly observed active.
+    beta: f64,                        // probability of a gene being incorrectly observed inactive.
     _marker: std::marker::PhantomData<(S, O)>,
 }
 
-impl<'a, S, O> OrModel<'a, S, O>
-{
-    pub fn new(annotations: &'a AnnotationIndex, p: f64, alpha: f64, beta: f64) -> OrModel<'a, S, O> {
+impl<'a, S, O> OrModel<'a, S, O> {
+    pub fn new(
+        annotations: &'a AnnotationIndex,
+        p: f64,
+        alpha: f64,
+        beta: f64,
+    ) -> OrModel<'a, S, O> {
         Self {
             annotations,
             p,
@@ -64,15 +68,13 @@ impl<'a, S, O> OrModel<'a, S, O>
 impl<'a, S, O> Model for OrModel<'a, S, O>
 where
     S: CountableState<Move = ToggleSwap>,
-    O: Observation
+    O: Observation,
 {
     type State = S;
     type Observation = O;
 
     fn initialize_state<R: Rng>(&self, rng: &mut R) -> &Self::State {
         todo!()
-
-
     }
 
     // Log probability P(T) to find a Term configuration
@@ -102,16 +104,18 @@ where
         todo!()
     }
 
-    fn log_likelihood_ratio(&self, state: &S, observation: &Self::Observation, m: &ToggleSwap) -> Option<f64> {
+    fn log_likelihood_ratio(
+        &self,
+        state: &S,
+        observation: &Self::Observation,
+        m: &ToggleSwap,
+    ) -> Option<f64> {
         todo!()
     }
 }
 
-
 #[cfg(test)]
 mod test {
 
-    fn test_model(){
-
-    }
+    fn test_model() {}
 }

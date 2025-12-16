@@ -1,13 +1,16 @@
-use std::collections::HashSet;
-use indexmap::{IndexMap};
 use crate::frequentist::hypergeo::Hypergeometric;
+use indexmap::IndexMap;
+use std::collections::HashSet;
 
 use super::results::{AnalysisResults, GOTermResult, get_term_aspect};
 use crate::core::AnnotationIndex;
 use crate::core::{GeneSet, GeneSymbol};
 use crate::frequentist::PValueCalculation;
-use ontolius::{ontology::{OntologyTerms, csr::FullCsrOntology}, term::MinimalTerm, TermId};
-
+use ontolius::{
+    TermId,
+    ontology::{OntologyTerms, csr::FullCsrOntology},
+    term::MinimalTerm,
+};
 
 pub struct TermForTerm;
 #[allow(non_snake_case)]
@@ -24,8 +27,7 @@ impl PValueCalculation for TermForTerm {
         let population_genes = population.recognized_genes();
         let n = study_genes.len();
         let N = population_genes.len();
-        
-        
+
         let study_terms_count = term_count_for_subset(study, annotation_container);
         let population_terms_count = term_count_for_subset(population, annotation_container);
 
@@ -63,11 +65,9 @@ impl PValueCalculation for TermForTerm {
 
 pub fn term_count_for_subset(
     gene_set: &GeneSet,
-    annotations: &AnnotationIndex
+    annotations: &AnnotationIndex,
 ) -> IndexMap<TermId, usize> {
-    
     let mut dense_counts = vec![0usize; annotations.terms().len()];
-
 
     for gene in gene_set.recognized_genes() {
         if let Some(gene_idx) = annotations.get_gene_index(gene) {
@@ -76,7 +76,7 @@ pub fn term_count_for_subset(
             }
         }
     }
-    
+
     let mut counts = IndexMap::new();
     for (term_idx, &count) in dense_counts.iter().enumerate() {
         if count > 0 {
@@ -103,9 +103,9 @@ fn gene_set_intersection(
 
 #[cfg(test)]
 mod test {
-
     use super::*;
     use crate::frequentist::mtc::{Bonferroni, MultipleTestingCorrection};
+    use oboannotation::go::stats::get_annotation_map;
 
     use crate::core::Ontologizer;
     use crate::core::{load_gene_set, separate_gene_set};
@@ -128,17 +128,17 @@ mod test {
 
         // Load the GOA annotations
         let mut annotation_container = AnnotationIndex::new(gaf_path, go_ref);
-
+        let annotated_genes = get_annotation_map(&annotation_container.annotations)
+            .into_keys()
+            .collect();
         // Load the population and study gene sets
         let study_gene_symbols =
             load_gene_set(study_set_path).expect("Failed to parse study gene set");
-        let study_gene_set =
-            separate_gene_set(&annotation_container.annotations, study_gene_symbols);
+        let study_gene_set = separate_gene_set(&annotated_genes, study_gene_symbols);
 
         let pop_gene_symbols =
             load_gene_set(pop_set_path).expect("Failed to parse population gene set");
-        let pop_gene_set =
-            separate_gene_set(&annotation_container.annotations, pop_gene_symbols);
+        let pop_gene_set = separate_gene_set(&annotated_genes, pop_gene_symbols);
 
         let mut results = AnalysisResults::new(MethodEnum::TermForTerm, mtc_method);
 

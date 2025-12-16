@@ -1,5 +1,4 @@
-
-use crate::core::geneset::{GeneSymbol};
+use crate::core::geneset::GeneSymbol;
 use oboannotation::{
     go::{GoAnnotations, GoGafAnnotationLoader, stats::get_annotation_map},
     io::AnnotationLoader,
@@ -9,8 +8,8 @@ use ontolius::{
     ontology::{HierarchyWalks, csr::FullCsrOntology},
 };
 
-use std::collections::HashSet;
 use indexmap::{IndexMap, IndexSet};
+use std::collections::HashSet;
 
 // Contains all GO annotations and provides methods to build annotation maps specific to the study and population sets.
 pub struct AnnotationIndex {
@@ -31,11 +30,9 @@ pub struct AnnotationIndex {
     // dense = including ancestors
     gene_to_term_dense: Vec<Vec<usize>>,
     term_to_gene_dense: Vec<Vec<usize>>,
-
 }
 
 impl AnnotationIndex {
-
     pub fn new(gaf_path: &str, go: &FullCsrOntology) -> Self {
         // 1. Load Annotations
         let loader = GoGafAnnotationLoader;
@@ -44,9 +41,8 @@ impl AnnotationIndex {
             .expect("Could not load GAF file");
 
         // 2. Load Sparse Annotations (implicit)
-        let named_gene_to_term_sparse: IndexMap<GeneSymbol, HashSet<TermId>> = get_annotation_map(&annotations)
-            .into_iter()
-            .collect();
+        let named_gene_to_term_sparse: IndexMap<GeneSymbol, HashSet<TermId>> =
+            get_annotation_map(&annotations).into_iter().collect();
 
         // 3. Build all Maps
         let mut named_term_to_gene_sparse: IndexMap<TermId, HashSet<GeneSymbol>> = IndexMap::new();
@@ -55,7 +51,9 @@ impl AnnotationIndex {
 
         for (gene_sym, direct_terms) in &named_gene_to_term_sparse {
             // Ensure gene exists in dense map even if it has no terms (unlikely)
-            named_gene_to_term_dense.entry(gene_sym.clone()).or_default();
+            named_gene_to_term_dense
+                .entry(gene_sym.clone())
+                .or_default();
 
             for term in direct_terms {
                 // A. Populate Sparse Reverse Map
@@ -96,7 +94,8 @@ impl AnnotationIndex {
             let to_indices = |set: Option<&HashSet<GeneSymbol>>| -> Vec<usize> {
                 match set {
                     Some(s) => {
-                        let mut idxs: Vec<usize> = s.iter()
+                        let mut idxs: Vec<usize> = s
+                            .iter()
                             .map(|g| gene_map.get_index_of(g).expect("Gene index missing"))
                             .collect();
                         idxs.sort_unstable();
@@ -119,7 +118,8 @@ impl AnnotationIndex {
             let to_indices = |set: Option<&HashSet<TermId>>| -> Vec<usize> {
                 match set {
                     Some(s) => {
-                        let mut idxs: Vec<usize> = s.iter()
+                        let mut idxs: Vec<usize> = s
+                            .iter()
                             .map(|t| term_map.get_index_of(t).expect("Term index missing"))
                             .collect();
                         idxs.sort_unstable();
@@ -151,7 +151,7 @@ impl AnnotationIndex {
     }
 
     /// Convert an index to its TermId
-    pub fn get_index_term(&self, i : usize) -> &TermId {
+    pub fn get_index_term(&self, i: usize) -> &TermId {
         &self.term_map[i]
     }
 
@@ -160,12 +160,11 @@ impl AnnotationIndex {
         self.term_map.get_index_of(term)
     }
 
-
     pub fn genes(&self) -> &IndexSet<GeneSymbol> {
         &self.gene_map
     }
 
-    pub fn get_index_gene(&self, i : usize) -> &GeneSymbol {
+    pub fn get_index_gene(&self, i: usize) -> &GeneSymbol {
         &self.gene_map[i]
     }
 
@@ -173,11 +172,11 @@ impl AnnotationIndex {
         self.gene_map.get_index_of(gene)
     }
 
-    pub fn get_gene_idxs_for_term_idx(&self, i : usize) -> &Vec<usize> {
+    pub fn get_gene_idxs_for_term_idx(&self, i: usize) -> &Vec<usize> {
         &self.term_to_gene_dense[i]
     }
 
-    pub fn get_term_idxs_for_gene_idx(&self, i : usize) -> &Vec<usize> {
+    pub fn get_term_idxs_for_gene_idx(&self, i: usize) -> &Vec<usize> {
         &self.gene_to_term_dense[i]
     }
 }

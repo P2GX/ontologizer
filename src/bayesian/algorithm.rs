@@ -1,9 +1,9 @@
 // MCMC
 use crate::bayesian::model::Model;
 use crate::bayesian::proposer::Proposer;
+use crate::bayesian::recorder::Recorder;
 use crate::bayesian::state::State;
 use rand::Rng;
-use crate::bayesian::recorder::Recorder;
 
 pub trait Algorithm<M>
 where
@@ -39,8 +39,8 @@ where
 {
     fn sample<P, R>(&mut self, state: &mut M::State, obs: &M::Observation, proposer: P) -> R
     where
-        P : Proposer<M::State>,
-        R : Recorder<M::State>
+        P: Proposer<M::State>,
+        R: Recorder<M::State>,
     {
         let mut result = R::initialize(&state);
 
@@ -88,12 +88,11 @@ where
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    
+
     #[test]
-    fn test_algorithm(){
+    fn test_algorithm() {
         todo!()
     }
 }

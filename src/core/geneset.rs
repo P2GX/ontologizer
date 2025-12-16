@@ -1,5 +1,5 @@
 use oboannotation::{
-    go::{GoAnnotations, GoGafAnnotationLoader, stats::get_annotation_map},
+    go::{GoGafAnnotationLoader, stats::get_annotation_map},
     io::AnnotationLoader,
 };
 use std::{
@@ -47,14 +47,15 @@ pub fn load_gene_set(path: &str) -> Result<HashSet<GeneSymbol>, String> {
     Ok(genes)
 }
 
-pub fn separate_gene_set(annotations: &GoAnnotations, genes: HashSet<GeneSymbol>) -> GeneSet {
+pub fn separate_gene_set(
+    annotated_genes: &HashSet<GeneSymbol>,
+    genes: HashSet<GeneSymbol>,
+) -> GeneSet {
     let mut recognized: HashSet<GeneSymbol> = HashSet::new();
     let mut unrecognized: HashSet<GeneSymbol> = HashSet::new();
 
-    let annotation_map = get_annotation_map(annotations);
-
     for sym in genes {
-        if annotation_map.contains_key(sym.as_str()) {
+        if annotated_genes.contains(sym.as_str()) {
             // Insert; if already present, it's a duplicate
             recognized.insert(sym);
         } else {
@@ -70,6 +71,7 @@ pub fn separate_gene_set(annotations: &GoAnnotations, genes: HashSet<GeneSymbol>
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::core::AnnotationIndex;
     use rstest::rstest;
 
     #[rstest]
@@ -81,8 +83,10 @@ mod test {
             .load_from_path(goa_path)
             .expect("Could not load GAF file");
 
+        let annotated_genes = get_annotation_map(&annotations).into_keys().collect();
+
         let genes = load_gene_set(gene_set_path).expect("Failed to load gene set");
-        let gene_set = separate_gene_set(&annotations, genes);
+        let gene_set = separate_gene_set(&annotated_genes, genes);
 
         eprintln!(
             "Built gene set with {} recognized genes, {} unrecognized genes.",
