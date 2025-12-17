@@ -1,25 +1,37 @@
-use crate::bayesian::state::{CountableState, State};
+use crate::bayesian::state::{BinaryParameterState, State};
 use ToggleSwap::{Swap, Toggle};
 use rand::Rng;
 
+/// Allows to sample from the sample space and to find the corresponding transition probability.
 pub trait Proposer<S: State> {
-    /// Generates a potential move
+    /// Generates move x -> x'
     fn propose<R: Rng>(&self, state: &S, rng: &mut R) -> S::Move;
 
     /// Calculates q(x'|x) / q(x|x')
     fn log_proposal_ratio(&self, state: &S, m: &S::Move) -> f64;
 }
 
+/// Explore the sample space by flipping the value of one element,
+/// or by exchanging the (different) values of two elements.
 #[derive(Clone, Copy)]
 pub enum ToggleSwap {
     Toggle(usize),
     Swap(usize, usize),
 }
 
-impl<S> Proposer<S> for ToggleSwap
+pub struct UniformProposer;
+impl UniformProposer {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl<S> Proposer<S> for UniformProposer
 where
-    S: CountableState<Move = ToggleSwap, Value = bool>,
+    S: BinaryParameterState<Move = ToggleSwap, Value = bool>,
 {
+    /// Draw a random number representing the index to all possible toggles and swaps and propose
+    /// the corresponding toggle or swap.
     fn propose<R: Rng>(&self, state: &S, rng: &mut R) -> S::Move {
         // Every possible state transition is equally likely.
         let n = state.n_all();
@@ -37,11 +49,13 @@ where
         else {
             // map random number x to pairs of indices a, b
             let k = x - n;
-            let (i, j) = find_swap_indices(k, state).expect("Swap index out of range");
+            let i = state.get_kth_active(k % na);
+            let j = state.get_kth_inactive(k / na);
             Swap(i, j)
         }
     }
 
+    ///
     fn log_proposal_ratio(&self, state: &S, m: &S::Move) -> f64 {
         match *m {
             Toggle(i) => {
@@ -63,129 +77,5 @@ where
             // ln(N / N) = ln(1) = 0
             Swap(_, _) => 0.0,
         }
-    }
-}
-
-/// Maps a random number `k` to indices (index_on, index_off) in the terms vector.
-/// Assumption: k < m_on * m_off
-fn find_swap_indices<S>(k: usize, state: &S) -> Option<(usize, usize)>
-where
-    S: State<Value = bool> + CountableState,
-{
-    let n = state.n_all();
-    let na = state.n_active();
-    let ni = state.n_inactive();
-
-    if k >= na * ni {
-        return None;
-    }
-
-    let target_on_nth = k % na;
-    let target_off_nth = k / na;
-
-    let mut on_idx = None;
-    let mut off_idx = None;
-    let mut current_on_count = 0;
-    let mut current_off_count = 0;
-
-    // Scan the vector once to find the actual indices of "nth active" and "nth inactive" terms.
-    for i in 0..n {
-        if state.get(i) {
-            if current_on_count == target_on_nth {
-                on_idx = Some(i);
-            }
-            current_on_count += 1;
-        } else {
-            if current_off_count == target_off_nth {
-                off_idx = Some(i);
-            }
-            current_off_count += 1;
-        }
-
-        if on_idx.is_some() && off_idx.is_some() {
-            // FIX 2: Return immediately here for cleaner flow
-            return Some((on_idx.unwrap(), off_idx.unwrap()));
-        }
-    }
-    None
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // State for testing without graph, logic, etc.
-    struct MockState {
-        values: Vec<bool>,
-        n_on: usize,
-    }
-
-    impl MockState {
-        fn new(values: Vec<bool>) -> Self {
-            let n_on = values.iter().filter(|&&v| v).count();
-            Self { values, n_on }
-        }
-    }
-
-    impl State for MockState {
-        type Move = ToggleSwap;
-        type Value = bool;
-
-        fn get(&self, i: usize) -> bool {
-            self.values[i]
-        }
-
-        fn n_all(&self) -> usize {
-            self.values.len()
-        }
-
-        // We don't even need to implement valid apply/revert logic
-        // because 'find_swap_indices' never calls them!
-        fn apply(&mut self, _m: &Self::Move) {}
-        fn revert(&mut self, _m: &Self::Move) {}
-    }
-
-    impl CountableState for MockState {
-        fn n_active(&self) -> usize {
-            self.n_on
-        }
-
-        fn n_inactive(&self) -> usize {
-            self.values.len() - self.n_on
-        }
-    }
-
-    #[test]
-    fn test_swap_indices_mapping() {
-        let terms = MockState::new(vec![true, false, false, true, false]);
-
-        // Case k=0: target_on=0, target_off=0 -> Expect indices (0, 1)
-        assert_eq!(find_swap_indices(0, &terms).unwrap(), (0, 1));
-
-        // Case k=1: target_on=1, target_off=0 -> Expect indices (3, 1)
-        assert_eq!(find_swap_indices(1, &terms).unwrap(), (3, 1));
-
-        // Case k=2: target_on=0, target_off=1 -> Expect indices (0, 2)
-        assert_eq!(find_swap_indices(2, &terms).unwrap(), (0, 2));
-
-        // Case k=3: target_on=1, target_off=1 -> Expect indices (3, 2)
-        assert_eq!(find_swap_indices(3, &terms).unwrap(), (3, 2));
-
-        // Case k=4: target_on=0, target_off=2 -> Expect indices (3, 2)
-        assert_eq!(find_swap_indices(4, &terms).unwrap(), (0, 4));
-
-        // Case k=5: target_on=1, target_off=2 -> Expect indices (3, 2)
-        assert_eq!(find_swap_indices(5, &terms).unwrap(), (3, 4));
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_out_of_bounds() {
-        // If we ask for a k that implies more active terms than exist
-        let terms = MockState::new(vec![true, false]);
-        let m_on = 1;
-        let m_off = 1;
-
-        find_swap_indices(5, &terms).unwrap();
     }
 }

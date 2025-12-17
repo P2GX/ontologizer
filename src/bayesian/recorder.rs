@@ -1,4 +1,4 @@
-use crate::bayesian::state::{CountableState, State};
+use crate::bayesian::state::{BinaryParameterState, State};
 
 pub trait Recorder<S: State> {
     /// Initialize the recorder (e.g., allocate vectors based on state size)
@@ -11,14 +11,14 @@ pub trait Recorder<S: State> {
     fn finalize(&mut self);
 }
 
-struct Count {
+pub struct Count {
     counts: Vec<u32>,
     n: u32,
 }
 
 impl<S> Recorder<S> for Count
 where
-    S: CountableState,
+    S: BinaryParameterState,
 {
     fn initialize(state: &S) -> Self {
         Self {
@@ -38,7 +38,7 @@ where
     fn finalize(&mut self) {}
 }
 
-struct Frequency {
+pub struct Frequency {
     counts: Vec<u32>,
     freqs: Vec<f32>,
     n: u32,
@@ -46,7 +46,7 @@ struct Frequency {
 
 impl<S> Recorder<S> for Frequency
 where
-    S: CountableState,
+    S: BinaryParameterState,
 {
     fn initialize(state: &S) -> Self {
         Self {

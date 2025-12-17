@@ -1,5 +1,6 @@
 use crate::bayesian::proposer::ToggleSwap;
 use ToggleSwap::*;
+use rand::Rng;
 
 // A trait that guarantees that *STATE* knows how to sample itself by drawing and applying *MOVE*.
 pub trait State {
@@ -12,96 +13,187 @@ pub trait State {
 }
 
 // A trait that guarantees that *STATE* takes boolean values (active/inactive).
-pub trait CountableState: State<Value = bool> {
+pub trait BinaryParameterState: State<Value = bool> {
+    fn get_kth_active(&self, k: usize) -> usize;
+    fn get_kth_inactive(&self, k: usize) -> usize;
     fn n_active(&self) -> usize;
     fn n_inactive(&self) -> usize;
 }
 
+pub trait AlignedBinaryLatentState: State {
+    fn n_true_positive(&self) -> usize;
+    fn n_false_positive(&self) -> usize;
+    fn n_true_negative(&self) -> usize;
+    fn n_false_negative(&self) -> usize;
+    fn get_latent_count(&self, k: usize) -> usize;
+}
+
 pub(crate) struct MgsaState {
-    // 1. Parameters / terms we want to infer
+    // Parameters
     terms: Vec<bool>, // maybe BitSet later
-    n: usize,
-    n_on: usize,
-    n_off: usize,
+    active_indices: Vec<usize>,
+    inactive_indices: Vec<usize>,
+    term_map: Vec<usize>,
 
-    // 2. Latent space between parameters to observations. Here it mimics observations.
+    // Latent
     latent: Vec<usize>,
-
-    // 3. The Network structure that connects terms to latent state, derived from Annotations
     terms_to_genes: Vec<Vec<usize>>,
+
+    // Observations
+    observations: Vec<bool>,
+
+    // Confusion Matrix
+    n_true_pos: usize,
+    n_false_pos: usize,
+    n_true_neg: usize,
+    n_false_neg: usize,
 }
 
 impl MgsaState {
     pub(crate) fn new(
         terms: Vec<bool>,
         terms_to_genes: Vec<Vec<usize>>,
-        n_genes: usize,
+        genes: Vec<bool>,
     ) -> MgsaState {
         let n = terms.len();
-        let n_on = terms.iter().filter(|&x| *x == true).count();
-        let n_off = terms.iter().filter(|&x| *x == false).count();
         assert_eq!(
             n,
             terms_to_genes.len(),
             "Initial terms vector size does not match network structure"
         );
 
-        let mut latent = Self::construct_latent(&terms, &terms_to_genes, n_genes);
+        let mut active_indices = Vec::new();
+        let mut inactive_indices = Vec::new();
+        let mut term_map = vec![0; n];
+
+        for (i, &is_active) in terms.iter().enumerate() {
+            if is_active {
+                term_map[i] = active_indices.len();
+                active_indices.push(i);
+            } else {
+                term_map[i] = inactive_indices.len();
+                inactive_indices.push(i);
+            }
+        }
+
+        let latent = Self::construct_latent(&active_indices, &terms_to_genes, genes.len());
+
+        let mut n_true_pos: usize = 0;
+        let mut n_false_pos: usize = 0;
+        let mut n_true_neg: usize = 0;
+        let mut n_false_neg: usize = 0;
+        for (i, &gene) in genes.iter().enumerate() {
+            let is_active = latent[i] > 0;
+            match (is_active, gene) {
+                (true, true) => n_true_pos += 1,
+                (true, false) => n_false_pos += 1,
+                (false, true) => n_true_neg += 1,
+                (false, false) => n_false_neg += 1,
+            }
+        }
 
         MgsaState {
             terms,
-            n,
-            n_on,
-            n_off,
             latent,
             terms_to_genes,
+            active_indices,
+            inactive_indices,
+            term_map,
+            observations: genes,
+            n_true_pos,
+            n_false_pos,
+            n_true_neg,
+            n_false_neg,
         }
     }
 
-    /// Returns true if the cached counts match the actual vector data (debug only).
+    /// Returns true if the cached counts and lists match the actual vector data (debug only).
     fn check_consistency(&self) -> bool {
-        let actual_on = self.terms.iter().filter(|&&t| t).count();
-        let actual_off = self.terms.iter().filter(|&&t| !t).count();
+        let n_on_vec = self.terms.iter().filter(|&&t| t).count();
+        let n_off_vec = self.terms.iter().filter(|&&t| !t).count();
 
-        // Return result rather than panicking, so we can use it in assert!
-        actual_on == self.n_on && actual_off == self.n_off
-    }
-
-    fn toggle_term(&mut self, term_idx: usize) {
-        // Assess whether term_idx is activated or inactivated
-        let is_becoming_active = !self.terms[term_idx];
-
-        // Update terms
-        self.terms[term_idx] = is_becoming_active;
-        // Update n_on/n_off count
-        if is_becoming_active {
-            self.n_on += 1;
-            self.n_off -= 1;
-        } else {
-            self.n_on -= 1;
-            self.n_off += 1;
+        // Check counts
+        if n_on_vec != self.active_indices.len() || n_off_vec != self.inactive_indices.len() {
+            return false;
         }
 
-        // Update Latent
+        // Check Map Integrity
+        for (idx, &term_idx) in self.active_indices.iter().enumerate() {
+            if !self.terms[term_idx] || self.term_map[term_idx] != idx {
+                return false;
+            }
+        }
+        for (idx, &term_idx) in self.inactive_indices.iter().enumerate() {
+            if self.terms[term_idx] || self.term_map[term_idx] != idx {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    // Swap is implemented as two toggles.
+    fn toggle_term(&mut self, term_idx: usize) {
+        let is_becoming_active = !self.terms[term_idx];
+        self.terms[term_idx] = is_becoming_active;
+
+        // Update of Active/Inactive lists
+        if is_becoming_active {
+            // Move from Inactive -> Active
+            self.move_index(term_idx, false);
+        } else {
+            // Move from Active -> Inactive
+            self.move_index(term_idx, true);
+        }
+
+        // Update Latent Counts
         self.update_latent(term_idx, is_becoming_active);
     }
 
+    /// A loco-ly optimized function to move index from one vec to another. Credits to Chatty.
+    fn move_index(&mut self, term_idx: usize, from_active: bool) {
+        let (source, dest) = if from_active {
+            (&mut self.active_indices, &mut self.inactive_indices)
+        } else {
+            (&mut self.inactive_indices, &mut self.active_indices)
+        };
+        // We are using four vectors here:
+        // 1. `terms`: the value of each term, [true, true, true, false, false]
+        // 2. `active_indices`: the indices of *active* terms in `terms`, [0, 1, 2]
+        // 3. `inactive_indices`: the indices of *inactive* terms in `terms`, [3, 4]
+        // 4. `term_map`: the position of each term index in active / inactive, [0, 1, 2, 0, 1]
+        // Let last map is crucial because it omits the need to scan active_indices/inactive_indices
+        // to find the position of a certain term_idx i and allows access directly by i=term_map[k].
+
+        let source_idx = self.term_map[term_idx]; // index in source that has to be removed
+
+        // `remove` removes one element and shifts over the remaining elements, O(n)
+        // `swap_remove` moves the last element to the position of the removed element, O(1)
+        // The drawback: we must update the map for that moved element.
+        let last_element = source[source.len() - 1];
+        source.swap_remove(source_idx);
+
+        // Update map for the element that was swapped into the gap (unless we removed the last one)
+        if source_idx < source.len() {
+            self.term_map[last_element] = source_idx;
+        }
+
+        // Add to Destination
+        self.term_map[term_idx] = dest.len();
+        dest.push(term_idx);
+    }
+
     fn construct_latent(
-        terms: &[bool],
+        active_indices: &[usize],
         terms_to_genes: &Vec<Vec<usize>>,
         n_genes: usize,
     ) -> Vec<usize> {
-        // 1. Initialize with correct size
+        // Initialize with correct size
         let mut latent = vec![0; n_genes];
-
-        // 2. Iterate and accumulate
-        for (term_idx, &active) in terms.iter().enumerate() {
-            if active {
-                // Use the getter we fixed earlier
-                let gene_indices = &terms_to_genes[term_idx];
-                for &gene_i in gene_indices {
-                    latent[gene_i] += 1;
-                }
+        // Iterate and accumulate active terms per gene
+        for &term_idx in active_indices {
+            for &gene_i in &terms_to_genes[term_idx] {
+                latent[gene_i] += 1;
             }
         }
         latent
@@ -111,10 +203,34 @@ impl MgsaState {
         let gene_indices = &self.terms_to_genes[term_idx];
         if enable {
             for &gene_i in gene_indices {
+                // Only if latent[i] changes from 0 to 1 we have to update counts.
+                if self.latent[gene_i] == 0 {
+                    if !self.observations[gene_i] {
+                        // observation is negative, latent was negative becomes positive
+                        self.n_true_neg -= 1;
+                        self.n_false_pos += 1;
+                    } else {
+                        // observation is positive, latent was negative becomes positive
+                        self.n_false_neg -= 1;
+                        self.n_true_pos += 1;
+                    }
+                }
                 self.latent[gene_i] += 1;
             }
         } else {
             for &gene_i in gene_indices {
+                // Only if latent[i] changes from 1 to 0 we have to update counts.
+                if self.latent[gene_i] == 1 {
+                    if !self.observations[gene_i] {
+                        // observation is negative, latent was positive becomes negative
+                        self.n_false_pos -= 1;
+                        self.n_true_neg += 1;
+                    } else {
+                        // observation is positive, latent was positive becomes negative
+                        self.n_true_pos -= 1;
+                        self.n_false_neg += 1;
+                    }
+                }
                 debug_assert!(self.latent[gene_i] > 0, "Latent count underflow!");
                 self.latent[gene_i] -= 1;
             }
@@ -132,7 +248,7 @@ impl State for MgsaState {
     }
 
     fn n_all(&self) -> usize {
-        self.n
+        self.terms.len()
     }
     /// Revert move and update n_on, n_off count
     fn apply(&mut self, m: &ToggleSwap) {
@@ -153,13 +269,42 @@ impl State for MgsaState {
     }
 }
 
-impl<'a> CountableState for MgsaState {
+impl BinaryParameterState for MgsaState {
+    fn get_kth_active(&self, k: usize) -> usize {
+        self.active_indices[k]
+    }
+
+    fn get_kth_inactive(&self, k: usize) -> usize {
+        self.inactive_indices[k]
+    }
     fn n_active(&self) -> usize {
-        self.n_on
+        self.active_indices.len()
     }
 
     fn n_inactive(&self) -> usize {
-        self.n_off
+        self.inactive_indices.len()
+    }
+}
+
+impl AlignedBinaryLatentState for MgsaState {
+    fn n_true_positive(&self) -> usize {
+        self.n_true_pos
+    }
+
+    fn n_false_positive(&self) -> usize {
+        self.n_false_pos
+    }
+
+    fn n_true_negative(&self) -> usize {
+        self.n_true_neg
+    }
+
+    fn n_false_negative(&self) -> usize {
+        self.n_false_neg
+    }
+
+    fn get_latent_count(&self, element_idx: usize) -> usize {
+        self.latent[element_idx]
     }
 }
 
@@ -182,8 +327,7 @@ mod tests {
             vec![1, 2], // T1 activates G1, G2
         ];
 
-        let n_genes = 3;
-
+        let genes = vec![true, true, false];
         // Verify the test writer didn't mess up the input vector size
         assert_eq!(
             terms.len(),
@@ -191,7 +335,7 @@ mod tests {
             "Test config must have length 2"
         );
 
-        MgsaState::new(terms, terms_to_genes, n_genes)
+        MgsaState::new(terms, terms_to_genes, genes)
     }
 
     #[test]

@@ -9,37 +9,38 @@ pub trait Algorithm<M>
 where
     M: Model,
 {
-    fn sample<P: Proposer<M::State>, R: Recorder<M::State>>(
-        &mut self,
-        state: &mut M::State,
-        obs: &M::Observation,
-        proposer: P,
-    ) -> R;
+    fn sample<R: Recorder<M::State>>(&mut self, state: &mut M::State) -> R;
 }
 
-pub struct MetropolisHasting<M> {
+pub struct MetropolisHasting<M, P> {
     model: M,
+    proposer: P,
     iterations: usize,
     burn_in: usize,
 }
 
-impl<M> MetropolisHasting<M> {
-    pub fn new(model: M, iterations: usize, burn_in: usize) -> Self {
+impl<M, P> MetropolisHasting<M, P>
+where
+    M: Model,
+    P: Proposer<M::State>,
+{
+    pub fn new(model: M, proposer: P, iterations: usize, burn_in: usize) -> Self {
         Self {
             model,
+            proposer,
             iterations,
             burn_in,
         }
     }
 }
 
-impl<M> Algorithm<M> for MetropolisHasting<M>
+impl<M, P> Algorithm<M> for MetropolisHasting<M, P>
 where
     M: Model,
+    P: Proposer<M::State>,
 {
-    fn sample<P, R>(&mut self, state: &mut M::State, obs: &M::Observation, proposer: P) -> R
+    fn sample<R>(&mut self, state: &mut M::State) -> R
     where
-        P: Proposer<M::State>,
         R: Recorder<M::State>,
     {
         let mut result = R::initialize(&state);
@@ -47,8 +48,8 @@ where
         let mut rng = rand::rng();
 
         for i in 0..(self.burn_in + self.iterations) {
-            let m = proposer.propose(state, &mut rng);
-            let log_q_ratio = proposer.log_proposal_ratio(state, &m);
+            let m = self.proposer.propose(state, &mut rng);
+            let log_q_ratio = self.proposer.log_proposal_ratio(state, &m);
 
             let log_p_ratio = match self.model.log_prior_ratio(state, &m) {
                 Some(log_p_ratio) => log_p_ratio,
@@ -61,12 +62,12 @@ where
                 }
             };
 
-            let log_l_ratio = match self.model.log_likelihood_ratio(state, obs, &m) {
+            let log_l_ratio = match self.model.log_likelihood_ratio(state, &m) {
                 Some(log_p_ratio) => log_p_ratio,
                 None => {
-                    let log_l1 = self.model.log_likelihood(state, obs);
+                    let log_l1 = self.model.log_likelihood(state);
                     state.apply(&m);
-                    let log_l2 = self.model.log_likelihood(state, obs);
+                    let log_l2 = self.model.log_likelihood(state);
                     state.revert(&m);
                     log_l2 - log_l1
                 }
