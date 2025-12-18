@@ -127,8 +127,8 @@ mod test {
         let go_ref = go.ontology();
 
         // Load the GOA annotations
-        let mut annotation_container = AnnotationIndex::new(gaf_path, go_ref);
-        let annotated_genes = get_annotation_map(&annotation_container.annotations)
+        let mut annotation_index = AnnotationIndex::new(gaf_path, go_ref);
+        let annotated_genes = get_annotation_map(&annotation_index.annotations)
             .into_keys()
             .collect();
         // Load the population and study gene sets
@@ -144,7 +144,7 @@ mod test {
 
         TermForTerm.calculate_p_values(
             go_ref,
-            &annotation_container,
+            &annotation_index,
             &study_gene_set,
             &pop_gene_set,
             &mut results,

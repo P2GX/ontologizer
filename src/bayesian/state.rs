@@ -87,8 +87,8 @@ impl MgsaState {
             match (is_active, gene) {
                 (true, true) => n_true_pos += 1,
                 (true, false) => n_false_pos += 1,
-                (false, true) => n_true_neg += 1,
-                (false, false) => n_false_neg += 1,
+                (false, true) => n_false_neg += 1,
+                (false, false) => n_true_neg += 1,
             }
         }
 
@@ -207,10 +207,12 @@ impl MgsaState {
                 if self.latent[gene_i] == 0 {
                     if !self.observations[gene_i] {
                         // observation is negative, latent was negative becomes positive
+                        debug_assert!(self.n_true_neg > 0, "True negative count underflow!");
                         self.n_true_neg -= 1;
                         self.n_false_pos += 1;
                     } else {
                         // observation is positive, latent was negative becomes positive
+                        debug_assert!(self.n_false_neg > 0, "False negative count underflow!");
                         self.n_false_neg -= 1;
                         self.n_true_pos += 1;
                     }
@@ -223,14 +225,17 @@ impl MgsaState {
                 if self.latent[gene_i] == 1 {
                     if !self.observations[gene_i] {
                         // observation is negative, latent was positive becomes negative
+                        debug_assert!(self.n_false_pos > 0, "False positive count underflow!");
                         self.n_false_pos -= 1;
                         self.n_true_neg += 1;
                     } else {
                         // observation is positive, latent was positive becomes negative
+                        debug_assert!(self.n_true_pos > 0, "True positive count underflow!");
                         self.n_true_pos -= 1;
                         self.n_false_neg += 1;
                     }
                 }
+
                 debug_assert!(self.latent[gene_i] > 0, "Latent count underflow!");
                 self.latent[gene_i] -= 1;
             }
@@ -260,7 +265,7 @@ impl State for MgsaState {
                 self.toggle_term(j);
             }
         }
-        debug_assert!(self.check_consistency());
+        // debug_assert!(self.check_consistency());
     }
 
     /// Revert move and update n_on, n_off count

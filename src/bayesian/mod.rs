@@ -1,7 +1,6 @@
 mod algorithm;
 mod model;
-
 mod proposer;
-mod recorder;
+pub(crate) mod recorder;
 mod run;
 mod state;

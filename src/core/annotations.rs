@@ -179,4 +179,20 @@ impl AnnotationIndex {
     pub fn get_term_idxs_for_gene_idx(&self, i: usize) -> &Vec<usize> {
         &self.gene_to_term_dense[i]
     }
+
+    pub fn get_terms_to_genes(&self, dense: bool) -> &Vec<Vec<usize>> {
+        if dense {
+            &self.term_to_gene_dense
+        } else {
+            &self.term_to_gene_sparse
+        }
+    }
+
+    pub fn get_genes_to_terms(&self, dense: bool) -> &Vec<Vec<usize>> {
+        if dense {
+            &self.gene_to_term_dense
+        } else {
+            &self.gene_to_term_sparse
+        }
+    }
 }

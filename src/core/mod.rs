@@ -1,6 +1,7 @@
 mod annotations;
 mod geneset;
 mod ontology;
+pub(crate) mod result;
 
 pub use geneset::{GeneSet, GeneSymbol, load_gene_set, separate_gene_set};
 

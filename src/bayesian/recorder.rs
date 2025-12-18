@@ -1,4 +1,5 @@
 use crate::bayesian::state::{BinaryParameterState, State};
+use crate::core::result::Measure;
 
 pub trait Recorder<S: State> {
     /// Initialize the recorder (e.g., allocate vectors based on state size)
@@ -14,6 +15,16 @@ pub trait Recorder<S: State> {
 pub struct Count {
     counts: Vec<u32>,
     n: u32,
+}
+
+impl Count {
+    pub fn iter(&self) -> std::slice::Iter<u32> {
+        self.counts.iter()
+    }
+
+    pub fn n(&self) -> u32 {
+        self.n
+    }
 }
 
 impl<S> Recorder<S> for Count
@@ -38,9 +49,15 @@ where
     fn finalize(&mut self) {}
 }
 
+impl Measure for Count {
+    fn scores(&self) -> impl Iterator<Item = f64> {
+        self.counts.iter().map(|&c| c as f64)
+    }
+}
+
 pub struct Frequency {
     counts: Vec<u32>,
-    freqs: Vec<f32>,
+    frequencies: Vec<f32>,
     n: u32,
 }
 
@@ -51,7 +68,7 @@ where
     fn initialize(state: &S) -> Self {
         Self {
             counts: vec![0; state.n_all()],
-            freqs: vec![0.0; state.n_all()],
+            frequencies: vec![0.0; state.n_all()],
             n: 0,
         }
     }
@@ -65,10 +82,18 @@ where
     }
 
     fn finalize(&mut self) {
-        self.freqs = self
+        self.frequencies = self
             .counts
             .iter()
             .map(|&x| x as f32 / self.n as f32)
             .collect();
+    }
+}
+
+// ... existing struct Frequency ...
+
+impl Measure for Frequency {
+    fn scores(&self) -> impl Iterator<Item = f64> {
+        self.frequencies.iter().map(|&f| f as f64)
     }
 }

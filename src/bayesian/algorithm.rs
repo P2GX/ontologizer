@@ -48,6 +48,9 @@ where
         let mut rng = rand::rng();
 
         for i in 0..(self.burn_in + self.iterations) {
+            if i % 1000 == 0 {
+                println!("{i:?}")
+            }
             let m = self.proposer.propose(state, &mut rng);
             let log_q_ratio = self.proposer.log_proposal_ratio(state, &m);
 

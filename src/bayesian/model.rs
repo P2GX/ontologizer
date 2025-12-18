@@ -3,7 +3,6 @@ use crate::bayesian::proposer::ToggleSwap::{Swap, Toggle};
 use crate::bayesian::state::{AlignedBinaryLatentState, BinaryParameterState, State};
 use rand::Rng;
 
-
 // A trait that connects *STATE* and *OBSERVATION* by assigning probabilities.
 pub trait Model {
     type State: State;
@@ -42,7 +41,7 @@ pub struct OrModel<S> {
     p: f64,     // probability of term being active
     alpha: f64, // probability of a gene being incorrectly observed active.
     beta: f64,  // probability of a gene being incorrectly observed inactive.
-    _marker: std::marker::PhantomData<(S)>,
+    _marker: std::marker::PhantomData<S>,
 }
 
 impl<S> OrModel<S> {
@@ -114,10 +113,4 @@ where
     fn log_likelihood_ratio(&self, state: &S, m: &ToggleSwap) -> Option<f64> {
         None
     }
-}
-
-#[cfg(test)]
-mod test {
-
-    fn test_model() {}
 }

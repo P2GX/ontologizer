@@ -1,42 +1,81 @@
-use crate::core::{AnnotationIndex, GeneSymbol, Ontologizer, load_gene_set, separate_gene_set};
-use oboannotation::go::GoGafAnnotationLoader;
-use oboannotation::go::stats::get_annotation_map;
-use oboannotation::io::AnnotationLoader;
+#[cfg(test)]
+mod test {
+    use crate::bayesian::algorithm::{Algorithm, MetropolisHasting};
+    use crate::bayesian::model::{Model, OrModel};
+    use crate::bayesian::proposer::UniformProposer;
+    use crate::bayesian::recorder::{Count, Frequency};
 
-struct Result {
-    term_probs: Vec<f32>,
-    term_genes: Vec<GeneSymbol>,
-}
+    use crate::bayesian::state::MgsaState;
+    use crate::core::{AnnotationIndex, Ontologizer, load_gene_set};
 
-struct MgsaParameter {
-    p: f32,
-    alpha: f32,
-    beta: f32,
-}
+    use crate::core::result::{AnalysisResult, BayesianResult};
+    use csv::Writer;
 
-pub fn run_mgsa(parameter: MgsaParameter) -> Result {
-    let result: Result;
+    #[test]
+    fn test_mgsa() {
+        let go_path = "tests/data/go-basic.json";
+        let gaf_path = "tests/data/goa_human.gaf";
+        let study_set_path = "tests/data/study.txt";
 
-    let go_path = "tests/data/go-basic.json";
-    let gaf_path = "tests/data/goa_human.gaf";
-    let pop_set_path = "tests/data/population.txt";
-    let study_set_path = "tests/data/study.txt";
+        // Load the GO ontology
+        let go = Ontologizer::new(go_path);
+        let go_ref = go.ontology();
+        let annotations = AnnotationIndex::new(gaf_path, go_ref);
+        // Load the GOA annotations
 
-    // Load the GO ontology
-    let go = Ontologizer::new(go_path);
-    let go_ref = go.ontology();
+        // Load the population and study gene sets
+        let gene_symbols = load_gene_set(study_set_path).expect("Failed to parse study gene set");
 
-    // Load the GOA annotations
-    let goa_path = "tests/data/goa_human.gaf";
-    let annotations = GoGafAnnotationLoader
-        .load_from_path(goa_path)
-        .expect("Could not load GAF file");
+        // MGSA Parameter
+        let p = 0.5;
+        let alpha = 0.05;
+        let beta = 0.10;
 
-    let annotated_genes = get_annotation_map(&annotations).into_keys().collect();
+        let terms_to_genes = annotations.get_terms_to_genes(true);
+        let n_genes = annotations.genes().len();
+        let n_terms = annotations.terms().len();
+        let observed_genes: Vec<bool> = (0..n_genes)
+            .map(|i| gene_symbols.contains(annotations.get_index_gene(i)))
+            .collect();
 
-    // Load the population and study gene sets
-    let gene_symbols = load_gene_set(study_set_path).expect("Failed to parse study gene set");
-    let genes = separate_gene_set(&annotated_genes, gene_symbols);
+        let mut rng = rand::rng();
 
-    todo!()
+        let model = OrModel::new(
+            terms_to_genes.clone(),
+            observed_genes.clone(),
+            p,
+            alpha,
+            beta,
+        );
+        let init_terms = model.sample_prior(&mut rng, n_terms);
+
+        let mut state = MgsaState::new(init_terms, terms_to_genes.clone(), observed_genes.clone());
+
+        let proposer = UniformProposer::new();
+
+        let mut algorithm = MetropolisHasting::new(model, proposer, 500_000, 100_000);
+
+        let counts: Count = algorithm.sample(&mut state);
+
+        // Create the Result (Eagerly resolves all strings)
+        let mut result = BayesianResult::from_counts(
+            &counts,
+            &go_ref,
+            annotations.terms(),
+            annotations.genes(),
+            &terms_to_genes,
+            0.5,
+            0.05,
+            0.10,
+        );
+
+        // Optional: Sort
+        result.sort_by_score(true); // descending for probability
+
+        // Serialize to CSV
+        let mut wtr = Writer::from_path("results.csv").unwrap();
+        for item in result.items() {
+            wtr.serialize(item).unwrap();
+        }
+    }
 }
