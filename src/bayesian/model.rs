@@ -49,10 +49,10 @@ pub struct OrCache {
     pub latent: Vec<usize>,
 
     // Confusion Matrix Counts
-    pub n_true_pos: usize,
-    pub n_false_pos: usize,
-    pub n_true_neg: usize,
-    pub n_false_neg: usize,
+    pub n_true_pos: usize,  // Model = 1 | Observed = 1
+    pub n_false_pos: usize, // Model = 0 | Observed = 1 (alpha)
+    pub n_true_neg: usize,  // Model = 0 | Observed = 0
+    pub n_false_neg: usize, // Model = 1 | Observed = 0 (beta)
 }
 
 pub struct OrModel<S> {
@@ -88,16 +88,23 @@ impl<S> OrModel<S> {
             for &g in genes {
                 if enable {
                     // Turning ON: Latent count increases
+                    // n_tp: Model = 1 | Observed = 1
+                    // n_fp: Model = 0 | Observed = 1
+                    // n_tn: Model = 0 | Observed = 0
+                    // n_fn: Model = 1 | Observed = 0
                     // Critical transition: 0 -> 1 (Gene becomes Predicted True)
                     if cache.latent[g] == 0 {
+                        // Model 0 -> 1
                         if self.observations[g] {
-                            // FN -> TP
-                            cache.n_false_neg -= 1;
+                            // Observed = 1
+                            // FP -> TP
+                            cache.n_false_pos -= 1;
                             cache.n_true_pos += 1;
                         } else {
-                            // TN -> FP
+                            // Observed = 0
+                            // TN -> FN
                             cache.n_true_neg -= 1;
-                            cache.n_false_pos += 1;
+                            cache.n_false_neg += 1;
                         }
                     }
                     cache.latent[g] += 1;
@@ -105,13 +112,16 @@ impl<S> OrModel<S> {
                     // Turning OFF: Latent count decreases
                     // Critical transition: 1 -> 0 (Gene becomes Predicted False)
                     if cache.latent[g] == 1 {
+                        // Model 1 -> 0
                         if self.observations[g] {
-                            // TP -> FN
+                            // Observed = 1
+                            // TP -> FP
                             cache.n_true_pos -= 1;
-                            cache.n_false_neg += 1;
+                            cache.n_false_pos += 1;
                         } else {
-                            // FP -> TN
-                            cache.n_false_pos -= 1;
+                            // Observed = 0
+                            // FN -> TN
+                            cache.n_false_neg -= 1;
                             cache.n_true_neg += 1;
                         }
                     }
@@ -193,8 +203,8 @@ where
             let predicted = latent[i] > 0;
             match (predicted, obs) {
                 (true, true) => n_tp += 1,
-                (true, false) => n_fp += 1,
-                (false, true) => n_fn += 1,
+                (false, true) => n_fp += 1,
+                (true, false) => n_fn += 1,
                 (false, false) => n_tn += 1,
             }
         }

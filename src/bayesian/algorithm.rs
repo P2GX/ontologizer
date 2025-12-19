@@ -99,9 +99,6 @@ where
 
         let n_max = self.burn_in + self.iterations;
         for i in 0..n_max {
-            if i % 1000 == 0 {
-                println!("{i:?}")
-            }
             let m = self.proposer.propose(state, &mut rng);
 
             let log_q_ratio = self.get_log_proposal_ratio(state, &m);
