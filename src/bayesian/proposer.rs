@@ -6,9 +6,10 @@ use rand::Rng;
 pub trait Proposer<S: State> {
     /// Generates move x -> x'
     fn propose<R: Rng>(&self, state: &S, rng: &mut R) -> S::Move;
-
+    /// Calculates q(x'|x)
+    fn log_proposal(&self, state: &S) -> f64;
     /// Calculates q(x'|x) / q(x|x')
-    fn log_proposal_ratio(&self, state: &S, m: &S::Move) -> f64;
+    fn log_proposal_ratio(&self, state: &S, m: &S::Move) -> Option<f64>;
 }
 
 /// Explore the sample space by flipping the value of one element,
@@ -49,14 +50,22 @@ where
         else {
             // map random number x to pairs of indices a, b
             let k = x - n;
-            let i = state.get_kth_active(k % na);
-            let j = state.get_kth_inactive(k / na);
+            let i = state.get_active(k % na);
+            let j = state.get_inactive(k / na);
             Swap(i, j)
         }
     }
 
+    fn log_proposal(&self, state: &S) -> f64 {
+        let n = state.n_all();
+        let na = state.n_active();
+        let ni = state.n_inactive();
+
+        -((n + na * ni) as f64).ln() // It is log(1/n)
+    }
+
     ///
-    fn log_proposal_ratio(&self, state: &S, m: &S::Move) -> f64 {
+    fn log_proposal_ratio(&self, state: &S, m: &S::Move) -> Option<f64> {
         match *m {
             Toggle(i) => {
                 let n_current = (state.n_all() + state.n_active() * state.n_inactive()) as f64;
@@ -71,11 +80,11 @@ where
                 let delta = if state.get(i) { diff } else { -diff } - 1.0;
 
                 let n_proposed = n_current + delta;
-                (n_proposed / n_current).ln()
+                Some((n_proposed / n_current).ln())
             }
             // Swapping preserves n_on and n_off, so the state space size N stays constant.
             // ln(N / N) = ln(1) = 0
-            Swap(_, _) => 0.0,
+            Swap(_, _) => Some(0.0),
         }
     }
 }

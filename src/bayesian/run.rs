@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod test {
     use crate::bayesian::algorithm::{Algorithm, MetropolisHasting};
-    use crate::bayesian::model::{Model, OrModel};
+    use crate::bayesian::model::OrModel;
     use crate::bayesian::proposer::UniformProposer;
-    use crate::bayesian::recorder::{Count, Frequency};
+    use crate::bayesian::recorder::Frequency;
 
     use crate::bayesian::state::MgsaState;
     use crate::core::{AnnotationIndex, Ontologizer, load_gene_set};
@@ -33,40 +33,31 @@ mod test {
 
         let terms_to_genes = annotations.get_terms_to_genes(true);
         let n_genes = annotations.genes().len();
-        let n_terms = annotations.terms().len();
         let observed_genes: Vec<bool> = (0..n_genes)
             .map(|i| gene_symbols.contains(annotations.get_index_gene(i)))
             .collect();
 
-        let mut rng = rand::rng();
+        let model = OrModel::new(terms_to_genes.clone(), observed_genes, beta, p, alpha);
+        let terms = model.heuristic_start();
 
-        let model = OrModel::new(
-            terms_to_genes.clone(),
-            observed_genes.clone(),
-            p,
-            alpha,
-            beta,
-        );
-        let init_terms = model.sample_prior(&mut rng, n_terms);
-
-        let mut state = MgsaState::new(init_terms, terms_to_genes.clone(), observed_genes.clone());
+        let mut state = MgsaState::new(terms);
 
         let proposer = UniformProposer::new();
 
-        let mut algorithm = MetropolisHasting::new(model, proposer, 500_000, 100_000);
+        let mut algorithm = MetropolisHasting::new(model, proposer, 1_000_000, 100_000);
 
-        let counts: Count = algorithm.sample(&mut state);
+        let measure: Frequency = algorithm.sample(&mut state);
 
         // Create the Result (Eagerly resolves all strings)
         let mut result = BayesianResult::from_counts(
-            &counts,
+            &measure,
             &go_ref,
             annotations.terms(),
             annotations.genes(),
             &terms_to_genes,
             0.5,
             0.05,
-            0.10,
+            0.05,
         );
 
         // Optional: Sort

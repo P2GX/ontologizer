@@ -14,56 +14,28 @@ pub trait State {
 
 // A trait that guarantees that *STATE* takes boolean values (active/inactive).
 pub trait BinaryParameterState: State<Value = bool> {
-    fn get_kth_active(&self, k: usize) -> usize;
-    fn get_kth_inactive(&self, k: usize) -> usize;
+    fn get_active(&self, k: usize) -> usize;
+    fn get_inactive(&self, k: usize) -> usize;
     fn n_active(&self) -> usize;
     fn n_inactive(&self) -> usize;
-}
-
-pub trait AlignedBinaryLatentState: State {
-    fn n_true_positive(&self) -> usize;
-    fn n_false_positive(&self) -> usize;
-    fn n_true_negative(&self) -> usize;
-    fn n_false_negative(&self) -> usize;
-    fn get_latent_count(&self, k: usize) -> usize;
 }
 
 pub(crate) struct MgsaState {
     // Parameters
     terms: Vec<bool>, // maybe BitSet later
+
     active_indices: Vec<usize>,
     inactive_indices: Vec<usize>,
+
     term_map: Vec<usize>,
-
-    // Latent
-    latent: Vec<usize>,
-    terms_to_genes: Vec<Vec<usize>>,
-
-    // Observations
-    observations: Vec<bool>,
-
-    // Confusion Matrix
-    n_true_pos: usize,
-    n_false_pos: usize,
-    n_true_neg: usize,
-    n_false_neg: usize,
 }
 
 impl MgsaState {
-    pub(crate) fn new(
-        terms: Vec<bool>,
-        terms_to_genes: Vec<Vec<usize>>,
-        genes: Vec<bool>,
-    ) -> MgsaState {
+    pub(crate) fn new(terms: Vec<bool>) -> MgsaState {
         let n = terms.len();
-        assert_eq!(
-            n,
-            terms_to_genes.len(),
-            "Initial terms vector size does not match network structure"
-        );
 
-        let mut active_indices = Vec::new();
-        let mut inactive_indices = Vec::new();
+        let mut active_indices = Vec::with_capacity(n);
+        let mut inactive_indices = Vec::with_capacity(n);
         let mut term_map = vec![0; n];
 
         for (i, &is_active) in terms.iter().enumerate() {
@@ -76,34 +48,11 @@ impl MgsaState {
             }
         }
 
-        let latent = Self::construct_latent(&active_indices, &terms_to_genes, genes.len());
-
-        let mut n_true_pos: usize = 0;
-        let mut n_false_pos: usize = 0;
-        let mut n_true_neg: usize = 0;
-        let mut n_false_neg: usize = 0;
-        for (i, &gene) in genes.iter().enumerate() {
-            let is_active = latent[i] > 0;
-            match (is_active, gene) {
-                (true, true) => n_true_pos += 1,
-                (true, false) => n_false_pos += 1,
-                (false, true) => n_false_neg += 1,
-                (false, false) => n_true_neg += 1,
-            }
-        }
-
         MgsaState {
             terms,
-            latent,
-            terms_to_genes,
             active_indices,
             inactive_indices,
             term_map,
-            observations: genes,
-            n_true_pos,
-            n_false_pos,
-            n_true_neg,
-            n_false_neg,
         }
     }
 
@@ -145,9 +94,6 @@ impl MgsaState {
             // Move from Active -> Inactive
             self.move_index(term_idx, true);
         }
-
-        // Update Latent Counts
-        self.update_latent(term_idx, is_becoming_active);
     }
 
     /// A loco-ly optimized function to move index from one vec to another. Credits to Chatty.
@@ -182,70 +128,10 @@ impl MgsaState {
         self.term_map[term_idx] = dest.len();
         dest.push(term_idx);
     }
-
-    fn construct_latent(
-        active_indices: &[usize],
-        terms_to_genes: &Vec<Vec<usize>>,
-        n_genes: usize,
-    ) -> Vec<usize> {
-        // Initialize with correct size
-        let mut latent = vec![0; n_genes];
-        // Iterate and accumulate active terms per gene
-        for &term_idx in active_indices {
-            for &gene_i in &terms_to_genes[term_idx] {
-                latent[gene_i] += 1;
-            }
-        }
-        latent
-    }
-
-    fn update_latent(&mut self, term_idx: usize, enable: bool) {
-        let gene_indices = &self.terms_to_genes[term_idx];
-        if enable {
-            for &gene_i in gene_indices {
-                // Only if latent[i] changes from 0 to 1 we have to update counts.
-                if self.latent[gene_i] == 0 {
-                    if !self.observations[gene_i] {
-                        // observation is negative, latent was negative becomes positive
-                        debug_assert!(self.n_true_neg > 0, "True negative count underflow!");
-                        self.n_true_neg -= 1;
-                        self.n_false_pos += 1;
-                    } else {
-                        // observation is positive, latent was negative becomes positive
-                        debug_assert!(self.n_false_neg > 0, "False negative count underflow!");
-                        self.n_false_neg -= 1;
-                        self.n_true_pos += 1;
-                    }
-                }
-                self.latent[gene_i] += 1;
-            }
-        } else {
-            for &gene_i in gene_indices {
-                // Only if latent[i] changes from 1 to 0 we have to update counts.
-                if self.latent[gene_i] == 1 {
-                    if !self.observations[gene_i] {
-                        // observation is negative, latent was positive becomes negative
-                        debug_assert!(self.n_false_pos > 0, "False positive count underflow!");
-                        self.n_false_pos -= 1;
-                        self.n_true_neg += 1;
-                    } else {
-                        // observation is positive, latent was positive becomes negative
-                        debug_assert!(self.n_true_pos > 0, "True positive count underflow!");
-                        self.n_true_pos -= 1;
-                        self.n_false_neg += 1;
-                    }
-                }
-
-                debug_assert!(self.latent[gene_i] > 0, "Latent count underflow!");
-                self.latent[gene_i] -= 1;
-            }
-        }
-    }
 }
 
 impl State for MgsaState {
     type Move = ToggleSwap;
-
     type Value = bool;
 
     fn get(&self, i: usize) -> bool {
@@ -275,11 +161,11 @@ impl State for MgsaState {
 }
 
 impl BinaryParameterState for MgsaState {
-    fn get_kth_active(&self, k: usize) -> usize {
+    fn get_active(&self, k: usize) -> usize {
         self.active_indices[k]
     }
 
-    fn get_kth_inactive(&self, k: usize) -> usize {
+    fn get_inactive(&self, k: usize) -> usize {
         self.inactive_indices[k]
     }
     fn n_active(&self) -> usize {
@@ -288,28 +174,6 @@ impl BinaryParameterState for MgsaState {
 
     fn n_inactive(&self) -> usize {
         self.inactive_indices.len()
-    }
-}
-
-impl AlignedBinaryLatentState for MgsaState {
-    fn n_true_positive(&self) -> usize {
-        self.n_true_pos
-    }
-
-    fn n_false_positive(&self) -> usize {
-        self.n_false_pos
-    }
-
-    fn n_true_negative(&self) -> usize {
-        self.n_true_neg
-    }
-
-    fn n_false_negative(&self) -> usize {
-        self.n_false_neg
-    }
-
-    fn get_latent_count(&self, element_idx: usize) -> usize {
-        self.latent[element_idx]
     }
 }
 
@@ -340,87 +204,57 @@ mod tests {
             "Test config must have length 2"
         );
 
-        MgsaState::new(terms, terms_to_genes, genes)
+        MgsaState::new(terms)
     }
 
-    #[test]
-    fn test_initialization_and_consistency() {
-        // Initial state: T0 is ON, T1 is OFF
-        let mut state = create_state(vec![true, false]);
+    #[cfg(test)]
+    mod tests {
+        use super::*;
 
-        // 1. Check Counters
-        assert_eq!(state.n_active(), 1);
-        assert_eq!(state.n_inactive(), 1);
-        assert!(state.check_consistency());
+        #[test]
+        fn test_initialization_and_consistency() {
+            // T0=On, T1=Off
+            let state = MgsaState::new(vec![true, false]);
 
-        // 2. Check Latent Space Calculation
-        // T0 is ON -> Activates G0 and G1
-        // T1 is OFF
-        // Expected Latent: G0=1, G1=1, G2=0
-        assert_eq!(state.latent, vec![1, 1, 0]);
-    }
+            assert_eq!(state.n_active(), 1);
+            assert_eq!(state.n_inactive(), 1);
 
-    #[test]
-    fn test_toggle_updates() {
-        let mut state = create_state(vec![true, false]);
-        // --- Action: Toggle T1 ON ---
-        // New State: T0=On, T1=On
-        state.apply(&Toggle(1));
+            // Verify indices
+            assert_eq!(state.get_active(0), 0); // Index 0 is active
+            assert_eq!(state.get_inactive(0), 1); // Index 1 is inactive
 
-        assert_eq!(state.n_active(), 2);
-        assert!(state.get(1)); // T1 should be true
+            assert!(state.check_consistency());
+        }
 
-        // Check Latent:
-        // T0 adds: G0, G1
-        // T1 adds: G1, G2
-        // Result: G0=1, G1=2, G2=1
-        assert_eq!(state.latent, vec![1, 2, 1]);
-        assert!(state.check_consistency());
+        #[test]
+        fn test_toggle_updates() {
+            let mut state = MgsaState::new(vec![true, false]);
 
-        // --- Action: Toggle T0 OFF ---
-        // New State: T0=Off, T1=On
-        state.apply(&Toggle(0));
+            // --- Action: Toggle T1 ON ---
+            state.apply(&Toggle(1));
 
-        assert_eq!(state.n_active(), 1);
-        assert!(!state.get(0)); // T0 should be false
+            assert_eq!(state.n_active(), 2);
+            assert!(state.get(1)); // T1 should be true
+            assert!(state.check_consistency());
 
-        // Check Latent:
-        // T0 removed: G0-1, G1-1
-        // Result: G0=0, G1=1, G2=1
-        assert_eq!(state.latent, vec![0, 1, 1]);
-    }
+            // --- Action: Toggle T0 OFF ---
+            state.apply(&Toggle(0));
 
-    #[test]
-    fn test_swap_move() {
-        let mut state = create_state(vec![true, false]);
+            assert_eq!(state.n_active(), 1);
+            assert!(!state.get(0)); // T0 should be false
+            assert!(state.check_consistency());
+        }
 
-        // Swap(0, 1) should flip both
-        // T0 -> Off, T1 -> On
-        state.apply(&Swap(0, 1));
+        #[test]
+        fn test_swap_move() {
+            let mut state = MgsaState::new(vec![true, false]);
 
-        assert!(!state.get(0));
-        assert!(state.get(1));
+            // Swap(0, 1) should flip both: T0->Off, T1->On
+            state.apply(&Swap(0, 1));
 
-        // Latent check:
-        // Only T1 active (G1, G2)
-        assert_eq!(state.latent, vec![0, 1, 1]);
-    }
-
-    #[test]
-    fn test_revert() {
-        let mut state = create_state(vec![true, false]);
-
-        let m = Toggle(1);
-
-        // Apply
-        state.apply(&m);
-        assert!(state.get(1));
-        assert_eq!(state.latent, vec![1, 2, 1]);
-
-        // Revert
-        state.revert(&m);
-        assert!(!state.get(1)); // Back to false
-        assert_eq!(state.latent, vec![1, 1, 0]); // Back to original
-        assert!(state.check_consistency());
+            assert!(!state.get(0));
+            assert!(state.get(1));
+            assert!(state.check_consistency());
+        }
     }
 }
