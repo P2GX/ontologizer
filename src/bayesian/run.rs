@@ -11,8 +11,13 @@ mod test {
     use crate::core::result::{AnalysisResult, BayesianResult};
     use csv::Writer;
 
+    use std::time::Instant;
+
     #[test]
     fn test_mgsa() {
+        let start_total = Instant::now();
+        let mut last_checkpoint = Instant::now();
+
         let go_path = "tests/data/go-basic.json";
         let gaf_path = "tests/data/goa_human.gaf";
         let study_set_path = "tests/data/study.txt";
@@ -20,11 +25,17 @@ mod test {
         // Load the GO ontology
         let go = Ontologizer::new(go_path);
         let go_ref = go.ontology();
+        println!("Ontology Load: {:.2?}", last_checkpoint.elapsed());
+        last_checkpoint = Instant::now();
+
         let annotations = AnnotationIndex::new(gaf_path, go_ref);
-        // Load the GOA annotations
+        println!("Annotations Load: {:.2?}", last_checkpoint.elapsed());
+        last_checkpoint = Instant::now();
 
         // Load the population and study gene sets
         let gene_symbols = load_gene_set(study_set_path).expect("Failed to parse study gene set");
+        println!("Gene Set Load: {:.2?}", last_checkpoint.elapsed());
+        last_checkpoint = Instant::now();// Reset timer
 
         // MGSA Parameter
         let p = 0.5;
@@ -37,16 +48,18 @@ mod test {
             .map(|i| gene_symbols.contains(annotations.get_index_gene(i)))
             .collect();
 
-        let model = OrModel::new(terms_to_genes.clone(), observed_genes, beta, p, alpha);
+        let model = OrModel::new(terms_to_genes.clone(), observed_genes.clone(), beta, p, alpha);
         let terms = model.heuristic_start();
-
         let mut state = MgsaState::new(terms);
-
         let proposer = UniformProposer::new();
+        let mut algorithm = MetropolisHasting::new(model, proposer, 500_000, 100_000);
 
-        let mut algorithm = MetropolisHasting::new(model, proposer, 1_000_000, 100_000);
+        println!("Model Setup: {:.2?}", last_checkpoint.elapsed());
+        last_checkpoint = Instant::now();
 
         let measure: Frequency = algorithm.sample(&mut state);
+        println!("MCMC Sampling: {:.2?}", last_checkpoint.elapsed());
+        last_checkpoint = Instant::now();
 
         // Create the Result (Eagerly resolves all strings)
         let mut result = BayesianResult::from_counts(
@@ -54,6 +67,7 @@ mod test {
             &go_ref,
             annotations.terms(),
             annotations.genes(),
+            &observed_genes,
             &terms_to_genes,
             0.5,
             0.05,
@@ -68,5 +82,13 @@ mod test {
         for item in result.items() {
             wtr.serialize(item).unwrap();
         }
+
+        println!(
+            "Result Processing & CSV Write: {:.2?}",
+            last_checkpoint.elapsed()
+        );
+
+        println!("Result Processing & CSV Write: {:.2?}", last_checkpoint.elapsed());
+        println!("Total Execution Time: {:.2?}", start_total.elapsed());
     }
 }

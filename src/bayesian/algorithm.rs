@@ -66,7 +66,7 @@ where
     fn get_log_likelihood_ratio(
         &mut self,
         state: &mut M::State,
-        cache: & M::Cache,
+        cache: &M::Cache,
         m: &<M::State as State>::Move,
     ) -> f64 {
         match self.model.log_likelihood_ratio(cache, m) {
@@ -97,7 +97,8 @@ where
 
         let mut rng = rand::rng();
 
-        for i in 0..(self.burn_in + self.iterations) {
+        let n_max = self.burn_in + self.iterations;
+        for i in 0..n_max {
             if i % 1000 == 0 {
                 println!("{i:?}")
             }
@@ -114,15 +115,15 @@ where
             let x: f64 = rng.random_range(0.0..1.0);
             if log_accept >= 0.0 || x.ln() < log_accept {
                 state.apply(&m);
-                
-                self.model.update_cache(&mut cache, state, &m);
-            }
 
-            if i > self.burn_in {
-                result.record(&state);
+                self.model.update_cache(&mut cache, state, &m);
+
+                if i > self.burn_in {
+                    result.record(&m, i);
+                }
             }
         }
-        result.finalize();
+        result.finalize(n_max);
         result
     }
 }
