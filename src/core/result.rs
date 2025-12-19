@@ -60,6 +60,7 @@ impl BayesianResult {
         ontology: &FullCsrOntology,
         term_map: &IndexSet<TermId>,
         gene_map: &IndexSet<GeneSymbol>,
+        observed_genes: &Vec<bool>,
         terms_to_genes: &Vec<Vec<usize>>,
         // Metadata
         p: f64,
@@ -80,6 +81,7 @@ impl BayesianResult {
 
             let gene_symbols: Vec<String> = gene_indices
                 .iter()
+                .filter(|&idx| observed_genes[*idx])
                 .map(|&idx| gene_map[idx].to_string())
                 .collect();
 

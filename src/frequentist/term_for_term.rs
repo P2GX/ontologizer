@@ -126,18 +126,20 @@ mod test {
         let go = Ontologizer::new(go_path);
         let go_ref = go.ontology();
 
-        // Load the GOA annotations
-        let mut annotation_index = AnnotationIndex::new(gaf_path, go_ref);
-        let annotated_genes = get_annotation_map(&annotation_index.annotations)
-            .into_keys()
-            .collect();
         // Load the population and study gene sets
         let study_gene_symbols =
             load_gene_set(study_set_path).expect("Failed to parse study gene set");
-        let study_gene_set = separate_gene_set(&annotated_genes, study_gene_symbols);
 
         let pop_gene_symbols =
             load_gene_set(pop_set_path).expect("Failed to parse population gene set");
+
+        // Load the GOA annotations
+        let mut annotation_index = AnnotationIndex::new(gaf_path, go_ref, &pop_gene_symbols);
+        let annotated_genes = get_annotation_map(&annotation_index.annotations)
+            .into_keys()
+            .collect();
+
+        let study_gene_set = separate_gene_set(&annotated_genes, study_gene_symbols);
         let pop_gene_set = separate_gene_set(&annotated_genes, pop_gene_symbols);
 
         let mut results = AnalysisResults::new(MethodEnum::TermForTerm, mtc_method);

@@ -33,7 +33,7 @@ pub struct AnnotationIndex {
 }
 
 impl AnnotationIndex {
-    pub fn new(gaf_path: &str, go: &FullCsrOntology) -> Self {
+    pub fn new(gaf_path: &str, go: &FullCsrOntology, pop_genes: &HashSet<GeneSymbol>) -> Self {
         // 1. Load Annotations
         let loader = GoGafAnnotationLoader;
         let annotations = loader
@@ -41,10 +41,21 @@ impl AnnotationIndex {
             .expect("Could not load GAF file");
 
         // 2. Load Sparse Annotations (implicit)
-        let named_gene_to_term_sparse: IndexMap<GeneSymbol, HashSet<TermId>> =
-            get_annotation_map(&annotations).into_iter().collect();
+        let raw_gene_to_term_sparse = get_annotation_map(&annotations);
 
-        // 3. Build all Maps
+        // 3. Restrict to Population Gene Set
+        let mut named_gene_to_term_sparse: IndexMap<GeneSymbol, HashSet<TermId>> = IndexMap::new();
+        for gene in pop_genes {
+            if let Some(terms) = raw_gene_to_term_sparse.get(gene) {
+                // Case 1: Gene is in population AND has annotations
+                named_gene_to_term_sparse.insert(gene.clone(), terms.clone());
+            } else {
+                // Case 2: Gene is in population but has NO annotations (True Negative)
+                named_gene_to_term_sparse.insert(gene.clone(), HashSet::new());
+            }
+        }
+
+        // 4. Build all other Maps
         let mut named_term_to_gene_sparse: IndexMap<TermId, HashSet<GeneSymbol>> = IndexMap::new();
         let mut named_gene_to_term_dense: IndexMap<GeneSymbol, HashSet<TermId>> = IndexMap::new();
         let mut named_term_to_gene_dense: IndexMap<TermId, HashSet<GeneSymbol>> = IndexMap::new();
@@ -77,14 +88,14 @@ impl AnnotationIndex {
             }
         }
 
-        // 4. Build Index Maps. Sort for deterministic behavior across runs.
+        // 5. Build Index Maps. Sort for deterministic behavior across runs.
         let mut term_map: IndexSet<TermId> = named_term_to_gene_dense.keys().cloned().collect();
         term_map.sort(); // Deterministic ordering
 
         let mut gene_map: IndexSet<GeneSymbol> = named_gene_to_term_dense.keys().cloned().collect();
         gene_map.sort(); // Deterministic ordering
 
-        // 5. Build Dense Matrices (Vec<Vec<usize>>) using the fixed indices
+        // 6. Build Dense Matrices (Vec<Vec<usize>>) using the fixed indices
         // --- A. Term Matrices (Iterate term_map) ---
         let mut term_to_gene_dense = Vec::with_capacity(term_map.len());
         let mut term_to_gene_sparse = Vec::with_capacity(term_map.len());
@@ -143,8 +154,6 @@ impl AnnotationIndex {
             gene_to_term_dense,
         }
     }
-
-    // --- Accessors ---
 
     pub fn terms(&self) -> &IndexSet<TermId> {
         &self.term_map
