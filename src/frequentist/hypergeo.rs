@@ -73,23 +73,23 @@ impl Hypergeometric {
 
     /// Forward term ratio r_fwd(k) = t(k+1)/t(k)
     /// where t(k) = P(X=k) for Hypergeometric(n, K, N)
-    #[allow(non_snake_case)]
+    /* #[allow(non_snake_case)]
     fn ratio_forward(&mut self, k: usize, n: usize, K: usize, N: usize) -> f64 {
         // (K - x)/(x + 1) * (n - x)/(N - K - n + x + 1)
         let a = (K - k) as f64 / (k + 1) as f64;
         let b = (n - k) as f64 / (N - K - n + k + 1) as f64;
         a * b
-    }
+    } */
 
     /// Backward term ratio r_back(k) = t(k-1)/t(k)
     /// where t(k) = P(X=k) for Hypergeometric(n, K, N)
     #[allow(non_snake_case)]
-    fn ratio_backward(&mut self, k: usize, n: usize, K: usize, N: usize) -> f64 {
+    /* fn ratio_backward(&mut self, k: usize, n: usize, K: usize, N: usize) -> f64 {
         // x/(K - x + 1) * (N - K - n + x)/(n - x + 1)
         let a = k as f64 / (K - k + 1) as f64;
         let b = (N - K - n + k) as f64 / (n - k + 1) as f64;
         a * b
-    }
+    } */
 
     /// phyper - Cumulative density function of the hypergeometric distribution.
     ///

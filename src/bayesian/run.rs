@@ -13,6 +13,10 @@ mod test {
 
     use std::time::Instant;
 
+    fn approx_equal(a: f64, b : f64, epsilon : f64) -> bool {
+        (a-b).abs() < epsilon
+    }
+
     #[test]
     fn test_mgsa() {
         let start_total = Instant::now();
@@ -38,7 +42,7 @@ mod test {
         last_checkpoint = Instant::now();
 
         // Build the AnnotationIndex restricted to Population Gene Set.
-        let mut annotations = AnnotationIndex::new(gaf_path, go_ref, &pop_gene_symbols);
+        let annotations = AnnotationIndex::new(gaf_path, go_ref, &pop_gene_symbols);
         println!("Annotations Load: {:.2?}", last_checkpoint.elapsed());
         last_checkpoint = Instant::now();
 
@@ -57,8 +61,8 @@ mod test {
             terms_to_genes.clone(),
             observed_genes.clone(),
             p,
-            beta,
             alpha,
+            beta,
         );
         let terms = model.heuristic_start();
         let mut state = MgsaState::new(terms);
@@ -80,9 +84,9 @@ mod test {
             annotations.genes(),
             &observed_genes,
             &terms_to_genes,
-            0.5,
-            0.05,
-            0.05,
+            p,
+            alpha,
+            beta,
         );
 
         // Optional: Sort
@@ -104,5 +108,104 @@ mod test {
             last_checkpoint.elapsed()
         );
         println!("Total Execution Time: {:.2?}", start_total.elapsed());
+    }
+
+    #[test]
+    fn test_one_term_one_gene(){
+        let state = vec![false];
+        let observations = vec![true];
+        let state_to_observations : Vec<Vec<usize>> = vec![
+            vec![0]
+        ];
+
+        let p = 0.5;
+        let alpha = 0.05;
+        let beta = 0.1;
+
+        let model = OrModel::new(
+            state_to_observations.clone(),
+            observations.clone(),
+            p,
+            alpha,
+            beta,
+        );
+
+        let mut state = MgsaState::new(state);
+        let proposer = UniformProposer::new();
+        let mut algorithm = MetropolisHasting::new(model, proposer, 10_000, 0);
+
+        let measure: Frequency = algorithm.sample(&mut state);
+        println!{"{:?}", measure.frequencies}
+
+        let post_sim = measure.frequencies[0];
+        let post_theory = p*(1.-beta)/(alpha*(1.-p) + (1.-beta)*p);
+        assert!(approx_equal(post_sim, post_theory, 0.01));
+    }
+
+    #[test]
+    fn test_two_term_one_gene(){
+        let state = vec![false, false];
+        let observations = vec![true];
+        let state_to_observations : Vec<Vec<usize>> = vec![
+            vec![0],
+            vec![0]
+        ];
+
+        let p = 0.5;
+        let beta = 0.1;
+        let alpha = 0.05;
+
+        let model = OrModel::new(
+            state_to_observations.clone(),
+            observations.clone(),
+            p,
+            alpha,
+            beta,
+        );
+
+        let mut state = MgsaState::new(state);
+        let proposer = UniformProposer::new();
+        let mut algorithm = MetropolisHasting::new(model, proposer, 10_000, 0);
+
+        let measure: Frequency = algorithm.sample(&mut state);
+        println!{"{:?}", measure.frequencies}
+
+        let post_t1_sim = measure.frequencies[0];
+        let post_t2_sim = measure.frequencies[1];
+        let post_theory = p*(1.-beta)/(alpha*(1.-p).powf(2.) + (1.-beta)*(1.-(1.-p).powf(2.)));
+        assert!(approx_equal(post_t1_sim, post_theory, 0.01));
+        assert!(approx_equal(post_t2_sim, post_theory, 0.01));
+    }
+
+    #[test]
+    fn test_small_annotations(){
+        let state = vec![false, false, false, false, false];
+        let observations = vec![false, true, true, true, false];
+        let state_to_observations : Vec<Vec<usize>> = vec![
+            vec![0],
+            vec![1, 2],
+            vec![2, 3],
+            vec![3, 4],
+            vec![4]];
+
+        let p = 0.5;
+        let beta = 0.1;
+        let alpha = 0.05;
+
+        let model = OrModel::new(
+            state_to_observations.clone(),
+            observations.clone(),
+            p,
+            alpha,
+            beta
+        );
+
+        let mut state = MgsaState::new(state);
+        let proposer = UniformProposer::new();
+        let mut algorithm = MetropolisHasting::new(model, proposer, 10_000, 0);
+
+        let measure: Frequency = algorithm.sample(&mut state);
+
+        println!{"{:?}", measure.frequencies}
     }
 }

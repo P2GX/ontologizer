@@ -66,16 +66,18 @@ where
     fn get_log_likelihood_ratio(
         &mut self,
         state: &mut M::State,
-        cache: &M::Cache,
+        cache: &mut M::Cache,
         m: &<M::State as State>::Move,
     ) -> f64 {
         match self.model.log_likelihood_ratio(cache, m) {
             Some(log_l_ratio) => log_l_ratio,
             None => {
                 let log_l1 = self.model.log_likelihood(cache);
-                state.apply(&m);
+                state.apply(m);
+                self.model.update_cache(cache, state, m);
                 let log_l2 = self.model.log_likelihood(cache);
-                state.revert(&m);
+                state.revert(m);
+                self.model.revert_cache(cache, state, m);
                 log_l2 - log_l1
             }
         }
@@ -105,17 +107,17 @@ where
 
             let log_p_ratio = self.get_log_prior_ratio(state, &m);
 
-            let log_l_ratio = self.get_log_likelihood_ratio(state, &cache, &m);
+            let log_l_ratio = self.get_log_likelihood_ratio(state, &mut cache, &m);
 
             let log_accept = log_l_ratio + log_p_ratio - log_q_ratio;
 
             let x: f64 = rng.random_range(0.0..1.0);
-            if log_accept >= 0.0 || x.ln() < log_accept {
+            let log_x = x.ln();
+            if log_accept >= 0.0 || log_x < log_accept {
                 state.apply(&m);
-
                 self.model.update_cache(&mut cache, state, &m);
 
-                if i > self.burn_in {
+                if i >= self.burn_in {
                     result.record(&m, i);
                 }
             }

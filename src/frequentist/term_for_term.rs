@@ -1,10 +1,9 @@
 use crate::frequentist::hypergeo::Hypergeometric;
 use indexmap::IndexMap;
-use std::collections::HashSet;
 
 use super::results::{AnalysisResults, GOTermResult, get_term_aspect};
 use crate::core::AnnotationIndex;
-use crate::core::{GeneSet, GeneSymbol};
+use crate::core::{GeneSet};
 use crate::frequentist::PValueCalculation;
 use ontolius::{
     TermId,
@@ -89,18 +88,6 @@ pub fn term_count_for_subset(
     counts
 }
 
-// Computes the intersection of a gene set with the set of genes annotated to a specific GO term.
-fn gene_set_intersection(
-    gene_set: &HashSet<GeneSymbol>,
-    genes_annotated_to_term: &HashSet<GeneSymbol>,
-) -> HashSet<GeneSymbol> {
-    let intersection: HashSet<_> = gene_set
-        .intersection(genes_annotated_to_term)
-        .cloned()
-        .collect();
-    intersection
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -134,7 +121,7 @@ mod test {
             load_gene_set(pop_set_path).expect("Failed to parse population gene set");
 
         // Load the GOA annotations
-        let mut annotation_index = AnnotationIndex::new(gaf_path, go_ref, &pop_gene_symbols);
+        let annotation_index = AnnotationIndex::new(gaf_path, go_ref, &pop_gene_symbols);
         let annotated_genes = get_annotation_map(&annotation_index.annotations)
             .into_keys()
             .collect();

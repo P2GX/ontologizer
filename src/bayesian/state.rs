@@ -1,6 +1,5 @@
 use crate::bayesian::proposer::ToggleSwap;
 use ToggleSwap::*;
-use rand::Rng;
 
 // A trait that guarantees that *STATE* knows how to sample itself by drawing and applying *MOVE*.
 pub trait State {
@@ -189,24 +188,6 @@ mod tests {
     ///   T0 -> [G0, G1]
     ///   T1 -> [G1, G2]
     ///
-    fn create_state(terms: Vec<bool>) -> MgsaState {
-        // Hardcoded integer graph (no strings needed!)
-        let terms_to_genes = vec![
-            vec![0, 1], // T0 activates G0, G1
-            vec![1, 2], // T1 activates G1, G2
-        ];
-
-        let genes = vec![true, true, false];
-        // Verify the test writer didn't mess up the input vector size
-        assert_eq!(
-            terms.len(),
-            terms_to_genes.len(),
-            "Test config must have length 2"
-        );
-
-        MgsaState::new(terms)
-    }
-
     #[cfg(test)]
     mod tests {
         use super::*;

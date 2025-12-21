@@ -71,7 +71,6 @@ pub fn separate_gene_set(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::core::AnnotationIndex;
     use rstest::rstest;
 
     #[rstest]

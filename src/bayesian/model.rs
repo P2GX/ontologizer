@@ -32,6 +32,13 @@ pub trait Model {
         m: &<Self::State as State>::Move,
     );
 
+    fn revert_cache(
+        &self,
+        cache: &mut Self::Cache,
+        state: &Self::State,
+        m: &<Self::State as State>::Move,
+    );
+
     // Log probability P(O | S) to find an Observable configuration given a State configuration.
     fn log_likelihood(&self, cache: &Self::Cache) -> f64;
 
@@ -83,7 +90,7 @@ impl<S> OrModel<S> {
         }
     }
 
-    fn apply_toggle(&self, cache: &mut OrCache, term_idx: usize, enable: bool) {
+    fn update_toggle(&self, cache: &mut OrCache, term_idx: usize, enable: bool) {
         if let Some(genes) = self.terms_to_genes.get(term_idx) {
             for &g in genes {
                 if enable {
@@ -221,20 +228,25 @@ where
     fn update_cache(&self, cache: &mut Self::Cache, state: &Self::State, m: &ToggleSwap) {
         match *m {
             Toggle(i) => {
-                self.apply_toggle(cache, i, state.get(i));
+                self.update_toggle(cache, i, state.get(i));
             }
             Swap(i, j) => {
-                self.apply_toggle(cache, i, state.get(i));
-                self.apply_toggle(cache, j, state.get(j));
+                self.update_toggle(cache, i, state.get(i));
+                self.update_toggle(cache, j, state.get(j));
             }
         }
     }
 
+    fn revert_cache(&self, cache: &mut Self::Cache, state: &Self::State, m: &<Self::State as State>::Move) {
+        self.update_cache(cache, state, m);
+    }
+    
+    
     // Log probability P(O | T) to find an observed Gene configuration given a Terms configuration.
     fn log_likelihood(&self, cache: &OrCache) -> f64 {
-        (cache.n_true_pos as f64) * (1. - self.alpha).ln()
+        (cache.n_true_pos as f64) * (1. - self.beta).ln()
             + (cache.n_false_pos as f64) * self.alpha.ln()
-            + (cache.n_true_neg as f64) * (1. - self.beta).ln()
+            + (cache.n_true_neg as f64) * (1. - self.alpha).ln()
             + (cache.n_false_neg as f64) * self.beta.ln()
     }
 }

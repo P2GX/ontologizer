@@ -22,7 +22,7 @@ impl MultipleTestingCorrection for BonferroniHolm {
 }
 
 fn enforce_pvalue_monotony(analysis_results: &mut AnalysisResults) {
-    let n: f32 = analysis_results.num_hypotheses();
+    // let n: f32 = analysis_results.num_hypotheses();
     let mut prev: f32 = 1.0;
     for result in analysis_results.iter_mut().rev() {
         let curr = result.adj_pval();
