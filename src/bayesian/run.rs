@@ -13,8 +13,37 @@ mod test {
 
     use std::time::Instant;
 
-    fn approx_equal(a: f64, b : f64, epsilon : f64) -> bool {
-        (a-b).abs() < epsilon
+    fn approx_equal(a: f64, b: f64, epsilon: f64) -> bool {
+        (a - b).abs() < epsilon
+    }
+
+    fn test_network(
+        observations: &Vec<bool>,
+        state_to_observations: &Vec<Vec<usize>>,
+        p: f64,
+        alpha: f64,
+        beta: f64,
+        posterior: Vec<f64>,
+    ) {
+        let model = OrModel::new(
+            state_to_observations.clone(),
+            observations.clone(),
+            p,
+            alpha,
+            beta,
+        );
+
+        let terms = model.heuristic_start();
+        let mut state = MgsaState::new(terms);
+        let proposer = UniformProposer::new();
+        let mut algorithm = MetropolisHasting::new(model, proposer, 10_000, 0);
+
+        let measure: Frequency = algorithm.sample(&mut state);
+        println! {"{:?}", measure.frequencies}
+
+        for (&sim, theo) in measure.frequencies.iter().zip(posterior) {
+            assert!(approx_equal(sim, theo, 0.01));
+        }
     }
 
     #[test]
@@ -111,101 +140,194 @@ mod test {
     }
 
     #[test]
-    fn test_one_term_one_gene(){
+    fn test_one_term_one_gene() {
+        let p = 0.5;
+        let alpha = 0.05;
+        let beta = 0.1;
+
         let state = vec![false];
+        let state_to_observations: Vec<Vec<usize>> = vec![vec![0]];
+
+        // Active Observation O=(1)
         let observations = vec![true];
-        let state_to_observations : Vec<Vec<usize>> = vec![
-            vec![0]
-        ];
+        let posterior = vec![p * (1. - beta) / (alpha * (1. - p) + (1. - beta) * p)];
 
-        let p = 0.5;
-        let alpha = 0.05;
-        let beta = 0.1;
-
-        let model = OrModel::new(
-            state_to_observations.clone(),
-            observations.clone(),
+        test_network(
+            &observations,
+            &state_to_observations,
             p,
             alpha,
             beta,
+            posterior,
         );
 
-        let mut state = MgsaState::new(state);
-        let proposer = UniformProposer::new();
-        let mut algorithm = MetropolisHasting::new(model, proposer, 10_000, 0);
+        // Inactive Observation O=(0)
+        let observations = vec![false];
+        let posterior = vec![p * beta / ((1. - alpha) * (1. - p) + beta * p)];
 
-        let measure: Frequency = algorithm.sample(&mut state);
-        println!{"{:?}", measure.frequencies}
-
-        let post_sim = measure.frequencies[0];
-        let post_theory = p*(1.-beta)/(alpha*(1.-p) + (1.-beta)*p);
-        assert!(approx_equal(post_sim, post_theory, 0.01));
+        test_network(
+            &observations,
+            &state_to_observations,
+            p,
+            alpha,
+            beta,
+            posterior,
+        );
     }
 
     #[test]
-    fn test_two_term_one_gene(){
+    fn test_two_term_one_gene() {
+        let p : f64 = 0.5;
+        let alpha : f64 = 0.05;
+        let beta  : f64 = 0.1;
+
         let state = vec![false, false];
-        let observations = vec![true];
-        let state_to_observations : Vec<Vec<usize>> = vec![
+        let state_to_observations: Vec<Vec<usize>> = vec![
             vec![0],
             vec![0]
         ];
 
-        let p = 0.5;
-        let beta = 0.1;
-        let alpha = 0.05;
+        // Active Observation O=(1)
+        let observations = vec![true];
+        let posterior_t1 = p * (1. - beta) / (alpha*(1.- p).powf(2.) + (1. - beta) * (1. - (1. - p).powf(2.)));
+        let posterior_t2 = p * (1. - beta) / (alpha*(1.- p).powf(2.) + (1. - beta) * (1. - (1. - p).powf(2.)));
 
-        let model = OrModel::new(
-            state_to_observations.clone(),
-            observations.clone(),
+        let posterior = vec![posterior_t1, posterior_t2];
+
+        test_network(
+            &observations,
+            &state_to_observations,
             p,
             alpha,
             beta,
+            posterior,
         );
 
-        let mut state = MgsaState::new(state);
-        let proposer = UniformProposer::new();
-        let mut algorithm = MetropolisHasting::new(model, proposer, 10_000, 0);
+        // Inactive Observation O=(0)
+        let observations = vec![false];
+        let posterior_t1 = p * beta / ((1.-alpha)*(1.- p).powf(2.) + beta * (1. - (1. - p).powf(2.)));
+        let posterior_t2 = p * beta / ((1.-alpha)*(1.- p).powf(2.) + beta * (1. - (1. - p).powf(2.)));
 
-        let measure: Frequency = algorithm.sample(&mut state);
-        println!{"{:?}", measure.frequencies}
+        let posterior = vec![posterior_t1, posterior_t2];
 
-        let post_t1_sim = measure.frequencies[0];
-        let post_t2_sim = measure.frequencies[1];
-        let post_theory = p*(1.-beta)/(alpha*(1.-p).powf(2.) + (1.-beta)*(1.-(1.-p).powf(2.)));
-        assert!(approx_equal(post_t1_sim, post_theory, 0.01));
-        assert!(approx_equal(post_t2_sim, post_theory, 0.01));
+        test_network(
+            &observations,
+            &state_to_observations,
+            p,
+            alpha,
+            beta,
+            posterior,
+        );
     }
 
     #[test]
-    fn test_small_annotations(){
-        let state = vec![false, false, false, false, false];
-        let observations = vec![false, true, true, true, false];
-        let state_to_observations : Vec<Vec<usize>> = vec![
-            vec![0],
-            vec![1, 2],
-            vec![2, 3],
-            vec![3, 4],
-            vec![4]];
+    fn test_full_two_term_two_gene() {
+        let p : f64 = 0.5;
+        let alpha : f64 = 0.05;
+        let beta  : f64 = 0.1;
 
-        let p = 0.5;
-        let beta = 0.1;
-        let alpha = 0.05;
+        let state = vec![false, false];
+        let state_to_observations: Vec<Vec<usize>> = vec![
+            vec![0, 1],
+            vec![0, 1]
+        ];
 
-        let model = OrModel::new(
-            state_to_observations.clone(),
-            observations.clone(),
+        // Active Observation O=(1)
+        let observations = vec![true, true];
+        let posterior_t1 = p * (1. - beta).powf(2.) / (alpha.powf(2.)*(1.- p).powf(2.) + (1. - beta).powf(2.) * (1. - (1. - p).powf(2.)));
+        let posterior_t2 = p * (1. - beta).powf(2.) / (alpha.powf(2.)*(1.- p).powf(2.) + (1. - beta).powf(2.) * (1. - (1. - p).powf(2.)));
+
+        let posterior = vec![posterior_t1, posterior_t2];
+
+        test_network(
+            &observations,
+            &state_to_observations,
             p,
             alpha,
-            beta
+            beta,
+            posterior,
         );
 
-        let mut state = MgsaState::new(state);
-        let proposer = UniformProposer::new();
-        let mut algorithm = MetropolisHasting::new(model, proposer, 10_000, 0);
+        // Inactive Observation O=(0)
+        let observations = vec![false, false];
+        let posterior_t1 = p * beta.powf(2.) / ((1.-alpha).powf(2.)*(1.- p).powf(2.) + beta.powf(2.) * (1. - (1. - p).powf(2.)));
+        let posterior_t2 = p * beta.powf(2.) / ((1.-alpha).powf(2.)*(1.- p).powf(2.) + beta.powf(2.) * (1. - (1. - p).powf(2.)));
 
-        let measure: Frequency = algorithm.sample(&mut state);
+        let posterior = vec![posterior_t1, posterior_t2];
 
-        println!{"{:?}", measure.frequencies}
+        test_network(
+            &observations,
+            &state_to_observations,
+            p,
+            alpha,
+            beta,
+            posterior,
+        );
+    }
+
+    #[test]
+    fn test_asymmetric_two_term_two_gene() {
+        let p: f64 = 0.5;
+        let alpha: f64 = 0.05;
+        let beta: f64 = 0.1;
+
+        let state_to_observations: Vec<Vec<usize>> = vec![
+            vec![0],    // Term 0
+            vec![0, 1], // Term 1
+        ];
+
+        let observations = vec![true, false];
+
+        let lh_00 = alpha * (1.0 - alpha);
+        let lh_10 = (1.0 - beta) * (1.0 - alpha);
+        let lh_01 = (1.0 - beta) * beta;
+        let lh_11 = (1.0 - beta) * beta;
+
+        let joint_00 = lh_00 * (1.0 - p).powf(2.0);
+        let joint_10 = lh_10 * p * (1.0 - p);
+        let joint_01 = lh_01 * p * (1.0 - p);
+        let joint_11 = lh_11 * p.powf(2.0);
+
+        let z = joint_00 + joint_10 + joint_01 + joint_11;
+
+        // Marginalize for Posteriors
+        let post_t0 = (joint_10 + joint_11) / z;
+        let post_t1 = (joint_01 + joint_11) / z;
+
+        test_network(
+            &observations,
+            &state_to_observations,
+            p,
+            alpha,
+            beta,
+            vec![post_t0, post_t1],
+        );
+
+
+        let observations = vec![false, true];
+
+        let lh_00 = (1.0 - alpha) * alpha;
+        let lh_10 = beta * alpha;
+        let lh_01 = beta * (1.0 - beta);
+        let lh_11 = beta * (1.0 - beta);
+
+        let joint_00 = lh_00 * (1.0 - p).powf(2.0);
+        let joint_10 = lh_10 * p * (1.0 - p);
+        let joint_01 = lh_01 * p * (1.0 - p);
+        let joint_11 = lh_11 * p.powf(2.0);
+
+        let z = joint_00 + joint_10 + joint_01 + joint_11;
+
+        let post_t0 = (joint_10 + joint_11) / z;
+        let post_t1 = (joint_01 + joint_11) / z;
+
+        test_network(
+            &observations,
+            &state_to_observations,
+            p,
+            alpha,
+            beta,
+            vec![post_t0, post_t1],
+        );
     }
 }
