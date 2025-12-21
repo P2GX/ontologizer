@@ -3,7 +3,7 @@ use indexmap::IndexMap;
 
 use super::results::{AnalysisResults, GOTermResult, get_term_aspect};
 use crate::core::AnnotationIndex;
-use crate::core::{GeneSet};
+use crate::core::GeneSet;
 use crate::frequentist::PValueCalculation;
 use ontolius::{
     TermId,

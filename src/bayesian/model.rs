@@ -237,11 +237,15 @@ where
         }
     }
 
-    fn revert_cache(&self, cache: &mut Self::Cache, state: &Self::State, m: &<Self::State as State>::Move) {
+    fn revert_cache(
+        &self,
+        cache: &mut Self::Cache,
+        state: &Self::State,
+        m: &<Self::State as State>::Move,
+    ) {
         self.update_cache(cache, state, m);
     }
-    
-    
+
     // Log probability P(O | T) to find an observed Gene configuration given a Terms configuration.
     fn log_likelihood(&self, cache: &OrCache) -> f64 {
         (cache.n_true_pos as f64) * (1. - self.beta).ln()
