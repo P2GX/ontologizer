@@ -17,8 +17,8 @@ path = "bin/main.rs"
 required-features = ["cli"]
 
 [features]
-default = []   # Do not enable CLI by default
-cli = ["dep:clap"]  # Enable clap only when the CLI feature is enabled
+default = ["cli"]
+cli = ["clap"]  # Enable clap when the CLI feature is enabled
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
