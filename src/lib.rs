@@ -3,6 +3,6 @@
 //! Lots of good documentation
 //!
 //!
-mod bayesian;
-mod core;
+pub mod bayesian;
+pub mod core;
 pub mod frequentist;

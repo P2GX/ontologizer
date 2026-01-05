@@ -4,7 +4,6 @@ mod test {
     use crate::bayesian::model::OrModel;
     use crate::bayesian::proposer::{UniformProposer, UniformToggleProposer};
     use crate::bayesian::recorder::Frequency;
-    use ontolius::TermId;
 
     use crate::bayesian::state::MgsaState;
     use crate::core::{AnnotationIndex, Ontologizer, load_gene_set};
@@ -47,10 +46,10 @@ mod test {
 
     #[test]
     fn test_mgsa() {
-        let go_path = "tests/data/go-basic.json";
-        let gaf_path = "tests/data/goa_human.gaf";
-        let study_set_path = "tests/data/study.txt";
-        let pop_set_path = "tests/data/population.txt";
+        let go_path = "tests/data/GO/go-basic.json";
+        let gaf_path = "tests/data/GO/goa_human.gaf";
+        let study_set_path = "tests/data/GO:none/study.txt";
+        let pop_set_path = "tests/data/GO:none/population.txt";
 
         // Load the population and study gene sets
         let obs_gene_symbols =
@@ -116,8 +115,8 @@ mod test {
 
     #[test]
     fn test_specific_term() {
-        let go_path = "tests/data/go-basic.json";
-        let gaf_path = "tests/data/goa_human.gaf";
+        let go_path = "tests/data/GO/go-basic.json";
+        let gaf_path = "tests/data/GO/goa_human.gaf";
         let study_set_path = "tests/data/GO:0090717/study.txt";
         let pop_set_path = "tests/data/GO:0090717/population.txt";
 
