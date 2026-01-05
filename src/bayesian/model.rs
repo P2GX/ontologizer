@@ -90,15 +90,16 @@ impl<S> OrModel<S> {
         }
     }
 
-    fn update_toggle(&self, cache: &mut OrCache, term_idx: usize, enable: bool) {
+    fn update_toggle(&self, cache: &mut OrCache, term_idx: usize, is_enabled: bool) {
         if let Some(genes) = self.terms_to_genes.get(term_idx) {
             for &g in genes {
-                if enable {
+                if is_enabled {
                     // Turning ON: Latent count increases
                     // n_tp: Model = 1 | Observed = 1
                     // n_fp: Model = 0 | Observed = 1
                     // n_tn: Model = 0 | Observed = 0
                     // n_fn: Model = 1 | Observed = 0
+
                     // Critical transition: 0 -> 1 (Gene becomes Predicted True)
                     if cache.latent[g] == 0 {
                         // Model 0 -> 1
@@ -132,7 +133,14 @@ impl<S> OrModel<S> {
                             cache.n_true_neg += 1;
                         }
                     }
-                    cache.latent[g] -= 1;
+                    if cache.latent[g] > 0 {
+                        cache.latent[g] -= 1;
+                    } else {
+                        panic!(
+                            "Latent underflow detected for gene {}! State/Cache desync.",
+                            g
+                        );
+                    }
                 }
             }
         }
@@ -225,14 +233,14 @@ where
         }
     }
 
-    fn update_cache(&self, cache: &mut Self::Cache, state: &Self::State, m: &ToggleSwap) {
+    fn update_cache(&self, cache: &mut Self::Cache, updated_state: &Self::State, m: &ToggleSwap) {
         match *m {
             Toggle(i) => {
-                self.update_toggle(cache, i, state.get(i));
+                self.update_toggle(cache, i, updated_state.get(i));
             }
             Swap(i, j) => {
-                self.update_toggle(cache, i, state.get(i));
-                self.update_toggle(cache, j, state.get(j));
+                self.update_toggle(cache, i, updated_state.get(i));
+                self.update_toggle(cache, j, updated_state.get(j));
             }
         }
     }

@@ -88,3 +88,37 @@ where
         }
     }
 }
+
+pub struct UniformToggleProposer;
+impl UniformToggleProposer {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl<S> Proposer<S> for UniformToggleProposer
+where
+    S: BinaryParameterState<Move = ToggleSwap, Value = bool>,
+{
+    /// Draw a random number representing the index to all possible toggles and swaps and propose
+    /// the corresponding toggle or swap.
+    fn propose<R: Rng>(&self, state: &S, rng: &mut R) -> S::Move {
+        // Every possible state transition is equally likely.
+        let n = state.n_all();
+
+        let x = rng.random_range(0..n);
+
+        Toggle(x)
+    }
+
+    fn log_proposal(&self, state: &S) -> f64 {
+        let n = state.n_all();
+
+        -(n as f64).ln() // It is log(1/n)
+    }
+
+    ///
+    fn log_proposal_ratio(&self, state: &S, m: &S::Move) -> Option<f64> {
+        Some(0.0)
+    }
+}

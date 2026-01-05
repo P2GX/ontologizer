@@ -16,6 +16,7 @@ pub trait Recorder<S: State> {
 
 pub struct Count {
     counts: Vec<usize>,
+    swaps: Vec<usize>,
     active_since: Vec<Option<usize>>,
 }
 
@@ -25,6 +26,7 @@ impl Count {
     }
 
     fn toggle_term(&mut self, idx: usize, step: usize) {
+        self.swaps[idx] += 1;
         match self.active_since[idx] {
             Some(start) => {
                 // Was ON, turning OFF. Record the duration.
@@ -55,6 +57,7 @@ where
 
         Self {
             counts: vec![0; n],
+            swaps: vec![0; n],
             active_since,
         }
     }
@@ -80,7 +83,19 @@ where
 
 impl Measure for Count {
     fn scores(&self) -> impl Iterator<Item = f64> {
-        self.counts.iter().map(|&c| c as f64)
+        self.counts.iter().map(|&x| x as f64)
+    }
+
+    fn diagnostics(&self) -> impl Iterator<Item = Option<String>> {
+        self.swaps.iter().map(|&x| Some(x.to_string()))
+    }
+
+    fn get_score(&self, i: usize) -> f64 {
+        self.counts[i] as f64
+    }
+
+    fn get_diagnostics(&self, i: usize) -> Option<f64> {
+        Some(self.swaps[i] as f64)
     }
 }
 
@@ -93,9 +108,9 @@ impl<S> Recorder<S> for Frequency
 where
     S: BinaryParameterState<Move = ToggleSwap>,
 {
+    // Largely similar and delegated to `Count`.
     fn initialize(state: &S) -> Self {
         Self {
-            // "Inherit" initialization logic
             counter: Count::initialize(state),
             frequencies: Vec::new(),
         }
@@ -121,5 +136,18 @@ where
 impl Measure for Frequency {
     fn scores(&self) -> impl Iterator<Item = f64> {
         self.frequencies.iter().map(|&f| f as f64)
+    }
+
+    fn diagnostics(&self) -> impl Iterator<Item = Option<String>> {
+        // Delegate to the counter for swap/toggle info
+        self.counter.swaps.iter().map(|&x| Some(x.to_string()))
+    }
+
+    fn get_score(&self, i: usize) -> f64 {
+        self.frequencies[i]
+    }
+
+    fn get_diagnostics(&self, i: usize) -> Option<f64> {
+        Some(self.counter.swaps[i] as f64)
     }
 }

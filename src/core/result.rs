@@ -21,6 +21,12 @@ pub trait AnalysisResult {
 pub trait Measure {
     /// Returns an iterator over the score for each term.
     fn scores(&self) -> impl Iterator<Item = f64>;
+
+    fn diagnostics(&self) -> impl Iterator<Item = Option<String>>;
+
+    fn get_score(&self, i: usize) -> f64;
+
+    fn get_diagnostics(&self, i: usize) -> Option<f64>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,6 +44,10 @@ pub struct EnrichmentItem {
     /// Genes from the study set annotated to this term
     #[serde(rename = "Associated Genes", serialize_with = "serialize_genes")]
     pub associated_genes: Vec<String>,
+
+    /// Arbitrary additional info
+    #[serde(rename = "Diagnostics", skip_serializing_if = "Option::is_none")]
+    pub diagnostics: Option<String>,
 }
 
 fn serialize_genes<S>(genes: &Vec<String>, serializer: S) -> Result<S::Ok, S::Error>
@@ -69,10 +79,11 @@ impl BayesianResult {
     ) -> Self {
         let mut items = Vec::new();
 
-        for ((measure, term_id), gene_indices) in measures
+        for (((score, term_id), gene_indices), diagnostics) in measures
             .scores()
             .zip(term_map.iter())
             .zip(terms_to_genes.iter())
+            .zip(measures.diagnostics())
         {
             let label = ontology
                 .term_by_id(term_id)
@@ -88,8 +99,9 @@ impl BayesianResult {
             items.push(EnrichmentItem {
                 id: term_id.to_string(),
                 label,
-                score: measure,
+                score,
                 associated_genes: gene_symbols,
+                diagnostics,
             })
         }
 

@@ -8,8 +8,8 @@ use ontolius::{
     ontology::{HierarchyWalks, csr::FullCsrOntology},
 };
 
-use indexmap::{IndexMap, IndexSet};
-use std::collections::HashSet;
+use indexmap::IndexSet;
+use std::collections::{HashMap, HashSet};
 
 // Contains all GO annotations and provides methods to build annotation maps specific to the study and population sets.
 pub struct AnnotationIndex {
@@ -33,7 +33,11 @@ pub struct AnnotationIndex {
 }
 
 impl AnnotationIndex {
-    pub fn new(gaf_path: &str, go: &FullCsrOntology, pop_genes: &HashSet<GeneSymbol>) -> Self {
+    pub fn new(
+        gaf_path: &str,
+        go: &FullCsrOntology,
+        pop_genes: Option<&HashSet<GeneSymbol>>,
+    ) -> Self {
         // 1. Load Annotations
         let loader = GoGafAnnotationLoader;
         let annotations = loader
@@ -44,21 +48,28 @@ impl AnnotationIndex {
         let raw_gene_to_term_sparse = get_annotation_map(&annotations);
 
         // 3. Restrict to Population Gene Set
-        let mut named_gene_to_term_sparse: IndexMap<GeneSymbol, HashSet<TermId>> = IndexMap::new();
-        for gene in pop_genes {
-            if let Some(terms) = raw_gene_to_term_sparse.get(gene) {
-                // Case 1: Gene is in population AND has annotations
-                named_gene_to_term_sparse.insert(gene.clone(), terms.clone());
-            } else {
-                // Case 2: Gene is in population but has NO annotations (True Negative)
-                named_gene_to_term_sparse.insert(gene.clone(), HashSet::new());
+        let named_gene_to_term_sparse: HashMap<GeneSymbol, HashSet<TermId>> = match pop_genes {
+            Some(pop) => {
+                let mut filtered_map = HashMap::new();
+                for gene in pop {
+                    // Check if gene exists in annotations. If so, create an entry with
+                    // key = GeneSymbol and value=Term list (cloned). If not, not create entry with
+                    // an empty term list.
+                    let terms = raw_gene_to_term_sparse
+                        .get(gene)
+                        .cloned()
+                        .unwrap_or_default();
+                    filtered_map.insert(gene.clone(), terms);
+                }
+                filtered_map
             }
-        }
+            None => raw_gene_to_term_sparse,
+        };
 
         // 4. Build all other Maps
-        let mut named_term_to_gene_sparse: IndexMap<TermId, HashSet<GeneSymbol>> = IndexMap::new();
-        let mut named_gene_to_term_dense: IndexMap<GeneSymbol, HashSet<TermId>> = IndexMap::new();
-        let mut named_term_to_gene_dense: IndexMap<TermId, HashSet<GeneSymbol>> = IndexMap::new();
+        let mut named_term_to_gene_sparse: HashMap<TermId, HashSet<GeneSymbol>> = HashMap::new();
+        let mut named_gene_to_term_dense: HashMap<GeneSymbol, HashSet<TermId>> = HashMap::new();
+        let mut named_term_to_gene_dense: HashMap<TermId, HashSet<GeneSymbol>> = HashMap::new();
 
         for (gene_sym, direct_terms) in &named_gene_to_term_sparse {
             // Ensure gene exists in dense map even if it has no terms (unlikely)
@@ -148,10 +159,10 @@ impl AnnotationIndex {
             annotations,
             term_map,
             gene_map,
-            term_to_gene_sparse,
             gene_to_term_sparse,
-            term_to_gene_dense,
+            term_to_gene_sparse,
             gene_to_term_dense,
+            term_to_gene_dense,
         }
     }
 

@@ -93,36 +93,43 @@ where
     where
         R: Recorder<M::State>,
     {
-        let mut result = R::initialize(&state);
-
-        let mut cache = self.model.create_cache(state);
-
         let mut rng = rand::rng();
 
-        let n_max = self.burn_in + self.iterations;
-        for i in 0..n_max {
+        // ------ TRANSIENT ------
+        let mut cache = self.model.create_cache(state);
+        for _ in 0..self.burn_in {
             let m = self.proposer.propose(state, &mut rng);
-
             let log_q_ratio = self.get_log_proposal_ratio(state, &m);
-
             let log_p_ratio = self.get_log_prior_ratio(state, &m);
-
             let log_l_ratio = self.get_log_likelihood_ratio(state, &mut cache, &m);
-
             let log_accept = log_l_ratio + log_p_ratio - log_q_ratio;
 
             let x: f64 = rng.random_range(0.0..1.0);
-            let log_x = x.ln();
-            if log_accept >= 0.0 || log_x < log_accept {
+            let accept = log_accept >= 0.0 || x.ln() < log_accept;
+            if accept {
                 state.apply(&m);
                 self.model.update_cache(&mut cache, state, &m);
-
-                if i >= self.burn_in {
-                    result.record(&m, i);
-                }
             }
         }
-        result.finalize(n_max);
+
+        // ------ (HOPEFULLY) STATIONARY ------
+        let mut result = R::initialize(&state);
+        for i in 0..self.iterations {
+            let m = self.proposer.propose(state, &mut rng);
+            let log_q_ratio = self.get_log_proposal_ratio(state, &m);
+            let log_p_ratio = self.get_log_prior_ratio(state, &m);
+            let log_l_ratio = self.get_log_likelihood_ratio(state, &mut cache, &m);
+            let log_accept = log_l_ratio + log_p_ratio - log_q_ratio;
+
+            let x: f64 = rng.random_range(0.0..1.0);
+            let accept = log_accept >= 0.0 || x.ln() < log_accept;
+            if accept {
+                state.apply(&m);
+                self.model.update_cache(&mut cache, state, &m);
+                result.record(&m, i);
+            }
+        }
+        result.finalize(self.iterations);
         result
     }
 }

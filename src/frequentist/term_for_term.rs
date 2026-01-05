@@ -121,7 +121,7 @@ mod test {
             load_gene_set(pop_set_path).expect("Failed to parse population gene set");
 
         // Load the GOA annotations
-        let annotation_index = AnnotationIndex::new(gaf_path, go_ref, &pop_gene_symbols);
+        let annotation_index = AnnotationIndex::new(gaf_path, go_ref, Some(&pop_gene_symbols));
         let annotated_genes = get_annotation_map(&annotation_index.annotations)
             .into_keys()
             .collect();
