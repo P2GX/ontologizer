@@ -9,19 +9,17 @@ use std::{
 };
 
 // Tuple struct for gene symbols that ensure normalization (uppercase, trimmed, no comments)
-pub type GeneSymbol = String;
-
 #[derive(Debug)]
 pub struct GeneSet {
-    recognized: HashSet<GeneSymbol>,
-    unrecognized: HashSet<GeneSymbol>,
+    recognized: HashSet<String>,
+    unrecognized: HashSet<String>,
 }
 
 impl GeneSet {
-    pub fn recognized_genes(&self) -> &HashSet<GeneSymbol> {
+    pub fn recognized_genes(&self) -> &HashSet<String> {
         &self.recognized
     }
-    pub fn unrecognized_genes(&self) -> &HashSet<GeneSymbol> {
+    pub fn unrecognized_genes(&self) -> &HashSet<String> {
         &self.unrecognized
     }
     pub fn gene_count(&self) -> usize {
@@ -30,12 +28,12 @@ impl GeneSet {
 }
 
 // Loads gene symbols from a text file. Each line in the file should contain a single gene symbol.
-pub fn load_gene_set(path: &str) -> Result<HashSet<GeneSymbol>, String> {
+pub fn load_gene_set(path: &str) -> Result<HashSet<String>, String> {
     let file =
         File::open(path).map_err(|err| format!("Failed to open file '{}': {}", path, err))?;
     let reader = BufReader::new(file);
 
-    let mut genes: HashSet<GeneSymbol> = HashSet::new();
+    let mut genes: HashSet<String> = HashSet::new();
 
     for (i, line) in reader.lines().enumerate() {
         let line = line.map_err(|err| format!("Failed to read line {}: {}", i + 1, err))?;
@@ -48,11 +46,11 @@ pub fn load_gene_set(path: &str) -> Result<HashSet<GeneSymbol>, String> {
 }
 
 pub fn separate_gene_set(
-    annotated_genes: &HashSet<GeneSymbol>,
-    genes: HashSet<GeneSymbol>,
+    annotated_genes: &HashSet<String>,
+    genes: HashSet<String>,
 ) -> GeneSet {
-    let mut recognized: HashSet<GeneSymbol> = HashSet::new();
-    let mut unrecognized: HashSet<GeneSymbol> = HashSet::new();
+    let mut recognized: HashSet<String> = HashSet::new();
+    let mut unrecognized: HashSet<String> = HashSet::new();
 
     for sym in genes {
         if annotated_genes.contains(sym.as_str()) {

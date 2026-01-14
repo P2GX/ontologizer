@@ -1,10 +1,8 @@
 mod annotations;
 mod geneset;
-mod ontology;
 pub(crate) mod result;
+mod problem;
 
-pub use geneset::{GeneSet, GeneSymbol, load_gene_set, separate_gene_set};
+pub use geneset::{GeneSet, load_gene_set, separate_gene_set};
 
 pub use annotations::AnnotationIndex;
-
-pub use ontology::Ontologizer;

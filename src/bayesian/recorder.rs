@@ -14,15 +14,17 @@ pub trait Recorder<S: State> {
     fn finalize(&mut self, final_step: usize);
 }
 
-pub struct Count {
+pub struct Probability {
     counts: Vec<usize>,
     swaps: Vec<usize>,
     active_since: Vec<Option<usize>>,
+
+    pub probabilities: Vec<f64>,
 }
 
-impl Count {
-    pub fn iter(&self) -> std::slice::Iter<usize> {
-        self.counts.iter()
+impl Probability {
+    pub fn iter(&self) -> std::slice::Iter<f64> {
+        self.probabilities.iter()
     }
 
     fn toggle_term(&mut self, idx: usize, step: usize) {
@@ -41,7 +43,7 @@ impl Count {
     }
 }
 
-impl<S> Recorder<S> for Count
+impl<S> Recorder<S> for Probability
 where
     S: BinaryParameterState<Move = ToggleSwap>,
 {
@@ -59,6 +61,7 @@ where
             counts: vec![0; n],
             swaps: vec![0; n],
             active_since,
+            probabilities : vec![0.; n],
         }
     }
 
@@ -77,13 +80,14 @@ where
             if let Some(start) = start_opt {
                 self.counts[i] += final_step - start;
             }
+            self.probabilities[i] = self.counts[i] as f64 / final_step as f64;
         }
     }
 }
 
-impl Measure for Count {
+impl Measure for Probability {
     fn scores(&self) -> impl Iterator<Item = f64> {
-        self.counts.iter().map(|&x| x as f64)
+        self.probabilities.iter().map(|&x| x as f64)
     }
 
     fn diagnostics(&self) -> impl Iterator<Item = Option<String>> {
@@ -91,63 +95,10 @@ impl Measure for Count {
     }
 
     fn get_score(&self, i: usize) -> f64 {
-        self.counts[i] as f64
+        self.probabilities[i] as f64
     }
 
     fn get_diagnostics(&self, i: usize) -> Option<f64> {
         Some(self.swaps[i] as f64)
-    }
-}
-
-pub struct Frequency {
-    counter: Count,
-    pub frequencies: Vec<f64>,
-}
-
-impl<S> Recorder<S> for Frequency
-where
-    S: BinaryParameterState<Move = ToggleSwap>,
-{
-    // Largely similar and delegated to `Count`.
-    fn initialize(state: &S) -> Self {
-        Self {
-            counter: Count::initialize(state),
-            frequencies: Vec::new(),
-        }
-    }
-
-    fn record(&mut self, m: &S::Move, step: usize) {
-        Recorder::<S>::record(&mut self.counter, m, step);
-    }
-
-    fn finalize(&mut self, final_step: usize) {
-        Recorder::<S>::finalize(&mut self.counter, final_step);
-
-        let total = final_step as f64;
-        self.frequencies = self
-            .counter
-            .counts
-            .iter()
-            .map(|&c| c as f64 / total)
-            .collect();
-    }
-}
-
-impl Measure for Frequency {
-    fn scores(&self) -> impl Iterator<Item = f64> {
-        self.frequencies.iter().map(|&f| f as f64)
-    }
-
-    fn diagnostics(&self) -> impl Iterator<Item = Option<String>> {
-        // Delegate to the counter for swap/toggle info
-        self.counter.swaps.iter().map(|&x| Some(x.to_string()))
-    }
-
-    fn get_score(&self, i: usize) -> f64 {
-        self.frequencies[i]
-    }
-
-    fn get_diagnostics(&self, i: usize) -> Option<f64> {
-        Some(self.counter.swaps[i] as f64)
     }
 }

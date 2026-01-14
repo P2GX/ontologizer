@@ -1,22 +1,10 @@
-use crate::core::GeneSymbol;
 use indexmap::IndexSet;
 use ontolius::TermId;
 use ontolius::ontology::OntologyTerms;
 use ontolius::ontology::csr::FullCsrOntology;
-use ontolius::term::MinimalTerm;
 use serde::{Deserialize, Serialize, Serializer};
 use std::collections::HashMap;
-
-pub trait AnalysisResult {
-    /// Returns the main table of results.
-    fn items(&self) -> &[EnrichmentItem];
-
-    /// Returns metadata about the run (e.g., "p=0.5", "alpha=0.1", "Correction=FDR").
-    fn parameters(&self) -> HashMap<String, String>;
-
-    /// Helper to sort results by score (descending for Prob, ascending for P-val).
-    fn sort_by_score(&mut self, descending: bool);
-}
+use ontolius::term::MinimalTerm;
 
 pub trait Measure {
     /// Returns an iterator over the score for each term.
@@ -28,6 +16,7 @@ pub trait Measure {
 
     fn get_diagnostics(&self, i: usize) -> Option<f64>;
 }
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnrichmentItem {
@@ -59,17 +48,17 @@ where
 }
 
 #[derive(Serialize)]
-pub struct BayesianResult {
-    parameters: HashMap<String, String>,
-    items: Vec<EnrichmentItem>,
+pub struct EnrichmentResult {
+    pub parameters: HashMap<String, String>,
+    pub items: Vec<EnrichmentItem>,
 }
 
-impl BayesianResult {
-    pub fn from_counts<M: Measure>(
+impl EnrichmentResult {
+    pub fn from_measure<M: Measure>(
         measures: &M,
         ontology: &FullCsrOntology,
         term_map: &IndexSet<TermId>,
-        gene_map: &IndexSet<GeneSymbol>,
+        gene_map: &IndexSet<String>,
         observed_genes: &Vec<bool>,
         terms_to_genes: &Vec<Vec<usize>>,
         // Metadata
@@ -110,23 +99,14 @@ impl BayesianResult {
         params.insert("alpha".to_string(), alpha.to_string());
         params.insert("beta".to_string(), beta.to_string());
 
-        BayesianResult {
+        EnrichmentResult {
             parameters: params,
             items,
         }
     }
-}
 
-impl AnalysisResult for BayesianResult {
-    fn items(&self) -> &[EnrichmentItem] {
-        &self.items
-    }
 
-    fn parameters(&self) -> HashMap<String, String> {
-        self.parameters.clone()
-    }
-
-    fn sort_by_score(&mut self, descending: bool) {
+    pub fn sort_by_score(&mut self, descending: bool) {
         if descending {
             self.items
                 .sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());

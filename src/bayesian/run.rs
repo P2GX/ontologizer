@@ -3,13 +3,18 @@ mod test {
     use crate::bayesian::algorithm::{Algorithm, MetropolisHasting};
     use crate::bayesian::model::OrModel;
     use crate::bayesian::proposer::{UniformProposer, UniformToggleProposer};
-    use crate::bayesian::recorder::Frequency;
+    use crate::bayesian::recorder::Probability;
+    use std::process;
 
     use crate::bayesian::state::MgsaState;
-    use crate::core::{AnnotationIndex, Ontologizer, load_gene_set};
+    use crate::core::{AnnotationIndex, load_gene_set};
 
-    use crate::core::result::{AnalysisResult, BayesianResult};
+    use crate::core::result::EnrichmentResult;
     use csv::Writer;
+    use oboannotation::go::{GoAnnotations, GoGafAnnotationLoader};
+    use oboannotation::io::AnnotationLoader;
+    use ontolius::io::OntologyLoaderBuilder;
+    use ontolius::ontology::csr::FullCsrOntology;
 
     fn approx_equal(a: f64, b: f64, epsilon: f64) -> bool {
         (a - b).abs() < epsilon
@@ -36,10 +41,10 @@ mod test {
         let proposer = UniformToggleProposer::new();
         let mut algorithm = MetropolisHasting::new(model, proposer, 10_000, 0);
 
-        let measure: Frequency = algorithm.sample(&mut state);
-        println! {"{:?}", measure.frequencies}
+        let measure: Probability = algorithm.sample(&mut state);
+        println! {"{:?}", measure.probabilities}
 
-        for (&sim, theo) in measure.frequencies.iter().zip(posterior) {
+        for (&sim, theo) in measure.probabilities.iter().zip(posterior) {
             assert!(approx_equal(sim, theo, 0.05));
         }
     }
@@ -48,31 +53,41 @@ mod test {
     fn test_mgsa() {
         let go_path = "tests/data/GO/go-basic.json";
         let gaf_path = "tests/data/GO/goa_human.gaf";
-        let study_set_path = "tests/data/GO:none/study.txt";
-        let pop_set_path = "tests/data/GO:none/population.txt";
+        let study_set_path = "tests/data/GOnone/study.txt";
+        let pop_set_path = "tests/data/GOnone/population.txt";
 
         // Load the population and study gene sets
-        let obs_gene_symbols =
-            load_gene_set(study_set_path).expect("Failed to parse study gene set");
-        let pop_gene_symbols =
-            load_gene_set(pop_set_path).expect("Failed to parse population gene set");
+        let study_genes = load_gene_set(study_set_path).expect("Failed to parse study genes");
+        let population_genes =
+            load_gene_set(pop_set_path).expect("Failed to parse population genes");
 
-        // Load the GO ontology
-        let go = Ontologizer::new(go_path);
-        let go_ref = go.ontology();
+        // ------ Load Gene Ontology and Annotations ------
+        let ontology_loader = OntologyLoaderBuilder::new().obographs_parser().build();
+        let ontology: FullCsrOntology =
+            ontology_loader
+                .load_from_path(go_path)
+                .unwrap_or_else(|err| {
+                    eprintln!("Error: {}", err);
+                    process::exit(1);
+                });
 
-        // Build the AnnotationIndex restricted to Population Gene Set.
-        let annotations = AnnotationIndex::new(gaf_path, go_ref, Some(&pop_gene_symbols));
+        let annotations_loader = GoGafAnnotationLoader;
+        let annotations: GoAnnotations = annotations_loader
+            .load_from_path(gaf_path)
+            .expect("Could not load GAF file");
+
+        let annotation_index =
+            AnnotationIndex::new(annotations, &ontology, Some(&population_genes));
 
         // MGSA Parameter
         let p = 0.01;
         let alpha = 0.05;
         let beta = 0.10;
 
-        let terms_to_genes = annotations.get_terms_to_genes(true);
-        let n_genes = annotations.genes().len();
+        let terms_to_genes = annotation_index.get_terms_to_genes(true);
+        let n_genes = annotation_index.genes().len();
         let observed_genes: Vec<bool> = (0..n_genes)
-            .map(|i| obs_gene_symbols.contains(annotations.get_index_gene(i)))
+            .map(|i| study_genes.contains(annotation_index.get_index_gene(i)))
             .collect();
 
         let model = OrModel::new(
@@ -88,14 +103,14 @@ mod test {
         let proposer = UniformToggleProposer::new();
         let mut algorithm = MetropolisHasting::new(model, proposer, 50_000_000, 1_000_000);
 
-        let measure: Frequency = algorithm.sample(&mut state);
+        let measure: Probability = algorithm.sample(&mut state);
 
         // Create the Result (Eagerly resolves all strings)
-        let mut result = BayesianResult::from_counts(
+        let mut result = EnrichmentResult::from_measure(
             &measure,
-            &go_ref,
-            annotations.terms(),
-            annotations.genes(),
+            &ontology,
+            annotation_index.terms(),
+            annotation_index.genes(),
             &observed_genes,
             &terms_to_genes,
             p,
@@ -108,7 +123,7 @@ mod test {
 
         // Serialize to CSV
         let mut wtr = Writer::from_path("results.csv").unwrap();
-        for item in result.items() {
+        for item in result.items {
             wtr.serialize(item).unwrap();
         }
     }
@@ -117,46 +132,35 @@ mod test {
     fn test_specific_term() {
         let go_path = "tests/data/GO/go-basic.json";
         let gaf_path = "tests/data/GO/goa_human.gaf";
-        let study_set_path = "tests/data/GO:0090717/study.txt";
-        let pop_set_path = "tests/data/GO:0090717/population.txt";
+        let study_set_path = "tests/data/GO0090717/study.txt";
+        let pop_set_path = "tests/data/GO0090717/population.txt";
 
         // Load the population and study gene sets
-        let obs_gene_symbols =
-            load_gene_set(study_set_path).expect("Failed to parse study gene set");
-        let pop_gene_symbols = load_gene_set(pop_set_path).expect("Failed to parse study gene set");
+        let study_genes = load_gene_set(study_set_path).expect("Failed to parse study gene set");
+        let population_genes = load_gene_set(pop_set_path).expect("Failed to parse study gene set");
 
-        let go = Ontologizer::new(go_path);
-        let go_ref = go.ontology();
+        // ------ Load Gene Ontology and Annotations ------
+        let ontology_loader = OntologyLoaderBuilder::new().obographs_parser().build();
+        let ontology: FullCsrOntology =
+            ontology_loader
+                .load_from_path(go_path)
+                .unwrap_or_else(|err| {
+                    eprintln!("Error: {}", err);
+                    process::exit(1);
+                });
 
-        let annotations = AnnotationIndex::new(gaf_path, go_ref, Some(&pop_gene_symbols));
-        let terms_to_genes = annotations.get_terms_to_genes(true);
+        let annotations_loader = GoGafAnnotationLoader;
+        let annotations: GoAnnotations = annotations_loader
+            .load_from_path(gaf_path)
+            .expect("Could not load GAF file");
 
-        /*let term_1: TermId = "GO:0002250".parse().expect("value is a valid CURIE");
-        let term_2: TermId = "GO:0090717".parse().expect("value is a valid CURIE");
+        let annotation_index =
+            AnnotationIndex::new(annotations, &ontology, Some(&population_genes));
+        let terms_to_genes = annotation_index.get_terms_to_genes(true);
 
-        let term_1_index = annotations.terms().get_index_of(&term_1).unwrap();
-        let term_2_index = annotations.terms().get_index_of(&term_2).unwrap();
-
-        let gene_indices_for_term1 = terms_to_genes.get(term_1_index).unwrap();
-        let gene_indices_for_term2 = terms_to_genes.get(term_2_index).unwrap();
-
-        let mut genes_for_term1 = Vec::new();
-        let mut genes_for_term2 = Vec::new();
-        for &g_index in gene_indices_for_term1{
-            let gene = annotations.genes().get_index(g_index).unwrap();
-            genes_for_term1.push(gene);
-            println!("{:?}", gene)
-        }
-
-        for &g_index in gene_indices_for_term2{
-            let gene = annotations.genes().get_index(g_index).unwrap();
-            genes_for_term2.push(gene);
-            println!("{:?}", gene)
-        }*/
-
-        let n_genes = annotations.genes().len();
+        let n_genes = annotation_index.genes().len();
         let observed_genes: Vec<bool> = (0..n_genes)
-            .map(|i| obs_gene_symbols.contains(annotations.get_index_gene(i)))
+            .map(|i| study_genes.contains(annotation_index.get_index_gene(i)))
             .collect();
 
         let p = 0.01;
@@ -175,13 +179,13 @@ mod test {
         let proposer = UniformToggleProposer::new();
         let mut algorithm = MetropolisHasting::new(model, proposer, 5_000_000, 1_000_000);
 
-        let measure: Frequency = algorithm.sample(&mut state);
+        let measure: Probability = algorithm.sample(&mut state);
 
-        let mut result = BayesianResult::from_counts(
+        let mut result = EnrichmentResult::from_measure(
             &measure,
-            &go_ref,
-            annotations.terms(),
-            annotations.genes(),
+            &ontology,
+            annotation_index.terms(),
+            annotation_index.genes(),
             &observed_genes,
             &terms_to_genes,
             p,
@@ -193,8 +197,8 @@ mod test {
         result.sort_by_score(true); // descending for probability
 
         // Serialize to CSV
-        let mut wtr = Writer::from_path("tests/data/GO:0090717/results.csv").unwrap();
-        for item in result.items() {
+        let mut wtr = Writer::from_path("tests/data/GO0090717/results.csv").unwrap();
+        for item in result.items {
             wtr.serialize(item).unwrap();
         }
     }
@@ -235,7 +239,7 @@ mod test {
         let proposer = UniformProposer::new();
         let mut algorithm = MetropolisHasting::new(model, proposer, 500_000, 100_000);
 
-        let measure: Frequency = algorithm.sample(&mut state);
+        let measure: Probability = algorithm.sample(&mut state);
 
         let n_background = n - 1; // 49
 
@@ -297,10 +301,10 @@ mod test {
         // P(tk=1 | o) = P(S=1 | o) * p / P(S=1)
         let prob_tk = prob_s * (p / p_s_1);
 
-        println!("{:?} {:?}", prob_t1, measure.frequencies[0]);
-        println!("{:?} {:?}", prob_tk, measure.frequencies[1]);
-        assert!(approx_equal(prob_t1, measure.frequencies[0], 0.05));
-        assert!(approx_equal(prob_tk, measure.frequencies[1], 0.05));
+        println!("{:?} {:?}", prob_t1, measure.probabilities[0]);
+        println!("{:?} {:?}", prob_tk, measure.probabilities[1]);
+        assert!(approx_equal(prob_t1, measure.probabilities[0], 0.05));
+        assert!(approx_equal(prob_tk, measure.probabilities[1], 0.05));
     }
 
     #[test]
@@ -331,10 +335,10 @@ mod test {
         let proposer = UniformProposer::new();
         let mut algorithm = MetropolisHasting::new(model, proposer, 10_000, 0);
 
-        let measure: Frequency = algorithm.sample(&mut state);
-        println! {"{:?}", measure.frequencies}
-        assert!(measure.frequencies[0] > measure.frequencies[1]);
-        assert!(measure.frequencies[1] > measure.frequencies[2]);
+        let measure: Probability = algorithm.sample(&mut state);
+        println! {"{:?}", measure.probabilities}
+        assert!(measure.probabilities[0] > measure.probabilities[1]);
+        assert!(measure.probabilities[1] > measure.probabilities[2]);
     }
 
     #[test]
