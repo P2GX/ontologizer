@@ -27,7 +27,7 @@ cargo run --features cli --bin rpt
 ```bash
 cargo doc --document-private-items --open
 ```
-
+## Structure
 ```mermaid
 graph TD;
     %% --- Define specific styles for clarity ---
