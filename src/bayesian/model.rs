@@ -90,7 +90,7 @@ impl<S> OrModel<S> {
         }
     }
 
-    fn update_toggle(&self, cache: &mut OrCache, term_idx: usize, is_enabled: bool) {
+    fn update_cache_for_toggle(&self, cache: &mut OrCache, term_idx: usize, is_enabled: bool) {
         if let Some(genes) = self.terms_to_genes.get(term_idx) {
             for &g in genes {
                 if is_enabled {
@@ -236,11 +236,11 @@ where
     fn update_cache(&self, cache: &mut Self::Cache, updated_state: &Self::State, m: &ToggleSwap) {
         match *m {
             Toggle(i) => {
-                self.update_toggle(cache, i, updated_state.get(i));
+                self.update_cache_for_toggle(cache, i, updated_state.get(i));
             }
             Swap(i, j) => {
-                self.update_toggle(cache, i, updated_state.get(i));
-                self.update_toggle(cache, j, updated_state.get(j));
+                self.update_cache_for_toggle(cache, i, updated_state.get(i));
+                self.update_cache_for_toggle(cache, j, updated_state.get(j));
             }
         }
     }
