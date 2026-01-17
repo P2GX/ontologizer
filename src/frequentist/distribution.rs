@@ -11,17 +11,17 @@ pub trait DiscreteDistribution {
 
 use std::cmp::{max, min};
 
-pub struct LogFactorialCache{
+pub struct LogFactorialCache {
     log_factorials: Vec<f64>,
 }
 
 impl LogFactorialCache {
-    pub fn new(max_n : usize) -> Self {
+    pub fn new(max_n: usize) -> Self {
         let mut log_facts = vec![];
         log_facts.push(0.0); // log(0!)
 
         let mut current = 0.0;
-        for i in 1..=max_n{
+        for i in 1..=max_n {
             current += (i as f64).ln();
             log_facts.push(current);
         }
@@ -59,14 +59,16 @@ pub struct Hypergeometric<'a> {
 
 #[allow(non_snake_case)]
 impl<'a> Hypergeometric<'a> {
-
     pub fn new(n: usize, K: usize, N: usize, cache: &'a LogFactorialCache) -> Self {
         Self { n, K, N, cache }
     }
 
     fn support(&self) -> (usize, usize) {
         // Compute the support of the distributio, i.e. the range of values for which P(k) != 0.
-        let k_min = max(0isize, (self.n as isize) + (self.K as isize) - (self.N as isize)) as usize;
+        let k_min = max(
+            0isize,
+            (self.n as isize) + (self.K as isize) - (self.N as isize),
+        ) as usize;
         // Example: n=100, N=200, K=120 -> cannot draw less than 20 successes
         let k_max = min(self.n, self.K);
         // Example: n=100, K=80, -> cannot draw more than 80 successes
@@ -81,10 +83,14 @@ impl<'a> DiscreteDistribution for Hypergeometric<'a> {
     /// Returns `P(X = k)`, the probability of observing exactly `k` successes in `n` draws.
     #[allow(non_snake_case)]
     fn pmf(&self, k: usize) -> f64 {
-        if self.n > self.N || self.K > self.N { return 0.0; }
+        if self.n > self.N || self.K > self.N {
+            return 0.0;
+        }
 
         let (k_min, k_max) = self.support();
-        if k < k_min || k > k_max { return 0.0; }
+        if k < k_min || k > k_max {
+            return 0.0;
+        }
 
         let log_prob = self.cache.log_n_choose_k(self.K, k)
             + self.cache.log_n_choose_k(self.N - self.K, self.n - k)
@@ -102,11 +108,17 @@ impl<'a> DiscreteDistribution for Hypergeometric<'a> {
     #[allow(non_snake_case)]
     fn cdf(&self, k: usize) -> f64 {
         // Domain checks
-        if self.n > self.N || self.K > self.N { return 0.0; }
+        if self.n > self.N || self.K > self.N {
+            return 0.0;
+        }
 
         let (k_min, k_max) = self.support();
-        if k < k_min { return 0.0; }
-        if k >= k_max { return 1.0; }
+        if k < k_min {
+            return 0.0;
+        }
+        if k >= k_max {
+            return 1.0;
+        }
 
         let mut sum = 0f64;
         let mut c = 0f64;
@@ -126,11 +138,17 @@ impl<'a> DiscreteDistribution for Hypergeometric<'a> {
 
     fn sf(&self, k: usize) -> f64 {
         // Domain checks
-        if self.n > self.N || self.K > self.N { return 0.0; }
+        if self.n > self.N || self.K > self.N {
+            return 0.0;
+        }
 
         let (k_min, k_max) = self.support();
-        if k < k_min { return 0.0; }
-        if k >= k_max { return 1.0; }
+        if k < k_min {
+            return 0.0;
+        }
+        if k >= k_max {
+            return 1.0;
+        }
 
         let mut sum = 0f64;
         let mut c = 0f64;
@@ -156,7 +174,7 @@ mod test {
     use rstest::rstest;
 
     #[test]
-    fn test_lfactorial() {
+    fn test_log_factorials() {
         let tests: Vec<(usize, i64)> = vec![
             (1, 1),
             (2, 2),
@@ -183,7 +201,7 @@ mod test {
     }
 
     #[test]
-    fn test_l_n_choose_k() {
+    fn test_log_n_choose_k() {
         // Test log N-choose-K for K=4, N=20
         let cache = LogFactorialCache::new(25);
         let lf4 = cache.log_factorial(4);
@@ -204,7 +222,7 @@ mod test {
     }
 
     #[test]
-    fn test_dhyper() {
+    fn test_pmf() {
         let cache = LogFactorialCache::new(100);
         // Let's first valid log-NchooseK
         // in R,  dhyper(4,20,45,10) yields 0.2204457
@@ -225,7 +243,7 @@ mod test {
     }
 
     #[test]
-    fn test_dhyper_edge() {
+    fn test_pmf_edge() {
         // We have ten balls, all white, and we draw 10. All ten must be white
         let cache = LogFactorialCache::new(10);
         let hypergeometric = Hypergeometric::new(10, 10, 10, &cache);
@@ -244,7 +262,7 @@ mod test {
     #[case(6, 5, 8, 22, 0.0)] // invalid case: x > k (drawing more white balls than total draws)
     #[case(0, 5, 4, 6, 0.0)] // invalid case: k - x > n (drawing more black balls than available)
     #[allow(non_snake_case)]
-    fn test_dhyper_cases(
+    fn test_pmf_cases(
         #[case] k: usize,
         #[case] n: usize,
         #[case] K: usize,
@@ -263,26 +281,32 @@ mod test {
     }
 
     #[test]
-    fn test_phyper() {
-        let N = 8376;
-        let cache = LogFactorialCache::new(N);
+    fn test_sf() {
+        let cache = LogFactorialCache::new(10_000);
 
         let n = 190;
         let K = 4;
+        let N = 1526;
         let hypergeometric = Hypergeometric::new(n, K, N, &cache);
         let result = hypergeometric.sf(3 - 1);
         // assertTrue(result > 0.0069 && result < 0.0070); -- from ontologizer code.
         println!("{}", result);
+    }
 
+    #[test]
+    fn test_sf_large_sums() {
+        let cache = LogFactorialCache::new(10_000);
         let n = 262;
         let K = 599;
+        let N = 8376;
         let hypergeometric = Hypergeometric::new(n, K, N, &cache);
         let result = hypergeometric.sf(66 - 1);
-        // assertTrue(result > 0.0069 && result < 0.0070); -- from ontologizer code.
+        // assertTrue(result > 0.0)
         println!("{}", result);
 
         let n = 262;
         let K = 899;
+        let N = 8376;
         let hypergeometric = Hypergeometric::new(n, K, N, &cache);
         let result = hypergeometric.sf(72 - 1);
         // assertTrue(result > 0.0069 && result < 0.0070); -- from ontologizer code.

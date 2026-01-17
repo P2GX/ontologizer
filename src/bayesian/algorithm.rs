@@ -135,8 +135,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::bayesian::measure::Probability;
     use super::*;
+    use crate::bayesian::measure::Probability;
     use crate::bayesian::model::OrModel;
     use crate::bayesian::proposer::{UniformProposer, UniformToggleProposer};
     use crate::bayesian::recorder::ProbabilityRecorder;
@@ -412,10 +412,10 @@ mod test {
         let observations = vec![true, true];
         let posterior_t1 = p * (1. - beta).powf(2.)
             / (alpha.powf(2.) * (1. - p).powf(2.)
-            + (1. - beta).powf(2.) * (1. - (1. - p).powf(2.)));
+                + (1. - beta).powf(2.) * (1. - (1. - p).powf(2.)));
         let posterior_t2 = p * (1. - beta).powf(2.)
             / (alpha.powf(2.) * (1. - p).powf(2.)
-            + (1. - beta).powf(2.) * (1. - (1. - p).powf(2.)));
+                + (1. - beta).powf(2.) * (1. - (1. - p).powf(2.)));
 
         let posterior = vec![posterior_t1, posterior_t2];
 
@@ -433,10 +433,10 @@ mod test {
         let observations = vec![false, false];
         let posterior_t1 = p * beta.powf(2.)
             / ((1. - alpha).powf(2.) * (1. - p).powf(2.)
-            + beta.powf(2.) * (1. - (1. - p).powf(2.)));
+                + beta.powf(2.) * (1. - (1. - p).powf(2.)));
         let posterior_t2 = p * beta.powf(2.)
             / ((1. - alpha).powf(2.) * (1. - p).powf(2.)
-            + beta.powf(2.) * (1. - (1. - p).powf(2.)));
+                + beta.powf(2.) * (1. - (1. - p).powf(2.)));
 
         let posterior = vec![posterior_t1, posterior_t2];
 

@@ -4,5 +4,5 @@ mod proposer;
 pub(crate) mod recorder;
 mod run;
 pub use run::run;
-mod state;
 mod measure;
+mod state;

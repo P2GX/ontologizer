@@ -6,11 +6,11 @@ pub struct Probability {
     swaps: Vec<usize>,
 }
 
-impl Probability{
-    pub fn new(probabilities: Vec<f64>, swaps: Vec<usize>,) -> Self {
+impl Probability {
+    pub fn new(probabilities: Vec<f64>, swaps: Vec<usize>) -> Self {
         Probability {
             probabilities,
-            swaps
+            swaps,
         }
     }
     pub fn iter(&self) -> std::slice::Iter<f64> {

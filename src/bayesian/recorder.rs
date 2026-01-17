@@ -14,7 +14,6 @@ pub trait Recorder<S: State> {
     fn finalize(self, final_step: usize) -> Self::Target;
 }
 
-
 pub struct ProbabilityRecorder {
     counts: Vec<usize>,
     swaps: Vec<usize>,
@@ -82,4 +81,3 @@ where
         Probability::new(probabilities, self.swaps)
     }
 }
-

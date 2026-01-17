@@ -1,7 +1,7 @@
 use crate::core::result::Measure;
 
 pub struct PValue {
-    pub pvalues : Vec<f64>,
+    pub pvalues: Vec<f64>,
 }
 
 impl PValue {
@@ -23,5 +23,7 @@ impl Measure for PValue {
         self.pvalues[i] as f64
     }
 
-    fn get_diagnostics(&self, i: usize) -> Option<f64> { None }
+    fn get_diagnostics(&self, i: usize) -> Option<f64> {
+        None
+    }
 }

@@ -1,15 +1,15 @@
-use std::collections::HashSet;
 use indexmap::IndexMap;
+use std::collections::HashSet;
 
-use super::results::{get_term_aspect, AnalysisResults, GOTermResult};
+use super::results::{AnalysisResults, GOTermResult, get_term_aspect};
 use crate::core::AnnotationIndex;
 
-use ontolius::{
-    ontology::{csr::FullCsrOntology, OntologyTerms},
-    term::MinimalTerm,
-    TermId,
-};
 use crate::frequentist::distribution::{DiscreteDistribution, Hypergeometric, LogFactorialCache};
+use ontolius::{
+    TermId,
+    ontology::{OntologyTerms, csr::FullCsrOntology},
+    term::MinimalTerm,
+};
 
 pub trait PValueCalculation {
     fn calculate_p_values(
@@ -33,7 +33,6 @@ impl PValueCalculation for TermForTerm {
         population_genes: &HashSet<String>,
         results: &mut AnalysisResults,
     ) -> () {
-
         let n = study_genes.len();
         let N = population_genes.len();
 
@@ -102,16 +101,16 @@ pub fn term_count_for_subset(
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::core;
     use crate::core::load_gene_set;
     use crate::frequentist::correction::Bonferroni;
+    use crate::frequentist::correction::MultipleTestingCorrection;
     use crate::frequentist::results::{AnalysisResults, MethodEnum, MtcEnum};
     use oboannotation::go::stats::get_annotation_map;
     use oboannotation::go::{GoAnnotations, GoGafAnnotationLoader};
     use oboannotation::io::AnnotationLoader;
     use ontolius::io::OntologyLoaderBuilder;
     use std::process;
-    use crate::core;
-    use crate::frequentist::correction::MultipleTestingCorrection;
 
     #[test]
     fn test_go_analysis() {

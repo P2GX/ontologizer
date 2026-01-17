@@ -2,9 +2,9 @@ use indexmap::IndexSet;
 use ontolius::TermId;
 use ontolius::ontology::OntologyTerms;
 use ontolius::ontology::csr::FullCsrOntology;
+use ontolius::term::MinimalTerm;
 use serde::{Deserialize, Serialize, Serializer};
 use std::collections::HashMap;
-use ontolius::term::MinimalTerm;
 
 pub trait Measure {
     /// Returns an iterator over the score for each term.
@@ -16,7 +16,6 @@ pub trait Measure {
 
     fn get_diagnostics(&self, i: usize) -> Option<f64>;
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnrichmentItem {
@@ -88,12 +87,9 @@ impl EnrichmentResult {
                 diagnostics,
             })
         }
-        
-        EnrichmentResult {
-            items,
-        }
-    }
 
+        EnrichmentResult { items }
+    }
 
     pub fn sort_by_score(&mut self, descending: bool) {
         if descending {

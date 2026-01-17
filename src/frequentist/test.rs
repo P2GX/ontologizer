@@ -16,10 +16,6 @@ impl StatisticalTest for OneSidedEnrichmentTest {
 
     fn calculate<D: DiscreteDistribution>(&self, dist: &D, k: usize) -> f64 {
         // P(X >= k) is equivalent to P(X > k - 1)
-        if k == 0 {
-            1.0
-        } else {
-            dist.sf(k - 1)
-        }
+        if k == 0 { 1.0 } else { dist.sf(k - 1) }
     }
 }

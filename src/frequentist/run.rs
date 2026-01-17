@@ -1,9 +1,13 @@
-use std::collections::HashSet;
-use ontolius::ontology::csr::FullCsrOntology;
 use crate::core::AnnotationIndex;
 use crate::core::result::EnrichmentResult;
+use ontolius::ontology::csr::FullCsrOntology;
+use std::collections::HashSet;
 
-pub fn run(ontology : &FullCsrOntology, annotation_index: AnnotationIndex, study_genes : HashSet<String>) -> EnrichmentResult {
+pub fn run(
+    ontology: &FullCsrOntology,
+    annotation_index: AnnotationIndex,
+    study_genes: HashSet<String>,
+) -> EnrichmentResult {
     let n_population_genes = annotation_index.get_genes().len();
     let n_study_genes = study_genes.len();
 

@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-use ontolius::ontology::csr::FullCsrOntology;
 use crate::bayesian::algorithm::{Algorithm, MetropolisHasting};
 use crate::bayesian::measure::Probability;
 use crate::bayesian::model::OrModel;
@@ -8,8 +6,14 @@ use crate::bayesian::recorder::ProbabilityRecorder;
 use crate::bayesian::state::MgsaState;
 use crate::core::AnnotationIndex;
 use crate::core::result::EnrichmentResult;
+use ontolius::ontology::csr::FullCsrOntology;
+use std::collections::HashSet;
 
-pub fn run(ontology : &FullCsrOntology, annotation_index: AnnotationIndex, study_genes : HashSet<String>) -> EnrichmentResult {
+pub fn run(
+    ontology: &FullCsrOntology,
+    annotation_index: AnnotationIndex,
+    study_genes: HashSet<String>,
+) -> EnrichmentResult {
     let p = 0.01;
     let alpha = 0.05;
     let beta = 0.10;
@@ -19,7 +23,7 @@ pub fn run(ontology : &FullCsrOntology, annotation_index: AnnotationIndex, study
 
     let terms_to_genes = annotation_index.get_terms_to_genes(true);
 
-    let observed_genes : Vec<bool> = (0..n_genes)
+    let observed_genes: Vec<bool> = (0..n_genes)
         .map(|i| study_genes.contains(annotation_index.get_gene_by_index(i)))
         .collect();
 
@@ -49,16 +53,15 @@ pub fn run(ontology : &FullCsrOntology, annotation_index: AnnotationIndex, study
 
     // Optional: Sort
     result.sort_by_score(true); // descending for probability
-    
+
     result
 }
-
 
 #[cfg(test)]
 mod test {
     use super::*; // Use super to access run()
-    use crate::core::load_gene_set;
     use crate::core::AnnotationIndex;
+    use crate::core::load_gene_set;
     use csv::Writer;
     use oboannotation::go::{GoAnnotations, GoGafAnnotationLoader};
     use oboannotation::io::AnnotationLoader;
