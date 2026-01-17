@@ -49,7 +49,6 @@ where
 
 #[derive(Serialize)]
 pub struct EnrichmentResult {
-    pub parameters: HashMap<String, String>,
     pub items: Vec<EnrichmentItem>,
 }
 
@@ -61,10 +60,6 @@ impl EnrichmentResult {
         gene_map: &IndexSet<String>,
         observed_genes: &Vec<bool>,
         terms_to_genes: &Vec<Vec<usize>>,
-        // Metadata
-        p: f64,
-        alpha: f64,
-        beta: f64,
     ) -> Self {
         let mut items = Vec::new();
 
@@ -93,14 +88,8 @@ impl EnrichmentResult {
                 diagnostics,
             })
         }
-
-        let mut params = HashMap::new();
-        params.insert("p".to_string(), p.to_string());
-        params.insert("alpha".to_string(), alpha.to_string());
-        params.insert("beta".to_string(), beta.to_string());
-
+        
         EnrichmentResult {
-            parameters: params,
             items,
         }
     }
