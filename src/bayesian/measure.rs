@@ -2,36 +2,22 @@ use crate::core::result::Measure;
 
 #[derive(Debug)]
 pub struct Probability {
-    probabilities: Vec<f64>,
-    swaps: Vec<usize>,
+    probability: f64,
+    swap: usize,
 }
 
 impl Probability {
-    pub fn new(probabilities: Vec<f64>, swaps: Vec<usize>) -> Self {
-        Probability {
-            probabilities,
-            swaps,
-        }
-    }
-    pub fn iter(&self) -> std::slice::Iter<f64> {
-        self.probabilities.iter()
+    pub fn new(probability: f64, swap: usize) -> Self {
+        Probability { probability, swap }
     }
 }
 
 impl Measure for Probability {
-    fn scores(&self) -> impl Iterator<Item = f64> {
-        self.probabilities.iter().cloned()
+    fn score(&self) -> f64 {
+        self.probability
     }
 
-    fn diagnostics(&self) -> impl Iterator<Item = Option<String>> {
-        self.swaps.iter().map(|&x| Some(x.to_string()))
-    }
-
-    fn get_score(&self, i: usize) -> f64 {
-        self.probabilities[i] as f64
-    }
-
-    fn get_diagnostics(&self, i: usize) -> Option<String> {
-        Some(self.swaps[i].to_string())
+    fn diagnostics(&self) -> Option<String> {
+        Some(self.swap.to_string())
     }
 }

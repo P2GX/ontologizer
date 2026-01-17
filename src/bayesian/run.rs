@@ -39,11 +39,11 @@ pub fn run(
     let proposer = UniformToggleProposer::new();
     let mut algorithm = MetropolisHasting::new(model, proposer, 50_000_000, 1_000_000);
 
-    let measure: Probability = algorithm.sample::<ProbabilityRecorder>(&mut state);
+    let measures: Vec<Probability> = algorithm.sample::<ProbabilityRecorder>(&mut state);
 
     // Create the Result (Eagerly resolves all strings)
     let mut result = EnrichmentResult::from_measure(
-        &measure,
+        &measures,
         &ontology,
         annotation_index.get_terms(),
         annotation_index.get_genes(),

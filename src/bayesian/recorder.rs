@@ -41,7 +41,7 @@ impl<S> Recorder<S> for ProbabilityRecorder
 where
     S: BinaryParameterState<Move = ToggleSwap>,
 {
-    type Target = Probability;
+    type Target = Vec<Probability>;
     fn initialize(state: &S) -> Self {
         let n = state.n_all();
         let mut active_since = vec![None; n];
@@ -70,14 +70,17 @@ where
     }
 
     fn finalize(mut self, final_step: usize) -> Self::Target {
-        let mut probabilities = vec![0.0; self.counts.len()];
+        let mut probabilities = Vec::new();
         for (i, start_opt) in self.active_since.iter().enumerate() {
             if let Some(start) = start_opt {
                 self.counts[i] += final_step - start;
             }
-            probabilities[i] = self.counts[i] as f64 / final_step as f64;
+            probabilities.push(Probability::new(
+                self.counts[i] as f64 / final_step as f64,
+                self.swaps[i],
+            ))
         }
 
-        Probability::new(probabilities, self.swaps)
+        probabilities
     }
 }

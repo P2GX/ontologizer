@@ -168,10 +168,10 @@ mod test {
         let proposer = UniformToggleProposer::new();
         let mut algorithm = MetropolisHasting::new(model, proposer, 10_000, 0);
 
-        let measure: Probability = algorithm.sample::<ProbabilityRecorder>(&mut state);
-        println! {"{:?}", measure.scores().collect::<Vec<_>>()}
-        for (sim, theo) in measure.scores().zip(posterior) {
-            assert!(approx_equal(sim, theo, 0.05));
+        let measure: Vec<Probability> = algorithm.sample::<ProbabilityRecorder>(&mut state);
+        println! {"{:?}", measure.iter().map(|m| m.score()).collect::<Vec<_>>()}
+        for (measure, theo) in measure.iter().zip(posterior) {
+            assert!(approx_equal(measure.score(), theo, 0.05));
         }
     }
 
@@ -211,7 +211,7 @@ mod test {
         let proposer = UniformProposer::new();
         let mut algorithm = MetropolisHasting::new(model, proposer, 500_000, 100_000);
 
-        let measure: Probability = algorithm.sample::<ProbabilityRecorder>(&mut state);
+        let measure: Vec<Probability> = algorithm.sample::<ProbabilityRecorder>(&mut state);
 
         let n_background = n - 1; // 49
 
@@ -273,10 +273,10 @@ mod test {
         // P(tk=1 | o) = P(S=1 | o) * p / P(S=1)
         let prob_tk = prob_s * (p / p_s_1);
 
-        println!("{:?} {:?}", prob_t1, measure.get_score(0));
-        println!("{:?} {:?}", prob_tk, measure.get_score(1));
-        assert!(approx_equal(prob_t1, measure.get_score(0), 0.05));
-        assert!(approx_equal(prob_tk, measure.get_score(1), 0.05));
+        println!("{:?} {:?}", prob_t1, measure[0].score());
+        println!("{:?} {:?}", prob_tk, measure[1].score());
+        assert!(approx_equal(prob_t1, measure[0].score(), 0.05));
+        assert!(approx_equal(prob_tk, measure[1].score(), 0.05));
     }
 
     #[test]
@@ -307,10 +307,10 @@ mod test {
         let proposer = UniformProposer::new();
         let mut algorithm = MetropolisHasting::new(model, proposer, 10_000, 0);
 
-        let measure: Probability = algorithm.sample::<ProbabilityRecorder>(&mut state);
-        println! {"{:?}",measure.scores().collect::<Vec<_>>()}
-        assert!(measure.get_score(0) > measure.get_score(1));
-        assert!(measure.get_score(1) > measure.get_score(2));
+        let measure: Vec<Probability> = algorithm.sample::<ProbabilityRecorder>(&mut state);
+        println! {"{:?}", measure.iter().map(|m| m.score()).collect::<Vec<_>>()}
+        assert!(measure[0].score() > measure[1].score());
+        assert!(measure[1].score() > measure[2].score());
     }
 
     #[test]

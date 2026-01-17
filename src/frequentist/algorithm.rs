@@ -39,13 +39,14 @@ impl PValueCalculation for TermForTerm {
         let study_terms_count = term_count_for_subset(study_genes, annotation_index);
         let population_terms_count = term_count_for_subset(population_genes, annotation_index);
 
+        let cache = LogFactorialCache::new(N);
+
         for (term, &k) in study_terms_count.iter() {
-            // TODO
             let &K = population_terms_count.get(term).unwrap();
 
             // let K = annotated_genes.len();
-            let cache = LogFactorialCache::new(N);
-            let mut hypergeom = Hypergeometric::new(n, K, N, &cache);
+
+            let hypergeom = Hypergeometric::new(n, K, N, &cache);
 
             let raw_p_value;
             if k > 1 {

@@ -1,30 +1,16 @@
 use crate::core::result::Measure;
 
 pub struct PValue {
-    pvalues: Vec<f64>,
-    chose: Vec<(u32, u32, u32, u32)>,
-}
-
-impl PValue {
-    pub fn iter(&self) -> std::slice::Iter<f64> {
-        self.pvalues.iter()
-    }
+    pvalue: f64,
+    chose: (u32, u32, u32, u32),
 }
 
 impl Measure for PValue {
-    fn scores(&self) -> impl Iterator<Item = f64> {
-        self.pvalues.iter().cloned()
+    fn score(&self) -> f64 {
+        self.pvalue
     }
 
-    fn diagnostics(&self) -> impl Iterator<Item = Option<String>> {
-        self.chose.iter().map(|&x| Some(format!("{:?}", x)))
-    }
-
-    fn get_score(&self, i: usize) -> f64 {
-        self.pvalues[i]
-    }
-
-    fn get_diagnostics(&self, i: usize) -> Option<String> {
-        Some(format!("{:?}", self.chose[i]))
+    fn diagnostics(&self) -> Option<String> {
+        Some(format!("{:?}", self.chose))
     }
 }

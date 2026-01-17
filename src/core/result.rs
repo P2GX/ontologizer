@@ -8,13 +8,9 @@ use std::collections::HashMap;
 
 pub trait Measure {
     /// Returns an iterator over the score for each term.
-    fn scores(&self) -> impl Iterator<Item = f64>;
+    fn score(&self) -> f64;
 
-    fn diagnostics(&self) -> impl Iterator<Item = Option<String>>;
-
-    fn get_score(&self, i: usize) -> f64;
-
-    fn get_diagnostics(&self, i: usize) -> Option<f64>;
+    fn diagnostics(&self) -> Option<String>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -53,7 +49,7 @@ pub struct EnrichmentResult {
 
 impl EnrichmentResult {
     pub fn from_measure<M: Measure>(
-        measures: &M,
+        measures: &Vec<M>,
         ontology: &FullCsrOntology,
         term_map: &IndexSet<TermId>,
         gene_map: &IndexSet<String>,
@@ -62,11 +58,10 @@ impl EnrichmentResult {
     ) -> Self {
         let mut items = Vec::new();
 
-        for (((score, term_id), gene_indices), diagnostics) in measures
-            .scores()
+        for ((measure, term_id), gene_indices) in measures
+            .iter()
             .zip(term_map.iter())
             .zip(terms_to_genes.iter())
-            .zip(measures.diagnostics())
         {
             let label = ontology
                 .term_by_id(term_id)
@@ -82,9 +77,9 @@ impl EnrichmentResult {
             items.push(EnrichmentItem {
                 id: term_id.to_string(),
                 label,
-                score,
+                score: measure.score(),
                 associated_genes: gene_symbols,
-                diagnostics,
+                diagnostics: measure.diagnostics(),
             })
         }
 
