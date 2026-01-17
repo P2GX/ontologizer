@@ -29,7 +29,6 @@ pub struct AnnotationIndex {
 }
 
 impl AnnotationIndex {
-    /// ```rust
     /// Creates a new instance of the data structure by processing gene-to-term annotations,
     /// applying optional population gene filtering, and constructing all relevant mappings
     /// and indices.
@@ -184,29 +183,29 @@ impl AnnotationIndex {
         }
     }
 
-    pub fn terms(&self) -> &IndexSet<TermId> {
+    pub fn get_terms(&self) -> &IndexSet<TermId> {
         &self.term_map
     }
 
     /// Convert an index to its TermId
-    pub fn get_index_term(&self, i: usize) -> &TermId {
+    pub fn get_term_by_index(&self, i: usize) -> &TermId {
         &self.term_map[i]
     }
 
     /// Convert a TermId to its index
-    pub fn get_term_index(&self, term: &TermId) -> Option<usize> {
+    pub fn get_index_by_term(&self, term: &TermId) -> Option<usize> {
         self.term_map.get_index_of(term)
     }
 
-    pub fn genes(&self) -> &IndexSet<String> {
+    pub fn get_genes(&self) -> &IndexSet<String> {
         &self.gene_map
     }
 
-    pub fn get_index_gene(&self, i: usize) -> &String {
+    pub fn get_gene_by_index(&self, i: usize) -> &String {
         &self.gene_map[i]
     }
 
-    pub fn get_gene_index(&self, gene: &String) -> Option<usize> {
+    pub fn get_index_by_gene(&self, gene: &String) -> Option<usize> {
         self.gene_map.get_index_of(gene)
     }
 
