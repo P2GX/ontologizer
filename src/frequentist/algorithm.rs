@@ -1,15 +1,26 @@
-use crate::frequentist::hypergeometric::Hypergeometric;
+use std::collections::HashSet;
 use indexmap::IndexMap;
 
 use super::results::{get_term_aspect, AnalysisResults, GOTermResult};
 use crate::core::AnnotationIndex;
-use crate::core::GeneSet;
-use crate::frequentist::PValueCalculation;
+
 use ontolius::{
     ontology::{csr::FullCsrOntology, OntologyTerms},
     term::MinimalTerm,
     TermId,
 };
+use crate::frequentist::distribution::{DiscreteDistribution, Hypergeometric, LogFactorialCache};
+
+pub trait PValueCalculation {
+    fn calculate_p_values(
+        &self,
+        go: &FullCsrOntology,
+        annotation_index: &AnnotationIndex,
+        study: &HashSet<String>,
+        population: &HashSet<String>,
+        results: &mut AnalysisResults,
+    ) -> ();
+}
 
 pub struct TermForTerm;
 #[allow(non_snake_case)]
@@ -18,28 +29,28 @@ impl PValueCalculation for TermForTerm {
         &self,
         go: &FullCsrOntology,
         annotation_index: &AnnotationIndex,
-        study: &GeneSet,
-        population: &GeneSet,
+        study_genes: &HashSet<String>,
+        population_genes: &HashSet<String>,
         results: &mut AnalysisResults,
     ) -> () {
-        let study_genes = study.recognized_genes();
-        let population_genes = population.recognized_genes();
+
         let n = study_genes.len();
         let N = population_genes.len();
 
-        let study_terms_count = term_count_for_subset(study, annotation_index);
-        let population_terms_count = term_count_for_subset(population, annotation_index);
+        let study_terms_count = term_count_for_subset(study_genes, annotation_index);
+        let population_terms_count = term_count_for_subset(population_genes, annotation_index);
 
         for (term, &k) in study_terms_count.iter() {
             // TODO
             let &K = population_terms_count.get(term).unwrap();
 
             // let K = annotated_genes.len();
-            let mut hypergeom = Hypergeometric::new();
+            let cache = LogFactorialCache::new(N);
+            let mut hypergeom = Hypergeometric::new(n, K, N, &cache);
 
             let raw_p_value;
             if k > 1 {
-                raw_p_value = hypergeom.phyper(k - 1, n, K, N, false).unwrap();
+                raw_p_value = hypergeom.sf(k - 1);
             } else {
                 continue;
                 // todo!(this was previously skipped, correctly the p-value should be 1.0)
@@ -63,12 +74,12 @@ impl PValueCalculation for TermForTerm {
 }
 
 pub fn term_count_for_subset(
-    gene_set: &GeneSet,
+    gene_set: &HashSet<String>,
     annotations: &AnnotationIndex,
 ) -> IndexMap<TermId, usize> {
     let mut dense_counts = vec![0usize; annotations.get_terms().len()];
 
-    for gene in gene_set.recognized_genes() {
+    for gene in gene_set {
         if let Some(gene_idx) = annotations.get_index_by_gene(gene) {
             for &term_idx in annotations.get_term_idxs_for_gene_idx(gene_idx) {
                 dense_counts[term_idx] += 1;
@@ -91,7 +102,7 @@ pub fn term_count_for_subset(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::core::{load_gene_set, separate_gene_set};
+    use crate::core::load_gene_set;
     use crate::frequentist::correction::Bonferroni;
     use crate::frequentist::results::{AnalysisResults, MethodEnum, MtcEnum};
     use oboannotation::go::stats::get_annotation_map;
@@ -99,6 +110,7 @@ mod test {
     use oboannotation::io::AnnotationLoader;
     use ontolius::io::OntologyLoaderBuilder;
     use std::process;
+    use crate::core;
     use crate::frequentist::correction::MultipleTestingCorrection;
 
     #[test]
@@ -144,8 +156,8 @@ mod test {
             .into_keys()
             .collect();
 
-        let study_gene_set = separate_gene_set(&annotated_genes, study_genes);
-        let pop_gene_set = separate_gene_set(&annotated_genes, population_genes);
+        let study_gene_set = core::overlap_sets(&annotated_genes, &study_genes);
+        let pop_gene_set = core::overlap_sets(&annotated_genes, &population_genes);
 
         let mut results = AnalysisResults::new(MethodEnum::TermForTerm, mtc_method);
 
