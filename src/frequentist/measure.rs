@@ -1,7 +1,8 @@
 use crate::core::result::Measure;
 
 pub struct PValue {
-    pub pvalues: Vec<f64>,
+    pvalues: Vec<f64>,
+    chose: Vec<(u32, u32, u32, u32)>,
 }
 
 impl PValue {
@@ -16,14 +17,14 @@ impl Measure for PValue {
     }
 
     fn diagnostics(&self) -> impl Iterator<Item = Option<String>> {
-        std::iter::repeat(None)
+        self.chose.iter().map(|&x| Some(format!("{:?}", x)))
     }
 
     fn get_score(&self, i: usize) -> f64 {
-        self.pvalues[i] as f64
+        self.pvalues[i]
     }
 
-    fn get_diagnostics(&self, i: usize) -> Option<f64> {
-        None
+    fn get_diagnostics(&self, i: usize) -> Option<String> {
+        Some(format!("{:?}", self.chose[i]))
     }
 }
