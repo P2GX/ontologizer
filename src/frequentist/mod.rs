@@ -1,12 +1,17 @@
+mod algorithm;
+mod correction;
+pub mod hypergeometric;
+mod measure;
+
+mod results;
+mod run;
+
+pub use run::run;
+
+use ontolius::ontology::csr::FullCsrOntology;
+pub use correction::{MultipleTestingCorrection};
 use crate::core::{AnnotationIndex, GeneSet};
 use crate::frequentist::results::AnalysisResults;
-use ontolius::ontology::csr::FullCsrOntology;
-
-mod hypergeo;
-pub mod mtc;
-pub mod results; // Contains the results of the enrichment analysis
-pub mod term_for_term;
-// Contains the term-for-term enrichment analysis
 
 pub trait PValueCalculation {
     fn calculate_p_values(
@@ -18,3 +23,4 @@ pub trait PValueCalculation {
         results: &mut AnalysisResults,
     ) -> ();
 }
+
