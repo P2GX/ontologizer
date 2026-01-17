@@ -1,8 +1,9 @@
 mod annotations;
-mod geneset;
+mod util;
 pub(crate) mod result;
 mod problem;
 
-pub use geneset::{GeneSet, load_gene_set, separate_gene_set};
+use std::collections::HashSet;
+pub use util::{load_gene_set, overlap_sets};
 
 pub use annotations::AnnotationIndex;
