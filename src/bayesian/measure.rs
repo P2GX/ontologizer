@@ -31,7 +31,7 @@ impl Measure for Probability {
         self.probabilities[i] as f64
     }
 
-    fn get_diagnostics(&self, i: usize) -> Option<f64> {
-        Some(self.swaps[i] as f64)
+    fn get_diagnostics(&self, i: usize) -> Option<String> {
+        Some(self.swaps[i].to_string())
     }
 }
