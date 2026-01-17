@@ -9,7 +9,7 @@ pub trait Algorithm<M>
 where
     M: Model,
 {
-    fn sample<R: Recorder<M::State>>(&mut self, state: &mut M::State) -> R;
+    fn sample<R: Recorder<M::State>>(&mut self, state: &mut M::State) -> R::Target;
 }
 
 pub struct MetropolisHasting<M: Model, P> {
@@ -89,7 +89,7 @@ where
     M: Model,
     P: Proposer<M::State>,
 {
-    fn sample<R>(&mut self, state: &mut M::State) -> R
+    fn sample<R>(&mut self, state: &mut M::State) -> R::Target
     where
         R: Recorder<M::State>,
     {
@@ -129,18 +129,19 @@ where
                 result.record(&m, i);
             }
         }
-        result.finalize(self.iterations);
-        result
+        result.finalize(self.iterations)
     }
 }
 
 #[cfg(test)]
 mod test {
+    use crate::bayesian::measure::Probability;
     use super::*;
     use crate::bayesian::model::OrModel;
     use crate::bayesian::proposer::{UniformProposer, UniformToggleProposer};
-    use crate::bayesian::recorder::Probability;
+    use crate::bayesian::recorder::ProbabilityRecorder;
     use crate::bayesian::state::MgsaState;
+    use crate::core::result::Measure;
 
     fn approx_equal(a: f64, b: f64, epsilon: f64) -> bool {
         (a - b).abs() < epsilon
@@ -167,10 +168,9 @@ mod test {
         let proposer = UniformToggleProposer::new();
         let mut algorithm = MetropolisHasting::new(model, proposer, 10_000, 0);
 
-        let measure: Probability = algorithm.sample(&mut state);
-        println! {"{:?}", measure.probabilities}
-
-        for (&sim, theo) in measure.probabilities.iter().zip(posterior) {
+        let measure: Probability = algorithm.sample::<ProbabilityRecorder>(&mut state);
+        println! {"{:?}", measure.scores().collect::<Vec<_>>()}
+        for (sim, theo) in measure.scores().zip(posterior) {
             assert!(approx_equal(sim, theo, 0.05));
         }
     }
@@ -211,7 +211,7 @@ mod test {
         let proposer = UniformProposer::new();
         let mut algorithm = MetropolisHasting::new(model, proposer, 500_000, 100_000);
 
-        let measure: Probability = algorithm.sample(&mut state);
+        let measure: Probability = algorithm.sample::<ProbabilityRecorder>(&mut state);
 
         let n_background = n - 1; // 49
 
@@ -273,10 +273,10 @@ mod test {
         // P(tk=1 | o) = P(S=1 | o) * p / P(S=1)
         let prob_tk = prob_s * (p / p_s_1);
 
-        println!("{:?} {:?}", prob_t1, measure.probabilities[0]);
-        println!("{:?} {:?}", prob_tk, measure.probabilities[1]);
-        assert!(approx_equal(prob_t1, measure.probabilities[0], 0.05));
-        assert!(approx_equal(prob_tk, measure.probabilities[1], 0.05));
+        println!("{:?} {:?}", prob_t1, measure.get_score(0));
+        println!("{:?} {:?}", prob_tk, measure.get_score(1));
+        assert!(approx_equal(prob_t1, measure.get_score(0), 0.05));
+        assert!(approx_equal(prob_tk, measure.get_score(1), 0.05));
     }
 
     #[test]
@@ -307,10 +307,10 @@ mod test {
         let proposer = UniformProposer::new();
         let mut algorithm = MetropolisHasting::new(model, proposer, 10_000, 0);
 
-        let measure: Probability = algorithm.sample(&mut state);
-        println! {"{:?}", measure.probabilities}
-        assert!(measure.probabilities[0] > measure.probabilities[1]);
-        assert!(measure.probabilities[1] > measure.probabilities[2]);
+        let measure: Probability = algorithm.sample::<ProbabilityRecorder>(&mut state);
+        println! {"{:?}",measure.scores().collect::<Vec<_>>()}
+        assert!(measure.get_score(0) > measure.get_score(1));
+        assert!(measure.get_score(1) > measure.get_score(2));
     }
 
     #[test]

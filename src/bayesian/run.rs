@@ -1,9 +1,10 @@
 use std::collections::HashSet;
 use ontolius::ontology::csr::FullCsrOntology;
 use crate::bayesian::algorithm::{Algorithm, MetropolisHasting};
+use crate::bayesian::measure::Probability;
 use crate::bayesian::model::OrModel;
 use crate::bayesian::proposer::UniformToggleProposer;
-use crate::bayesian::recorder::Probability;
+use crate::bayesian::recorder::ProbabilityRecorder;
 use crate::bayesian::state::MgsaState;
 use crate::core::AnnotationIndex;
 use crate::core::result::EnrichmentResult;
@@ -12,14 +13,14 @@ pub fn run(ontology : &FullCsrOntology, annotation_index: AnnotationIndex, study
     let p = 0.01;
     let alpha = 0.05;
     let beta = 0.10;
-    
+
+    let n_genes = annotation_index.get_genes().len();
+    let n_terms = annotation_index.get_terms().len();
+
     let terms_to_genes = annotation_index.get_terms_to_genes(true);
-    
-    let n_genes = annotation_index.genes().len();
-    let n_terms = annotation_index.terms().len();
-    
+
     let observed_genes : Vec<bool> = (0..n_genes)
-        .map(|i| study_genes.contains(annotation_index.get_index_gene(i)))
+        .map(|i| study_genes.contains(annotation_index.get_gene_by_index(i)))
         .collect();
 
     let model = OrModel::new(
@@ -34,19 +35,16 @@ pub fn run(ontology : &FullCsrOntology, annotation_index: AnnotationIndex, study
     let proposer = UniformToggleProposer::new();
     let mut algorithm = MetropolisHasting::new(model, proposer, 50_000_000, 1_000_000);
 
-    let measure: Probability = algorithm.sample(&mut state);
+    let measure: Probability = algorithm.sample::<ProbabilityRecorder>(&mut state);
 
     // Create the Result (Eagerly resolves all strings)
     let mut result = EnrichmentResult::from_measure(
         &measure,
         &ontology,
-        annotation_index.terms(),
-        annotation_index.genes(),
+        annotation_index.get_terms(),
+        annotation_index.get_genes(),
         &observed_genes,
         &terms_to_genes,
-        p,
-        alpha,
-        beta,
     );
 
     // Optional: Sort

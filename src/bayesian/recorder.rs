@@ -1,9 +1,9 @@
+use crate::bayesian::measure::Probability;
 use crate::bayesian::proposer::ToggleSwap;
 use crate::bayesian::proposer::ToggleSwap::{Swap, Toggle};
 use crate::bayesian::state::{BinaryParameterState, State};
-use crate::core::result::Measure;
-
 pub trait Recorder<S: State> {
+    type Target;
     /// Initialize the recorder (e.g., allocate vectors based on state size)
     fn initialize(state: &S) -> Self;
 
@@ -11,22 +11,17 @@ pub trait Recorder<S: State> {
     fn record(&mut self, m: &<S as State>::Move, step: usize);
 
     // Optional: A method to finalize computation (e.g., divide sum by count)
-    fn finalize(&mut self, final_step: usize);
+    fn finalize(self, final_step: usize) -> Self::Target;
 }
 
-pub struct Probability {
+
+pub struct ProbabilityRecorder {
     counts: Vec<usize>,
     swaps: Vec<usize>,
     active_since: Vec<Option<usize>>,
-
-    pub probabilities: Vec<f64>,
 }
 
-impl Probability {
-    pub fn iter(&self) -> std::slice::Iter<f64> {
-        self.probabilities.iter()
-    }
-
+impl ProbabilityRecorder {
     fn toggle_term(&mut self, idx: usize, step: usize) {
         self.swaps[idx] += 1;
         match self.active_since[idx] {
@@ -43,10 +38,11 @@ impl Probability {
     }
 }
 
-impl<S> Recorder<S> for Probability
+impl<S> Recorder<S> for ProbabilityRecorder
 where
     S: BinaryParameterState<Move = ToggleSwap>,
 {
+    type Target = Probability;
     fn initialize(state: &S) -> Self {
         let n = state.n_all();
         let mut active_since = vec![None; n];
@@ -61,7 +57,6 @@ where
             counts: vec![0; n],
             swaps: vec![0; n],
             active_since,
-            probabilities : vec![0.; n],
         }
     }
 
@@ -75,30 +70,16 @@ where
         }
     }
 
-    fn finalize(&mut self, final_step: usize) {
+    fn finalize(mut self, final_step: usize) -> Self::Target {
+        let mut probabilities = vec![0.0; self.counts.len()];
         for (i, start_opt) in self.active_since.iter().enumerate() {
             if let Some(start) = start_opt {
                 self.counts[i] += final_step - start;
             }
-            self.probabilities[i] = self.counts[i] as f64 / final_step as f64;
+            probabilities[i] = self.counts[i] as f64 / final_step as f64;
         }
+
+        Probability::new(probabilities, self.swaps)
     }
 }
 
-impl Measure for Probability {
-    fn scores(&self) -> impl Iterator<Item = f64> {
-        self.probabilities.iter().map(|&x| x as f64)
-    }
-
-    fn diagnostics(&self) -> impl Iterator<Item = Option<String>> {
-        self.swaps.iter().map(|&x| Some(x.to_string()))
-    }
-
-    fn get_score(&self, i: usize) -> f64 {
-        self.probabilities[i] as f64
-    }
-
-    fn get_diagnostics(&self, i: usize) -> Option<f64> {
-        Some(self.swaps[i] as f64)
-    }
-}
