@@ -7,13 +7,9 @@ edition = "2024"
 license = "MIT"
 readme = "README.md"
 
-[lib]
-name = "ontologizer"
-path = "src/lib.rs"
-
 [[bin]]
-name = "onto"
-path = "bin/main.rs"
+name = "ontologizer"
+path = "src/main.rs"
 required-features = ["cli"]
 
 [features]
