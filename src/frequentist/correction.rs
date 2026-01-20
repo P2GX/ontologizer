@@ -1,16 +1,16 @@
 use crate::frequentist::results::AnalysisResults;
 
-pub trait MultipleTestingCorrection {
-    fn adjust_pvalues(&self, results: &mut AnalysisResults);
+pub trait Correction {
+    fn adjust(&self, results: &mut AnalysisResults);
     fn name(&self) -> &'static str;
 }
 
 pub struct Bonferroni;
 
-impl MultipleTestingCorrection for Bonferroni {
-    fn adjust_pvalues(&self, analysis_results: &mut AnalysisResults) {
-        let n = analysis_results.num_hypotheses();
-        for result in analysis_results.iter_mut() {
+impl Correction for Bonferroni {
+    fn adjust(&self, result: &mut AnalysisResults) {
+        let n = result.num_hypotheses();
+        for result in result.iter_mut() {
             result.set_adj_pval((result.p_val() * n).min(1.0));
         }
     }
@@ -22,17 +22,17 @@ impl MultipleTestingCorrection for Bonferroni {
 
 pub struct BonferroniHolm;
 
-impl MultipleTestingCorrection for BonferroniHolm {
-    fn adjust_pvalues(&self, analysis_results: &mut AnalysisResults) {
-        analysis_results.sort_by_p_value();
-        let n: f32 = analysis_results.num_hypotheses();
+impl Correction for BonferroniHolm {
+    fn adjust(&self, result: &mut AnalysisResults) {
+        result.sort_by_p_value();
+        let n: f32 = result.num_hypotheses();
         let mut i: f32 = 1.0;
-        for result in analysis_results.iter_mut() {
+        for result in result.iter_mut() {
             result.set_adj_pval(result.p_val() * (n - i + 1.0));
             i += 1.0;
         }
 
-        enforce_pvalue_monotony(analysis_results);
+        enforce_pvalue_monotony(result);
     }
 
     fn name(&self) -> &'static str {
@@ -53,8 +53,8 @@ fn enforce_pvalue_monotony(analysis_results: &mut AnalysisResults) {
 
 pub struct None;
 
-impl MultipleTestingCorrection for None {
-    fn adjust_pvalues(&self, _analysis_results: &mut AnalysisResults) {
+impl Correction for None {
+    fn adjust(&self, _analysis_results: &mut AnalysisResults) {
         // No adjustment is made
     }
 

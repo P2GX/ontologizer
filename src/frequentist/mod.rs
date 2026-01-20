@@ -1,12 +1,8 @@
 mod algorithm;
 mod correction;
-mod measure;
-
 mod distribution;
+mod measure;
 mod results;
 mod run;
-mod test;
 
-pub use run::run;
-
-pub use correction::MultipleTestingCorrection;
+pub use correction::Correction;

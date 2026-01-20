@@ -2,7 +2,14 @@ use crate::core::result::Measure;
 
 pub struct PValue {
     pvalue: f64,
-    chose: (u32, u32, u32, u32),
+    // (n_annotated_study, n_annotated_pop, n_study, n_pop)
+    counts: (u32, u32, u32, u32),
+}
+
+impl PValue {
+    pub fn new(pvalue: f64, counts: (u32, u32, u32, u32)) -> Self {
+        Self { pvalue, counts }
+    }
 }
 
 impl Measure for PValue {
@@ -11,6 +18,6 @@ impl Measure for PValue {
     }
 
     fn diagnostics(&self) -> Option<String> {
-        Some(format!("{:?}", self.chose))
+        Some(format!("{:?}", self.counts))
     }
 }

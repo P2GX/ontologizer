@@ -63,6 +63,15 @@ impl<'a> Hypergeometric<'a> {
         Self { n, K, N, cache }
     }
 
+    pub fn n(&self) -> usize {
+        self.n
+    }
+    pub fn K(&self) -> usize {
+        self.K
+    }
+    pub fn N(&self) -> usize {
+        self.N
+    }
     fn support(&self) -> (usize, usize) {
         // Compute the support of the distributio, i.e. the range of values for which P(k) != 0.
         let k_min = max(
