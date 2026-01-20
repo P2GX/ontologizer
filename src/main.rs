@@ -65,7 +65,7 @@ fn main() {
 
     let result;
     if method == "frequentist" {
-        result = bayesian::run(&ontology, annotation_index, study_genes);
+        result = frequentist::run(&ontology, annotation_index, study_genes);
     } else {
         result = bayesian::run(&ontology, annotation_index, study_genes)
     }

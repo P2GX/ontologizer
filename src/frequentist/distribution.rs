@@ -3,6 +3,7 @@ pub trait DiscreteDistribution {
     fn pmf(&self, k: usize) -> f64;
 
     /// Cumulative Distribution Function: P(X <= k)
+    #[allow(unused)]
     fn cdf(&self, k: usize) -> f64;
 
     /// Survival Function: P(X > k)
@@ -57,7 +58,7 @@ pub struct Hypergeometric<'a> {
     cache: &'a LogFactorialCache,
 }
 
-#[allow(non_snake_case)]
+#[allow(non_snake_case, unused)]
 impl<'a> Hypergeometric<'a> {
     pub fn new(n: usize, K: usize, N: usize, cache: &'a LogFactorialCache) -> Self {
         Self { n, K, N, cache }

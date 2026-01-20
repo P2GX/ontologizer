@@ -1,6 +1,7 @@
 use crate::bayesian::proposer::ToggleSwap;
 use crate::bayesian::proposer::ToggleSwap::{Swap, Toggle};
 use crate::bayesian::state::{BinaryParameterState, State};
+use indexmap::IndexSet;
 use rand::Rng;
 
 // A trait that connects *STATE* and *OBSERVATION* by assigning probabilities.
@@ -9,6 +10,7 @@ pub trait Model {
     type Cache;
 
     // Initialize the State
+    #[allow(unused)]
     fn sample_prior<R: Rng>(&self, rng: &mut R, n: usize) -> Vec<<Self::State as State>::Value>;
 
     // Log probability P(S) to find a State configuration
@@ -67,14 +69,14 @@ pub struct OrModel<S> {
     alpha: f64, // probability of a gene being incorrectly observed active.
     beta: f64,  // probability of a gene being incorrectly observed inactive.
 
-    terms_to_genes: Vec<Vec<usize>>, // Adjacency list (Term -> Genes)
+    terms_to_genes: Vec<IndexSet<usize>>, // Adjacency list (Term -> Genes)
     observations: Vec<bool>,
     _marker: std::marker::PhantomData<S>,
 }
 
 impl<S> OrModel<S> {
     pub fn new(
-        terms_to_genes: Vec<Vec<usize>>,
+        terms_to_genes: Vec<IndexSet<usize>>,
         observations: Vec<bool>,
         p: f64,
         alpha: f64,
@@ -144,19 +146,6 @@ impl<S> OrModel<S> {
                 }
             }
         }
-    }
-
-    pub fn heuristic_start(&self) -> Vec<bool> {
-        let mut prior = vec![false; self.terms_to_genes.len()];
-        for (term_index, gene_indices) in self.terms_to_genes.iter().enumerate() {
-            for &gene_index in gene_indices {
-                if self.observations[gene_index] {
-                    prior[term_index] = true;
-                    break;
-                }
-            }
-        }
-        prior
     }
 }
 

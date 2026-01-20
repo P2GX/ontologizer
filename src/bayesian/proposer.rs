@@ -118,7 +118,7 @@ where
     }
 
     ///
-    fn log_proposal_ratio(&self, state: &S, m: &S::Move) -> Option<f64> {
+    fn log_proposal_ratio(&self, _state: &S, _m: &S::Move) -> Option<f64> {
         Some(0.0)
     }
 }

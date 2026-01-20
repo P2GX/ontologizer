@@ -1,10 +1,8 @@
-use indexmap::IndexSet;
-use ontolius::TermId;
+use crate::core::AnnotationIndex;
 use ontolius::ontology::OntologyTerms;
 use ontolius::ontology::csr::FullCsrOntology;
 use ontolius::term::MinimalTerm;
 use serde::{Deserialize, Serialize, Serializer};
-use std::collections::HashMap;
 
 pub trait Measure {
     /// Returns an iterator over the score for each term.
@@ -51,11 +49,13 @@ impl EnrichmentResult {
     pub fn from_measure<M: Measure>(
         measures: &Vec<M>,
         ontology: &FullCsrOntology,
-        term_map: &IndexSet<TermId>,
-        gene_map: &IndexSet<String>,
+        annotation_index: &AnnotationIndex,
         observed_genes: &Vec<bool>,
-        terms_to_genes: &Vec<Vec<usize>>,
     ) -> Self {
+        let term_map = annotation_index.get_terms();
+        let gene_map = annotation_index.get_genes();
+        let terms_to_genes = annotation_index.get_terms_to_genes(true);
+
         let mut items = Vec::new();
 
         for ((measure, term_id), gene_indices) in measures

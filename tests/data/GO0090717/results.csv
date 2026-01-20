@@ -1,535 +1,535 @@
 ID,Label,Score,Associated Genes,Diagnostics
-GO:0090713,immunological memory process,0.18092,"CD27, CD70, EBAG9",700
-GO:0090716,adaptive immune memory response,0.1731196,"CD27, CD70, EBAG9",750
-GO:0098772,molecular function regulator activity,0.1695788,"CD27, CD70, EBAG9",727
-GO:0090717,adaptive immune memory response involving T cells and B cells,0.1600602,"CD27, CD70, EBAG9",720
-GO:0140677,molecular function activator activity,0.0462328,"CD70, EBAG9",588
-GO:0097191,extrinsic apoptotic signaling pathway,0.0435,"CD27, CD70",568
-GO:0160162,CD27 signaling pathway,0.0407408,"CD27, CD70",581
-GO:0006915,apoptotic process,0.0384128,"CD27, EBAG9",480
-GO:0030234,enzyme regulator activity,0.0339996,"CD27, EBAG9",416
-GO:0012501,programmed cell death,0.0337094,"CD27, EBAG9",444
-GO:0008219,cell death,0.030723,"CD27, EBAG9",428
-GO:0032813,tumor necrosis factor receptor superfamily binding,0.023687,CD70,410
-GO:0048018,receptor ligand activity,0.0233998,CD70,428
-GO:0030545,signaling receptor regulator activity,0.0209596,CD70,400
-GO:0005126,cytokine receptor binding,0.0207396,CD70,362
-GO:0042098,T cell proliferation,0.0199554,CD70,330
-GO:0033209,tumor necrosis factor-mediated signaling pathway,0.0197448,CD70,360
-GO:0030141,secretory granule,0.0193126,EBAG9,362
-GO:0030546,signaling receptor activator activity,0.0187046,CD70,364
-GO:0001909,leukocyte mediated cytotoxicity,0.0185524,EBAG9,346
-GO:0061134,peptidase regulator activity,0.0181492,EBAG9,296
-GO:0001558,regulation of cell growth,0.018043,EBAG9,358
-GO:0000139,Golgi membrane,0.0179872,EBAG9,336
-GO:1901222,regulation of non-canonical NF-kappaB signal transduction,0.0178668,CD27,288
-GO:0001906,cell killing,0.0178108,EBAG9,328
-GO:0005164,tumor necrosis factor receptor binding,0.0176652,CD70,356
-GO:0005794,Golgi apparatus,0.0175988,EBAG9,326
-GO:0099503,secretory vesicle,0.0173356,EBAG9,332
-GO:0016504,peptidase activator activity,0.0172362,EBAG9,294
-GO:0008047,enzyme activator activity,0.0170872,EBAG9,294
-GO:0045577,regulation of B cell differentiation,0.0169006,CD27,296
-GO:0043027,cysteine-type endopeptidase inhibitor activity involved in apoptotic process,0.0160174,CD27,290
-GO:0040008,regulation of growth,0.0158846,EBAG9,288
-GO:0001913,T cell mediated cytotoxicity,0.015654,EBAG9,314
-GO:0043408,regulation of MAPK cascade,0.0155968,CD27,314
-GO:1901224,positive regulation of non-canonical NF-kappaB signal transduction,0.0152546,CD27,288
-GO:0045579,positive regulation of B cell differentiation,0.014849,CD27,294
-GO:0050871,positive regulation of B cell activation,0.0147904,CD27,238
-GO:0043028,cysteine-type endopeptidase regulator activity involved in apoptotic process,0.0147366,CD27,270
-GO:0016505,peptidase activator activity involved in apoptotic process,0.0144692,EBAG9,284
-GO:0046328,regulation of JNK cascade,0.014102,CD27,244
-GO:0051128,regulation of cellular component organization,0.013564,EBAG9,274
-GO:0046330,positive regulation of JNK cascade,0.0131364,CD27,258
-GO:0043410,positive regulation of MAPK cascade,0.0125398,CD27,278
-GO:0031090,organelle membrane,0.0078482,EBAG9,128
-GO:0097190,apoptotic signaling pathway,0.0068422,"CD27, CD70",126
-GO:0019221,cytokine-mediated signaling pathway,0.0068032,CD70,124
-GO:0002456,T cell mediated immunity,0.0067488,"CD70, EBAG9",124
-GO:0009986,cell surface,0.006278,CD27,102
-GO:0019724,B cell mediated immunity,0.0062712,"CD27, CD70",108
-GO:2000106,regulation of leukocyte apoptotic process,0.0062244,CD27,90
-GO:0071345,cellular response to cytokine stimulus,0.005436,,90
-GO:0042330,taxis,0.0054214,,82
-GO:0070228,regulation of lymphocyte apoptotic process,0.0052956,CD27,88
-GO:0005788,endoplasmic reticulum lumen,0.0052498,,76
-GO:0043066,negative regulation of apoptotic process,0.0051636,CD27,86
-GO:0045580,regulation of T cell differentiation,0.0050314,CD27,100
-GO:0051235,maintenance of location,0.0050026,,66
-GO:0045471,response to ethanol,0.0049276,,84
-GO:0031410,cytoplasmic vesicle,0.0048608,EBAG9,96
-GO:0006952,defense response,0.0048272,,80
-GO:0005201,extracellular matrix structural constituent,0.0048194,,76
-GO:0060326,cell chemotaxis,0.0047062,,58
-GO:0050795,regulation of behavior,0.0046436,,70
-GO:0043687,post-translational protein modification,0.0045758,,64
-GO:0070243,regulation of thymocyte apoptotic process,0.0045464,,62
-GO:0033280,response to vitamin D,0.004545,,90
-GO:0031974,membrane-enclosed lumen,0.0045124,,70
-GO:0070232,regulation of T cell apoptotic process,0.0044768,CD27,90
-GO:0097708,intracellular vesicle,0.0044606,EBAG9,94
-GO:0050829,defense response to Gram-negative bacterium,0.0044446,,78
-GO:0021549,cerebellum development,0.0044356,,60
-GO:0036211,protein modification process,0.0043518,,58
-GO:0045637,regulation of myeloid cell differentiation,0.0043434,,60
-GO:0071362,cellular response to ether,0.0043246,,74
-GO:2000107,negative regulation of leukocyte apoptotic process,0.004311,CD27,72
-GO:2000822,regulation of behavioral fear response,0.0042634,,80
-GO:0032101,regulation of response to external stimulus,0.0042264,,86
-GO:0048538,thymus development,0.0042204,,64
-GO:1902494,catalytic complex,0.004176,,58
-GO:1990782,protein tyrosine kinase binding,0.0041624,,64
-GO:0042011,interleukin-16 binding,0.0041476,,74
-GO:0070233,negative regulation of T cell apoptotic process,0.0041084,CD27,72
-GO:0050727,regulation of inflammatory response,0.0040756,,56
-GO:0002443,leukocyte mediated immunity,0.0040748,"CD27, CD70, EBAG9",56
-GO:0042106,gamma-delta T cell receptor complex,0.0040288,,62
-GO:0043233,organelle lumen,0.004012,,76
-GO:0045582,positive regulation of T cell differentiation,0.003969,CD27,68
-GO:1903561,extracellular vesicle,0.0039528,CD70,68
-GO:0008542,visual learning,0.0039452,,60
-GO:0045655,regulation of monocyte differentiation,0.0039356,,70
-GO:0045619,regulation of lymphocyte differentiation,0.0039216,CD27,72
-GO:0097011,cellular response to granulocyte macrophage colony-stimulating factor stimulus,0.0038824,,60
-GO:0140096,"catalytic activity, acting on a protein",0.0038808,,68
-GO:0070229,negative regulation of lymphocyte apoptotic process,0.0038784,CD27,74
-GO:0045621,positive regulation of lymphocyte differentiation,0.0038736,CD27,68
-GO:0033993,response to lipid,0.0038652,,58
-GO:0009416,response to light stimulus,0.0038552,,58
-GO:0045639,positive regulation of myeloid cell differentiation,0.0038536,,48
-GO:0043069,negative regulation of programmed cell death,0.0038528,CD27,92
-GO:0031667,response to nutrient levels,0.003816,,60
-GO:1901700,response to oxygen-containing compound,0.003813,,58
-GO:0004536,DNA nuclease activity,0.0038076,,72
-GO:0032943,mononuclear cell proliferation,0.0038024,CD70,58
-GO:0002322,B cell proliferation involved in immune response,0.003802,,46
-GO:0043170,macromolecule metabolic process,0.0038,,60
-GO:0030225,macrophage differentiation,0.003766,,66
-GO:0016787,hydrolase activity,0.0037622,,72
-GO:0046640,regulation of alpha-beta T cell proliferation,0.003739,,46
-GO:0098588,bounding membrane of organelle,0.0036826,EBAG9,84
-GO:0004520,DNA endonuclease activity,0.0036746,,54
-GO:0019865,immunoglobulin binding,0.0036656,,54
-GO:0005198,structural molecule activity,0.0036572,,68
-GO:0030662,coated vesicle membrane,0.0036458,,68
-GO:0065008,regulation of biological quality,0.0036294,,72
-GO:0008283,cell population proliferation,0.0036148,CD70,64
-GO:0050890,cognition,0.0036054,,60
-GO:1901652,response to peptide,0.003605,,64
-GO:0032507,maintenance of protein location in cell,0.0035754,,56
-GO:0070647,protein modification by small protein conjugation or removal,0.0035698,,68
-GO:0044409,symbiont entry into host,0.0035606,,62
-GO:0120025,plasma membrane bounded cell projection,0.0035574,,54
-GO:0097305,response to alcohol,0.0035382,,62
-GO:0019955,cytokine binding,0.0035346,,66
-GO:0048732,gland development,0.0035278,,54
-GO:0006950,response to stress,0.003514,,66
-GO:0045061,thymic T cell selection,0.0034766,,58
-GO:0070013,intracellular organelle lumen,0.0034624,,64
-GO:0042742,defense response to bacterium,0.0034326,,58
-GO:0016444,somatic cell DNA recombination,0.0034226,,52
-GO:1901701,cellular response to oxygen-containing compound,0.0034134,,66
-GO:0007610,behavior,0.003412,,58
-GO:0002763,positive regulation of myeloid leukocyte differentiation,0.003406,,54
-GO:0090304,nucleic acid metabolic process,0.0034028,,54
-GO:0046651,lymphocyte proliferation,0.0033888,CD70,66
-GO:0044238,primary metabolic process,0.0033648,,58
-GO:0031982,vesicle,0.0033628,"CD70, EBAG9",70
-GO:0045472,response to ether,0.0033394,,50
-GO:0002822,regulation of adaptive immune response based on somatic recombination of immune receptors built from immunoglobulin superfamily domains,0.0033344,,60
-GO:0001776,leukocyte homeostasis,0.0033246,,68
-GO:0051179,localization,0.0033154,,60
-GO:0050900,leukocyte migration,0.0033082,,50
-GO:0007155,cell adhesion,0.0032946,,60
-GO:0016788,"hydrolase activity, acting on ester bonds",0.0032904,,66
-GO:0040011,locomotion,0.0032858,,54
-GO:0061630,ubiquitin protein ligase activity,0.0032708,,48
-GO:0002449,lymphocyte mediated immunity,0.0032652,"CD27, CD70, EBAG9",46
-GO:0045060,negative thymic T cell selection,0.0032474,,62
-GO:0045657,positive regulation of monocyte differentiation,0.0032424,,56
-GO:0043565,sequence-specific DNA binding,0.0032358,,50
-GO:0004896,cytokine receptor activity,0.0032328,,64
-GO:0008152,metabolic process,0.0032204,,54
-GO:0035591,signaling adaptor activity,0.0032172,,50
-GO:0030665,clathrin-coated vesicle membrane,0.0032094,,78
-GO:0002913,positive regulation of lymphocyte anergy,0.0032068,,50
-GO:0042221,response to chemical,0.003198,,60
-GO:0051651,maintenance of location in cell,0.0031844,,56
-GO:0140535,intracellular protein-containing complex,0.0031746,,52
-GO:0006325,chromatin organization,0.0031616,,66
-GO:0003008,system process,0.0031576,,50
-GO:0031295,T cell costimulation,0.0031552,,40
-GO:0045185,maintenance of protein location,0.0031438,,70
-GO:0007584,response to nutrient,0.0031366,,64
-GO:0009628,response to abiotic stimulus,0.0031154,,62
-GO:0016740,transferase activity,0.0031014,,64
-GO:0042289,MHC class II protein binding,0.0030988,,56
-GO:0051865,protein autoubiquitination,0.0030914,,36
-GO:0042100,B cell proliferation,0.003089,CD70,52
-GO:0050729,positive regulation of inflammatory response,0.003089,,50
-GO:0070661,leukocyte proliferation,0.0030856,CD70,60
-GO:0033634,positive regulation of cell-cell adhesion mediated by integrin,0.0030848,,48
-GO:0044297,cell body,0.0030698,,42
-GO:1904313,response to methamphetamine hydrochloride,0.0030688,,58
-GO:0002573,myeloid leukocyte differentiation,0.003063,,64
-GO:0010522,regulation of calcium ion transport into cytosol,0.0030462,,58
-GO:0004518,nuclease activity,0.0030456,,66
-GO:0070542,response to fatty acid,0.003007,,58
-GO:0007172,signal complex assembly,0.0030056,,38
-GO:0030159,signaling receptor complex adaptor activity,0.0030016,,32
-GO:0030669,clathrin-coated endocytic vesicle membrane,0.002981,,58
-GO:0140640,"catalytic activity, acting on a nucleic acid",0.0029732,,46
-GO:0014075,response to amine,0.0029652,,54
-GO:0007204,positive regulation of cytosolic calcium ion concentration,0.0029532,,64
-GO:0008306,associative learning,0.0029512,,48
-GO:0071398,cellular response to fatty acid,0.0029348,,52
-GO:0003824,catalytic activity,0.0029326,,48
-GO:0030595,leukocyte chemotaxis,0.0029324,,52
-GO:0002819,regulation of adaptive immune response,0.0029236,,54
-GO:0002643,regulation of tolerance induction,0.0029228,,58
-GO:0033632,regulation of cell-cell adhesion mediated by integrin,0.0029208,,56
-GO:0048513,animal organ development,0.0029188,,56
-GO:0035397,helper T cell enhancement of adaptive immune response,0.0029152,,60
-GO:1904636,response to ionomycin,0.0029134,,62
-GO:0019787,ubiquitin-like protein transferase activity,0.0029122,,48
-GO:0033273,response to vitamin,0.0028996,,66
-GO:0008284,positive regulation of cell population proliferation,0.0028954,CD70,52
-GO:0048872,homeostasis of number of cells,0.0028934,,50
-GO:0032103,positive regulation of response to external stimulus,0.0028796,,56
-GO:1903708,positive regulation of hemopoiesis,0.002843,CD27,52
-GO:0005615,extracellular space,0.0028326,,52
-GO:0030099,myeloid cell differentiation,0.002822,,62
-GO:0031349,positive regulation of defense response,0.0028196,,44
-GO:0044403,biological process involved in symbiotic interaction,0.0028184,,58
-GO:0002669,positive regulation of T cell anergy,0.002818,,44
-GO:0065003,protein-containing complex assembly,0.002815,,44
-GO:0120036,plasma membrane bounded cell projection organization,0.0028132,,50
-GO:0002260,lymphocyte homeostasis,0.0028128,,52
-GO:0003676,nucleic acid binding,0.0028118,,50
-GO:0002331,pre-B cell allelic exclusion,0.0028084,,60
-GO:0007611,learning or memory,0.0027954,,48
-GO:0043029,T cell homeostasis,0.0027918,,72
-GO:0032446,protein modification by small protein conjugation,0.0027892,,58
-GO:0006935,chemotaxis,0.0027798,,58
-GO:0032355,response to estradiol,0.0027564,,58
-GO:0007632,visual behavior,0.002747,,40
-GO:0002460,adaptive immune response based on somatic recombination of immune receptors built from immunoglobulin superfamily domains,0.0027448,"CD27, CD70, EBAG9",46
-GO:0010648,negative regulation of cell communication,0.002743,,48
-GO:0032993,protein-DNA complex,0.0027356,,48
-GO:0032729,positive regulation of type II interferon production,0.0027324,,62
-GO:0012506,vesicle membrane,0.002732,,62
-GO:0030659,cytoplasmic vesicle membrane,0.0027218,,58
-GO:0016064,immunoglobulin mediated immune response,0.0027078,CD27,50
-GO:0043933,protein-containing complex organization,0.0026994,,42
-GO:0060090,molecular adaptor activity,0.0026902,,50
-GO:0010629,negative regulation of gene expression,0.0026814,,30
-GO:0006139,nucleobase-containing compound metabolic process,0.0026784,,60
-GO:0071396,cellular response to lipid,0.0026748,,50
-GO:0009314,response to radiation,0.0026658,,44
-GO:0008589,regulation of smoothened signaling pathway,0.0026606,,56
-GO:0009892,negative regulation of metabolic process,0.002652,,46
-GO:0004842,ubiquitin-protein transferase activity,0.0026464,,52
-GO:0048870,cell motility,0.0026194,,60
-GO:0043368,positive T cell selection,0.002618,,40
-GO:0002821,positive regulation of adaptive immune response,0.0025976,,52
-GO:0033630,positive regulation of cell adhesion mediated by integrin,0.0025888,,52
-GO:0050670,regulation of lymphocyte proliferation,0.0025804,CD70,44
-GO:0003677,DNA binding,0.0025648,,60
-GO:0045879,negative regulation of smoothened signaling pathway,0.0025586,,44
-GO:0010811,positive regulation of cell-substrate adhesion,0.002528,,48
-GO:0097012,response to granulocyte macrophage colony-stimulating factor,0.0025234,,68
-GO:0043005,neuron projection,0.0025186,,62
-GO:0046635,positive regulation of alpha-beta T cell activation,0.002518,,42
-GO:0050877,nervous system process,0.0025162,,56
-GO:0005576,extracellular region,0.0025054,CD27,48
-GO:0019904,protein domain specific binding,0.0025022,,42
-GO:0048585,negative regulation of response to stimulus,0.0024968,,50
-GO:0001618,virus receptor activity,0.0024958,,54
-GO:0044853,plasma membrane raft,0.002494,,38
-GO:0002200,somatic diversification of immune receptors,0.002486,,46
-GO:0140097,"catalytic activity, acting on DNA",0.0024836,,50
-GO:0051701,biological process involved in interaction with host,0.0024642,,62
-GO:1905348,endonuclease complex,0.0024634,,46
-GO:0016477,cell migration,0.0024434,,58
-GO:0010720,positive regulation of cell development,0.0024412,CD27,40
-GO:0002366,leukocyte activation involved in immune response,0.00244,,34
-GO:0030666,endocytic vesicle membrane,0.0024348,,44
-GO:0008289,lipid binding,0.0024288,,64
-GO:0060341,regulation of cellular localization,0.0024226,,56
-GO:0030030,cell projection organization,0.0024156,,38
-GO:0001952,regulation of cell-matrix adhesion,0.0024128,,54
-GO:1904637,cellular response to ionomycin,0.002411,,54
-GO:0045065,cytotoxic T cell differentiation,0.0024072,,34
-GO:0043229,intracellular organelle,0.0024044,EBAG9,42
-GO:0005768,endosome,0.0024036,,60
-GO:0016746,acyltransferase activity,0.0024026,,60
-GO:0098794,postsynapse,0.0023994,,46
-GO:0140272,exogenous protein binding,0.0023948,,68
-GO:0032944,regulation of mononuclear cell proliferation,0.0023426,CD70,28
-GO:0033628,regulation of cell adhesion mediated by integrin,0.0023348,,38
-GO:0042393,histone binding,0.0023292,,46
-GO:0046718,symbiont entry into host cell,0.0023254,,62
-GO:1990238,double-stranded DNA endonuclease activity,0.0023162,,60
-GO:0097519,DNA recombinase complex,0.0023052,,42
-GO:0051094,positive regulation of developmental process,0.0022932,CD27,34
-GO:0045595,regulation of cell differentiation,0.002284,CD27,52
-GO:0050864,regulation of B cell activation,0.0022748,CD27,42
-GO:0031175,neuron projection development,0.0022718,,40
-GO:0005654,nucleoplasm,0.0022632,,56
-GO:0033077,T cell differentiation in thymus,0.002257,,48
-GO:0042608,T cell receptor binding,0.0022388,,40
-GO:0034097,response to cytokine,0.0022306,,48
-GO:0050793,regulation of developmental process,0.0022292,CD27,34
-GO:0005769,early endosome,0.0022204,,56
-GO:0002335,mature B cell differentiation,0.002217,,38
-GO:0016567,protein ubiquitination,0.002201,,46
-GO:0002667,regulation of T cell anergy,0.0021986,,46
-GO:0032946,positive regulation of mononuclear cell proliferation,0.0021752,CD70,34
-GO:0001923,B-1 B cell differentiation,0.0021744,,36
-GO:0030054,cell junction,0.0021732,,34
-GO:0051716,cellular response to stimulus,0.0021704,,48
-GO:0035723,interleukin-15-mediated signaling pathway,0.0021592,,42
-GO:0019900,kinase binding,0.0021462,,26
-GO:0051050,positive regulation of transport,0.0021446,,26
-GO:0042592,homeostatic process,0.0021434,,54
-GO:0002285,lymphocyte activation involved in immune response,0.0021338,,46
-GO:0002312,B cell activation involved in immune response,0.0020946,,30
-GO:0010605,negative regulation of macromolecule metabolic process,0.002058,,44
-GO:0032753,positive regulation of interleukin-4 production,0.0020518,,44
-GO:0006310,DNA recombination,0.0020458,,48
-GO:0042129,regulation of T cell proliferation,0.0020288,CD70,32
-GO:0002824,positive regulation of adaptive immune response based on somatic recombination of immune receptors built from immunoglobulin superfamily domains,0.0020254,,44
-GO:0002263,cell activation involved in immune response,0.0020166,,34
-GO:0070244,negative regulation of thymocyte apoptotic process,0.0020094,,56
-GO:0050854,regulation of antigen receptor-mediated signaling pathway,0.002005,,48
-GO:0032673,regulation of interleukin-4 production,0.0020014,,46
-GO:0070665,positive regulation of leukocyte proliferation,0.0019932,CD70,26
-GO:0016755,aminoacyltransferase activity,0.0019848,,38
-GO:0050853,B cell receptor signaling pathway,0.0019826,,32
-GO:2000026,regulation of multicellular organismal development,0.0019794,CD27,32
-GO:0002666,positive regulation of T cell tolerance induction,0.0019678,,42
-GO:1903365,regulation of fear response,0.001961,,36
-GO:0005789,endoplasmic reticulum membrane,0.0019572,,56
-GO:0042995,cell projection,0.0019534,,40
-GO:0046641,positive regulation of alpha-beta T cell proliferation,0.0019516,,50
-GO:0004519,endonuclease activity,0.0019468,,34
-GO:0006259,DNA metabolic process,0.0019362,,44
-GO:0010524,positive regulation of calcium ion transport into cytosol,0.0019092,,54
-GO:0045597,positive regulation of cell differentiation,0.0018876,CD27,32
-GO:0042012,interleukin-16 receptor activity,0.0018852,,42
-GO:0005634,nucleus,0.0018832,,44
-GO:0023057,negative regulation of signaling,0.0018798,,30
-GO:0002761,regulation of myeloid leukocyte differentiation,0.001874,,36
-GO:0044309,neuron spine,0.0018668,,42
-GO:0043230,extracellular organelle,0.0018652,CD70,46
-GO:0002645,positive regulation of tolerance induction,0.0018508,,42
-GO:0023026,MHC class II protein complex binding,0.0018352,,44
-GO:0019538,protein metabolic process,0.0018114,,46
-GO:0030674,protein-macromolecule adaptor activity,0.0018104,,40
-GO:0050867,positive regulation of cell activation,0.0018078,"CD27, CD70",28
-GO:1901698,response to nitrogen compound,0.0018052,,44
-GO:0048871,multicellular organismal-level homeostasis,0.0017996,,40
-GO:0043227,membrane-bounded organelle,0.001795,"CD70, EBAG9",22
-GO:0009890,negative regulation of biosynthetic process,0.0017882,,38
-GO:0005911,cell-cell junction,0.0017698,,40
-GO:0001954,positive regulation of cell-matrix adhesion,0.0017682,,32
-GO:0031294,lymphocyte costimulation,0.001747,,30
-GO:0043226,organelle,0.0017432,"CD70, EBAG9",20
-GO:0048534,hematopoietic or lymphoid organ development,0.0017406,,42
-GO:0008270,zinc ion binding,0.0017276,,20
-GO:0017124,SH3 domain binding,0.0017264,,44
-GO:0080134,regulation of response to stress,0.00172,,28
-GO:0046634,regulation of alpha-beta T cell activation,0.0016984,,34
-GO:1905347,endodeoxyribonuclease complex,0.0016754,,50
-GO:0043231,intracellular membrane-bounded organelle,0.0016642,EBAG9,40
-GO:0042803,protein homodimerization activity,0.0016556,,28
-GO:0050855,regulation of B cell receptor signaling pathway,0.0016416,,32
-GO:0002562,somatic diversification of immune receptors via germline recombination within a single locus,0.0016378,,40
-GO:0022407,regulation of cell-cell adhesion,0.0016306,"CD27, CD70",16
-GO:0010558,negative regulation of macromolecule biosynthetic process,0.001605,,44
-GO:0051281,positive regulation of release of sequestered calcium ion into cytosol,0.0015992,,34
-GO:0022607,cellular component assembly,0.0015736,,48
-GO:1903706,regulation of hemopoiesis,0.001572,CD27,34
-GO:0009968,negative regulation of signal transduction,0.0015694,,36
-GO:0007186,G protein-coupled receptor signaling pathway,0.0015514,,44
-GO:1902107,positive regulation of leukocyte differentiation,0.0015492,CD27,28
-GO:0016358,dendrite development,0.0015244,,30
-GO:0007612,learning,0.0014926,,36
-GO:0046872,metal ion binding,0.0014864,,18
-GO:0002252,immune effector process,0.0014832,"CD27, CD70, EBAG9",30
-GO:0045785,positive regulation of cell adhesion,0.0014804,"CD27, CD70",30
-GO:0070062,extracellular exosome,0.001473,CD70,52
-GO:0046914,transition metal ion binding,0.001449,,24
-GO:0050863,regulation of T cell activation,0.0014308,"CD27, CD70",30
-GO:0061659,ubiquitin-like protein ligase activity,0.0014218,,30
-GO:0060284,regulation of cell development,0.00141,CD27,26
-GO:0043412,macromolecule modification,0.001407,,38
-GO:0019882,antigen processing and presentation,0.0013662,,22
-GO:0043383,negative T cell selection,0.0013582,,34
-GO:0019899,enzyme binding,0.0013346,,18
-GO:0010810,regulation of cell-substrate adhesion,0.001324,,40
-GO:0051896,regulation of phosphatidylinositol 3-kinase/protein kinase B signal transduction,0.0013138,,32
-GO:0033151,V(D)J recombination,0.0013024,,48
-GO:0045059,positive thymic T cell selection,0.0013008,,30
-GO:0042127,regulation of cell population proliferation,0.0012988,CD70,28
-GO:0001772,immunological synapse,0.0012926,,26
-GO:0019901,protein kinase binding,0.001283,,14
-GO:0042113,B cell activation,0.0012822,CD70,26
-GO:0051282,regulation of sequestering of calcium ion,0.0012692,,30
-GO:1902105,regulation of leukocyte differentiation,0.001261,CD27,28
-GO:0051240,positive regulation of multicellular organismal process,0.0012392,"CD27, CD70",28
-GO:0002664,regulation of T cell tolerance induction,0.0012374,,28
-GO:0070887,cellular response to chemical stimulus,0.0012364,,44
-GO:0042102,positive regulation of T cell proliferation,0.0012252,CD70,28
-GO:0032649,regulation of type II interferon production,0.0011934,,36
-GO:0002911,regulation of lymphocyte anergy,0.001146,,36
-GO:0050870,positive regulation of T cell activation,0.001128,"CD27, CD70",30
-GO:1903037,regulation of leukocyte cell-cell adhesion,0.0011198,"CD27, CD70",24
-GO:0043269,regulation of monoatomic ion transport,0.0011044,,22
-GO:0070161,anchoring junction,0.001103,,32
-GO:0043197,dendritic spine,0.0011016,,30
-GO:0051251,positive regulation of lymphocyte activation,0.0010988,"CD27, CD70",20
-GO:0009967,positive regulation of signal transduction,0.001098,CD27,12
-GO:0001817,regulation of cytokine production,0.0010858,,18
-GO:0034764,positive regulation of transmembrane transport,0.0010766,,16
-GO:0046629,gamma-delta T cell activation,0.001067,,24
-GO:0065010,extracellular membrane-bounded organelle,0.0010628,CD70,48
-GO:0050671,positive regulation of lymphocyte proliferation,0.0010404,CD70,24
-GO:1904062,regulation of monoatomic cation transmembrane transport,0.00104,,22
-GO:0005488,binding,0.0010102,"CD27, CD70, EBAG9",12
-GO:0048519,negative regulation of biological process,0.0010086,CD27,20
-GO:0042981,regulation of apoptotic process,0.0010074,CD27,18
-GO:0022409,positive regulation of cell-cell adhesion,0.0009904,"CD27, CD70",20
-GO:0034767,positive regulation of monoatomic ion transmembrane transport,0.000973,,12
-GO:0070663,regulation of leukocyte proliferation,0.0009654,CD70,30
-GO:1903169,regulation of calcium ion transmembrane transport,0.000949,,22
-GO:0098590,plasma membrane region,0.0009452,,16
-GO:0045121,membrane raft,0.0009428,,10
-GO:0043067,regulation of programmed cell death,0.0009326,CD27,22
-GO:0051279,regulation of release of sequestered calcium ion into cytosol,0.0009176,,30
-GO:0009891,positive regulation of biosynthetic process,0.000906,,16
-GO:0009889,regulation of biosynthetic process,0.0008868,,10
-GO:0045058,T cell selection,0.0008792,,20
-GO:0051897,positive regulation of phosphatidylinositol 3-kinase/protein kinase B signal transduction,0.000878,,24
-GO:0042802,identical protein binding,0.0008728,,14
-GO:1903039,positive regulation of leukocyte cell-cell adhesion,0.0008654,"CD27, CD70",14
-GO:0036094,small molecule binding,0.0008596,,16
-GO:0046983,protein dimerization activity,0.0008566,,22
-GO:1904427,positive regulation of calcium ion transmembrane transport,0.0008534,,16
-GO:0009893,positive regulation of metabolic process,0.0008396,,20
-GO:0034765,regulation of monoatomic ion transmembrane transport,0.000837,,18
-GO:0010646,regulation of cell communication,0.0008104,CD27,10
-GO:0023056,positive regulation of signaling,0.0007622,CD27,12
-GO:0032663,regulation of interleukin-2 production,0.0007338,,12
-GO:0023024,MHC class I protein complex binding,0.000732,,20
-GO:0050848,regulation of calcium-mediated signaling,0.0007306,,12
-GO:0044877,protein-containing complex binding,0.0007278,,6
-GO:0016043,cellular component organization,0.0007274,,14
-GO:0010604,positive regulation of macromolecule metabolic process,0.0007234,,14
-GO:0031347,regulation of defense response,0.000686,,18
-GO:0043167,ion binding,0.0006854,,14
-GO:0032743,positive regulation of interleukin-2 production,0.0006782,,18
-GO:0019222,regulation of metabolic process,0.0006652,,12
-GO:0010557,positive regulation of macromolecule biosynthetic process,0.0006558,,12
-GO:0048523,negative regulation of cellular process,0.0006526,CD27,16
-GO:0051928,positive regulation of calcium ion transport,0.0006092,,10
-GO:0032879,regulation of localization,0.0005968,,16
-GO:0010468,regulation of gene expression,0.0005922,,14
-GO:0005515,protein binding,0.0005852,"CD27, CD70, EBAG9",14
-GO:0043169,cation binding,0.0005852,,18
-GO:0023051,regulation of signaling,0.0005792,CD27,10
-GO:0042288,MHC class I protein binding,0.0005706,,20
-GO:0005102,signaling receptor binding,0.0005354,CD70,12
-GO:0071840,cellular component organization or biogenesis,0.0005254,,14
-GO:0007169,cell surface receptor protein tyrosine kinase signaling pathway,0.000525,,4
-GO:0015026,coreceptor activity,0.0005158,,14
-GO:0051049,regulation of transport,0.0004942,,20
-GO:0010647,positive regulation of cell communication,0.0004774,CD27,4
-GO:0060255,regulation of macromolecule metabolic process,0.0004658,,8
-GO:0043207,response to external biotic stimulus,0.0004614,,8
-GO:0042287,MHC protein binding,0.0004556,,12
-GO:0010628,positive regulation of gene expression,0.000453,,18
-GO:0009605,response to external stimulus,0.0004426,,6
-GO:0030155,regulation of cell adhesion,0.0004352,"CD27, CD70",10
-GO:1902531,regulation of intracellular signal transduction,0.0004278,CD27,8
-GO:0051707,response to other organism,0.0003962,,10
-GO:0032395,MHC class II receptor activity,0.0003592,,8
-GO:0043270,positive regulation of monoatomic ion transport,0.000357,,12
-GO:0002696,positive regulation of leukocyte activation,0.0003562,"CD27, CD70",8
-GO:0030183,B cell differentiation,0.0003332,,6
-GO:0001819,positive regulation of cytokine production,0.0003318,,10
-GO:0051239,regulation of multicellular organismal process,0.0003178,"CD27, CD70",4
-GO:0051924,regulation of calcium ion transport,0.0002976,,10
-GO:0023023,MHC protein complex binding,0.000282,,10
-GO:1904064,positive regulation of cation transmembrane transport,0.0002764,,10
-GO:0050865,regulation of cell activation,0.000259,"CD27, CD70",4
-GO:0048856,anatomical structure development,0.0002488,,10
-GO:0050850,positive regulation of calcium-mediated signaling,0.0002476,,6
-GO:0009617,response to bacterium,0.0002016,,6
-GO:1903131,mononuclear cell differentiation,0.0001914,,2
-GO:0010556,regulation of macromolecule biosynthetic process,0.0001888,,6
-GO:0044419,biological process involved in interspecies interaction between organisms,0.0001848,,6
-GO:0140375,immune receptor activity,0.0001802,,4
-GO:0048522,positive regulation of cellular process,0.0001776,"CD27, CD70",4
-GO:0034762,regulation of transmembrane transport,0.0001752,,8
-GO:0045321,leukocyte activation,0.0001608,"CD27, CD70",2
-GO:1902533,positive regulation of intracellular signal transduction,0.0001566,CD27,2
-GO:0009897,external side of plasma membrane,0.0001412,CD27,4
-GO:0002694,regulation of leukocyte activation,0.000132,"CD27, CD70",4
-GO:0009966,regulation of signal transduction,0.0001112,CD27,2
-GO:0009607,response to biotic stimulus,0.000104,,2
-GO:0032502,developmental process,0.0000968,,2
-GO:0003674,molecular_function,0.0000868,"CD27, CD70, EBAG9",2
-GO:0010959,regulation of metal ion transport,0.0000796,,6
-GO:0060089,molecular transducer activity,0.0000728,CD27,2
-GO:0098552,side of membrane,0.0000304,CD27,2
-GO:0007167,enzyme-linked receptor protein signaling pathway,0.000029,,6
-GO:0050852,T cell receptor signaling pathway,0.0000212,,2
-GO:0098857,membrane microdomain,0.0000192,,2
-GO:0030217,T cell differentiation,0.0000144,,2
-GO:0030154,cell differentiation,6.8e-6,,2
+GO:0090716,adaptive immune memory response,0.17429346,"CD27, CD70, EBAG9",7508
+GO:0098772,molecular function regulator activity,0.17174578,"CD27, CD70, EBAG9",7484
+GO:0090713,immunological memory process,0.16982808,"CD27, CD70, EBAG9",7354
+GO:0090717,adaptive immune memory response involving T cells and B cells,0.16437538,"CD27, CD70, EBAG9",7294
+GO:0140677,molecular function activator activity,0.0465896,"CD70, EBAG9",5724
+GO:0160162,CD27 signaling pathway,0.04555614,"CD27, CD70",5623
+GO:0097191,extrinsic apoptotic signaling pathway,0.04415156,"CD27, CD70",5426
+GO:0030234,enzyme regulator activity,0.03786488,"CD27, EBAG9",4802
+GO:0008219,cell death,0.03623162,"CD27, EBAG9",4488
+GO:0006915,apoptotic process,0.0357604,"CD27, EBAG9",4558
+GO:0012501,programmed cell death,0.03536798,"CD27, EBAG9",4646
+GO:0005164,tumor necrosis factor receptor binding,0.02043354,CD70,3844
+GO:0042098,T cell proliferation,0.02031748,CD70,3836
+GO:0030546,signaling receptor activator activity,0.02030232,CD70,3758
+GO:0032813,tumor necrosis factor receptor superfamily binding,0.02000694,CD70,3650
+GO:0033209,tumor necrosis factor-mediated signaling pathway,0.01962276,CD70,3650
+GO:0048018,receptor ligand activity,0.01959212,CD70,3696
+GO:0005126,cytokine receptor binding,0.0195746,CD70,3664
+GO:0030545,signaling receptor regulator activity,0.01891352,CD70,3790
+GO:0016505,peptidase activator activity involved in apoptotic process,0.01785142,EBAG9,3246
+GO:0000139,Golgi membrane,0.01784674,EBAG9,3152
+GO:0051128,regulation of cellular component organization,0.01723218,EBAG9,3134
+GO:0001558,regulation of cell growth,0.01665844,EBAG9,3154
+GO:0061134,peptidase regulator activity,0.01664918,EBAG9,3128
+GO:0099503,secretory vesicle,0.01658756,EBAG9,3044
+GO:0040008,regulation of growth,0.01655588,EBAG9,3020
+GO:0030141,secretory granule,0.01654648,EBAG9,3160
+GO:0005794,Golgi apparatus,0.0164496,EBAG9,3144
+GO:0016504,peptidase activator activity,0.01642854,EBAG9,3098
+GO:0008047,enzyme activator activity,0.01639036,EBAG9,3117
+GO:0001906,cell killing,0.01637376,EBAG9,3067
+GO:0001909,leukocyte mediated cytotoxicity,0.0162962,EBAG9,3212
+GO:0001913,T cell mediated cytotoxicity,0.01571542,EBAG9,3094
+GO:0045577,regulation of B cell differentiation,0.01566038,CD27,2930
+GO:0043028,cysteine-type endopeptidase regulator activity involved in apoptotic process,0.01549584,CD27,2884
+GO:0046328,regulation of JNK cascade,0.01539514,CD27,2780
+GO:0043410,positive regulation of MAPK cascade,0.01534328,CD27,2802
+GO:1901222,regulation of non-canonical NF-kappaB signal transduction,0.01510992,CD27,2762
+GO:0043408,regulation of MAPK cascade,0.01506636,CD27,2720
+GO:1901224,positive regulation of non-canonical NF-kappaB signal transduction,0.01477476,CD27,2632
+GO:0046330,positive regulation of JNK cascade,0.0147625,CD27,2666
+GO:0045579,positive regulation of B cell differentiation,0.01427488,CD27,2718
+GO:0043027,cysteine-type endopeptidase inhibitor activity involved in apoptotic process,0.01424116,CD27,2758
+GO:0050871,positive regulation of B cell activation,0.01308746,CD27,2604
+GO:0097190,apoptotic signaling pathway,0.00935136,"CD27, CD70",1482
+GO:0019221,cytokine-mediated signaling pathway,0.00628136,CD70,1224
+GO:0098588,bounding membrane of organelle,0.00611192,EBAG9,1168
+GO:0031090,organelle membrane,0.00597722,EBAG9,1112
+GO:0019724,B cell mediated immunity,0.00596098,"CD27, CD70",1183
+GO:0097708,intracellular vesicle,0.0055891,EBAG9,1062
+GO:0031410,cytoplasmic vesicle,0.00519608,EBAG9,990
+GO:0002456,T cell mediated immunity,0.00518972,"CD70, EBAG9",934
+GO:0009986,cell surface,0.00477404,CD27,926
+GO:0045582,positive regulation of T cell differentiation,0.00419316,CD27,746
+GO:0043066,negative regulation of apoptotic process,0.00413196,CD27,742
+GO:0070228,regulation of lymphocyte apoptotic process,0.003955,CD27,716
+GO:0005768,endosome,0.00393748,,644
+GO:0051235,maintenance of location,0.00391936,,676
+GO:0070233,negative regulation of T cell apoptotic process,0.00391342,CD27,732
+GO:0043069,negative regulation of programmed cell death,0.0038936,CD27,696
+GO:2000106,regulation of leukocyte apoptotic process,0.00379706,CD27,712
+GO:0045580,regulation of T cell differentiation,0.0037833,CD27,708
+GO:0045619,regulation of lymphocyte differentiation,0.00374534,CD27,758
+GO:0043233,organelle lumen,0.00372874,,692
+GO:0051716,cellular response to stimulus,0.00372106,,632
+GO:0019865,immunoglobulin binding,0.00372098,,654
+GO:0030665,clathrin-coated vesicle membrane,0.00370402,,642
+GO:2000107,negative regulation of leukocyte apoptotic process,0.00366976,CD27,720
+GO:0045621,positive regulation of lymphocyte differentiation,0.00366862,CD27,744
+GO:0002763,positive regulation of myeloid leukocyte differentiation,0.0036597,,642
+GO:0023026,MHC class II protein complex binding,0.00365734,,610
+GO:0042011,interleukin-16 binding,0.00365074,,636
+GO:0030595,leukocyte chemotaxis,0.0036481,,642
+GO:0006935,chemotaxis,0.0035949,,654
+GO:0050727,regulation of inflammatory response,0.0035928,,706
+GO:0045471,response to ethanol,0.00357996,,620
+GO:0010524,positive regulation of calcium ion transport into cytosol,0.00355452,,622
+GO:0030669,clathrin-coated endocytic vesicle membrane,0.00352666,,658
+GO:0065008,regulation of biological quality,0.00351464,,616
+GO:0033280,response to vitamin D,0.00350892,,590
+GO:0042012,interleukin-16 receptor activity,0.00350734,,646
+GO:0007204,positive regulation of cytosolic calcium ion concentration,0.00350592,,672
+GO:0065010,extracellular membrane-bounded organelle,0.00349474,CD70,678
+GO:0071345,cellular response to cytokine stimulus,0.00349016,,644
+GO:0008283,cell population proliferation,0.00348748,CD70,598
+GO:0030659,cytoplasmic vesicle membrane,0.00347958,,628
+GO:0008289,lipid binding,0.00347316,,600
+GO:0042742,defense response to bacterium,0.0034708,,606
+GO:0014075,response to amine,0.00346924,,632
+GO:1901700,response to oxygen-containing compound,0.0034571,,618
+GO:0070661,leukocyte proliferation,0.00345684,CD70,636
+GO:0035397,helper T cell enhancement of adaptive immune response,0.0034553,,596
+GO:0032103,positive regulation of response to external stimulus,0.00345514,,616
+GO:0070229,negative regulation of lymphocyte apoptotic process,0.00345342,CD27,694
+GO:0031667,response to nutrient levels,0.0034474,,600
+GO:0032101,regulation of response to external stimulus,0.00343964,,624
+GO:1901698,response to nitrogen compound,0.00342354,,648
+GO:0070232,regulation of T cell apoptotic process,0.0034162,CD27,736
+GO:0002824,positive regulation of adaptive immune response based on somatic recombination of immune receptors built from immunoglobulin superfamily domains,0.00340796,,630
+GO:0031349,positive regulation of defense response,0.00339924,,660
+GO:1904637,cellular response to ionomycin,0.00339396,,600
+GO:0051179,localization,0.00338556,,586
+GO:0002821,positive regulation of adaptive immune response,0.00337252,,642
+GO:0070013,intracellular organelle lumen,0.00337202,,610
+GO:0050729,positive regulation of inflammatory response,0.00336992,,638
+GO:0042330,taxis,0.0033637,,610
+GO:0042289,MHC class II protein binding,0.00335896,,652
+GO:0002573,myeloid leukocyte differentiation,0.00334054,,638
+GO:0005201,extracellular matrix structural constituent,0.00333482,,660
+GO:0051701,biological process involved in interaction with host,0.00333388,,608
+GO:0040011,locomotion,0.00332926,,574
+GO:0070062,extracellular exosome,0.00332072,CD70,608
+GO:0030099,myeloid cell differentiation,0.00331922,,578
+GO:0004896,cytokine receptor activity,0.0033152,,608
+GO:0016477,cell migration,0.00331106,,610
+GO:0005769,early endosome,0.00330956,,636
+GO:0007155,cell adhesion,0.0033028,,686
+GO:0002822,regulation of adaptive immune response based on somatic recombination of immune receptors built from immunoglobulin superfamily domains,0.00330046,,616
+GO:0007632,visual behavior,0.0032994,,568
+GO:1904636,response to ionomycin,0.00329802,,602
+GO:0050829,defense response to Gram-negative bacterium,0.00328044,,592
+GO:0044409,symbiont entry into host,0.0032791,,558
+GO:0051651,maintenance of location in cell,0.00326312,,596
+GO:0030662,coated vesicle membrane,0.00325398,,616
+GO:0005198,structural molecule activity,0.0032444,,592
+GO:0002819,regulation of adaptive immune response,0.00324004,,566
+GO:0045637,regulation of myeloid cell differentiation,0.00323978,,632
+GO:0033993,response to lipid,0.00323768,,618
+GO:0045655,regulation of monocyte differentiation,0.00323094,,602
+GO:0042221,response to chemical,0.00322314,,610
+GO:0060326,cell chemotaxis,0.0032224,,624
+GO:0005789,endoplasmic reticulum membrane,0.00321818,,574
+GO:0001618,virus receptor activity,0.00321756,,556
+GO:0006950,response to stress,0.00321058,,622
+GO:0010522,regulation of calcium ion transport into cytosol,0.00320832,,596
+GO:0030225,macrophage differentiation,0.00319314,,632
+GO:0042100,B cell proliferation,0.00317506,CD70,624
+GO:1990782,protein tyrosine kinase binding,0.00317288,,638
+GO:0012506,vesicle membrane,0.0031485,,610
+GO:0034097,response to cytokine,0.00314324,,630
+GO:0002761,regulation of myeloid leukocyte differentiation,0.00314322,,588
+GO:0097011,cellular response to granulocyte macrophage colony-stimulating factor stimulus,0.00314184,,620
+GO:0030666,endocytic vesicle membrane,0.003133,,622
+GO:0070887,cellular response to chemical stimulus,0.00311064,,624
+GO:0045185,maintenance of protein location,0.00310844,,584
+GO:1904313,response to methamphetamine hydrochloride,0.00310636,,584
+GO:0045639,positive regulation of myeloid cell differentiation,0.00310358,,572
+GO:0043230,extracellular organelle,0.00310086,CD70,588
+GO:1903561,extracellular vesicle,0.00309952,CD70,598
+GO:0004519,endonuclease activity,0.0030888,,554
+GO:0006952,defense response,0.00308834,,644
+GO:0048870,cell motility,0.00307634,,604
+GO:0097305,response to alcohol,0.00307244,,580
+GO:0043687,post-translational protein modification,0.00306334,,550
+GO:0051865,protein autoubiquitination,0.00305244,,544
+GO:2000822,regulation of behavioral fear response,0.00303872,,560
+GO:0003676,nucleic acid binding,0.00303854,,527
+GO:0032446,protein modification by small protein conjugation,0.00303832,,528
+GO:0045059,positive thymic T cell selection,0.00303082,,516
+GO:0032507,maintenance of protein location in cell,0.00302212,,606
+GO:0050890,cognition,0.00301116,,564
+GO:0035723,interleukin-15-mediated signaling pathway,0.00300378,,598
+GO:0044403,biological process involved in symbiotic interaction,0.00300132,,612
+GO:0097012,response to granulocyte macrophage colony-stimulating factor,0.0030003,,586
+GO:1905347,endodeoxyribonuclease complex,0.00299952,,524
+GO:0019955,cytokine binding,0.00299532,,624
+GO:0005788,endoplasmic reticulum lumen,0.00299438,,592
+GO:0046718,symbiont entry into host cell,0.00299252,,576
+GO:0050864,regulation of B cell activation,0.00298708,CD27,540
+GO:0032943,mononuclear cell proliferation,0.00297952,CD70,534
+GO:0071362,cellular response to ether,0.00297598,,634
+GO:0019787,ubiquitin-like protein transferase activity,0.00295428,,526
+GO:0007584,response to nutrient,0.0029495,,616
+GO:0009628,response to abiotic stimulus,0.00292616,,520
+GO:0008152,metabolic process,0.0029241,,546
+GO:0002645,positive regulation of tolerance induction,0.00292328,,484
+GO:0004518,nuclease activity,0.0029215,,484
+GO:0061659,ubiquitin-like protein ligase activity,0.00290858,,526
+GO:0060341,regulation of cellular localization,0.0029079,,552
+GO:0002562,somatic diversification of immune receptors via germline recombination within a single locus,0.00290266,,526
+GO:0030030,cell projection organization,0.00290038,,482
+GO:0005615,extracellular space,0.00289838,,614
+GO:0070647,protein modification by small protein conjugation or removal,0.00289324,,552
+GO:0002252,immune effector process,0.00288094,"CD27, CD70, EBAG9",490
+GO:0140097,"catalytic activity, acting on DNA",0.00287846,,540
+GO:0048732,gland development,0.00287732,,542
+GO:0003008,system process,0.00287134,,486
+GO:0050900,leukocyte migration,0.00286398,,590
+GO:0002449,lymphocyte mediated immunity,0.00285752,"CD27, CD70, EBAG9",498
+GO:0048538,thymus development,0.00285548,,512
+GO:0061630,ubiquitin protein ligase activity,0.002849,,498
+GO:0048871,multicellular organismal-level homeostasis,0.00284482,,514
+GO:0033077,T cell differentiation in thymus,0.0028406,,558
+GO:0033273,response to vitamin,0.00283924,,582
+GO:0071398,cellular response to fatty acid,0.0028392,,546
+GO:0140272,exogenous protein binding,0.00283226,,540
+GO:1901701,cellular response to oxygen-containing compound,0.00283114,,564
+GO:0006310,DNA recombination,0.00282434,,536
+GO:0033151,V(D)J recombination,0.00281918,,516
+GO:0031974,membrane-enclosed lumen,0.0028166,,620
+GO:0031982,vesicle,0.0028158,"CD70, EBAG9",444
+GO:0008542,visual learning,0.00281294,,526
+GO:0046651,lymphocyte proliferation,0.0028038,CD70,514
+GO:0002260,lymphocyte homeostasis,0.00280378,,528
+GO:1901652,response to peptide,0.00280072,,560
+GO:0033630,positive regulation of cell adhesion mediated by integrin,0.00278154,,466
+GO:0048534,hematopoietic or lymphoid organ development,0.00276952,,510
+GO:1990238,double-stranded DNA endonuclease activity,0.00276022,,500
+GO:0043170,macromolecule metabolic process,0.00275464,,514
+GO:0032993,protein-DNA complex,0.00275454,,538
+GO:0045657,positive regulation of monocyte differentiation,0.00275356,,540
+GO:0036211,protein modification process,0.0027438,,502
+GO:0043412,macromolecule modification,0.00273272,,500
+GO:0023057,negative regulation of signaling,0.0027322,,498
+GO:0070542,response to fatty acid,0.00272488,,558
+GO:0001954,positive regulation of cell-matrix adhesion,0.00272342,,458
+GO:0004842,ubiquitin-protein transferase activity,0.00272102,,480
+GO:0016064,immunoglobulin mediated immune response,0.00271628,CD27,534
+GO:0005634,nucleus,0.00270646,,512
+GO:0050877,nervous system process,0.00270588,,526
+GO:0070244,negative regulation of thymocyte apoptotic process,0.00270482,,498
+GO:0140096,"catalytic activity, acting on a protein",0.00270228,,484
+GO:0043029,T cell homeostasis,0.00270182,,506
+GO:1905348,endonuclease complex,0.00269632,,514
+GO:0006259,DNA metabolic process,0.00269386,,554
+GO:0035591,signaling adaptor activity,0.00268722,,448
+GO:0009314,response to radiation,0.00267354,,504
+GO:0045472,response to ether,0.00267262,,544
+GO:0140640,"catalytic activity, acting on a nucleic acid",0.0026684,,480
+GO:0065003,protein-containing complex assembly,0.00266634,,448
+GO:0045879,negative regulation of smoothened signaling pathway,0.00266254,,458
+GO:1903365,regulation of fear response,0.00266008,,488
+GO:0007610,behavior,0.0026535,,476
+GO:0016567,protein ubiquitination,0.00264604,,508
+GO:0006325,chromatin organization,0.00264338,,570
+GO:0019538,protein metabolic process,0.00263784,,510
+GO:0008589,regulation of smoothened signaling pathway,0.00263096,,486
+GO:0017124,SH3 domain binding,0.0026164,,458
+GO:0071396,cellular response to lipid,0.0026143,,554
+GO:0016755,aminoacyltransferase activity,0.00259932,,496
+GO:0016787,hydrolase activity,0.00259524,,476
+GO:0016740,transferase activity,0.00259458,,494
+GO:0002331,pre-B cell allelic exclusion,0.00259166,,474
+GO:0046629,gamma-delta T cell activation,0.0025916,,470
+GO:0004536,DNA nuclease activity,0.00259148,,492
+GO:0033634,positive regulation of cell-cell adhesion mediated by integrin,0.00259028,,458
+GO:0048513,animal organ development,0.00258944,,522
+GO:0043197,dendritic spine,0.00258468,,436
+GO:0019904,protein domain specific binding,0.00258038,,444
+GO:0007612,learning,0.0025645,,496
+GO:0043933,protein-containing complex organization,0.002564,,486
+GO:1902494,catalytic complex,0.00255232,,480
+GO:0005654,nucleoplasm,0.00255088,,510
+GO:0044297,cell body,0.00254784,,476
+GO:0003824,catalytic activity,0.00254528,,464
+GO:0031295,T cell costimulation,0.00254228,,464
+GO:0016746,acyltransferase activity,0.00254162,,487
+GO:0016444,somatic cell DNA recombination,0.0025392,,506
+GO:0045060,negative thymic T cell selection,0.00252254,,474
+GO:0007186,G protein-coupled receptor signaling pathway,0.002522,,460
+GO:0042995,cell projection,0.0025205,,468
+GO:0097519,DNA recombinase complex,0.00251764,,490
+GO:0090304,nucleic acid metabolic process,0.0025168,,480
+GO:0008306,associative learning,0.00251246,,454
+GO:0001952,regulation of cell-matrix adhesion,0.00250596,,462
+GO:0009416,response to light stimulus,0.00250218,,480
+GO:0032355,response to estradiol,0.00250088,,554
+GO:0010811,positive regulation of cell-substrate adhesion,0.00250038,,462
+GO:0045061,thymic T cell selection,0.00249956,,450
+GO:0001772,immunological synapse,0.00249902,,456
+GO:0002443,leukocyte mediated immunity,0.00249888,"CD27, CD70, EBAG9",464
+GO:0009892,negative regulation of metabolic process,0.00249514,,452
+GO:0031175,neuron projection development,0.00249328,,436
+GO:0070161,anchoring junction,0.0024827,,452
+GO:0042393,histone binding,0.00248202,,486
+GO:0006139,nucleobase-containing compound metabolic process,0.00248134,,486
+GO:0044238,primary metabolic process,0.00248086,,486
+GO:0002460,adaptive immune response based on somatic recombination of immune receptors built from immunoglobulin superfamily domains,0.00247486,"CD27, CD70, EBAG9",448
+GO:0070243,regulation of thymocyte apoptotic process,0.00247364,,504
+GO:0048872,homeostasis of number of cells,0.00246542,,492
+GO:0033628,regulation of cell adhesion mediated by integrin,0.00246144,,450
+GO:0004520,DNA endonuclease activity,0.00245972,,474
+GO:0005911,cell-cell junction,0.00244908,,468
+GO:0009890,negative regulation of biosynthetic process,0.00243812,,454
+GO:0030674,protein-macromolecule adaptor activity,0.00243636,,435
+GO:0042592,homeostatic process,0.00243372,,476
+GO:0002200,somatic diversification of immune receptors,0.00243214,,496
+GO:0010558,negative regulation of macromolecule biosynthetic process,0.00242492,,440
+GO:0098794,postsynapse,0.0024187,,416
+GO:0031294,lymphocyte costimulation,0.00240916,,434
+GO:0016358,dendrite development,0.002402,,448
+GO:0046641,positive regulation of alpha-beta T cell proliferation,0.0023942,,450
+GO:0033632,regulation of cell-cell adhesion mediated by integrin,0.00238996,,478
+GO:0002911,regulation of lymphocyte anergy,0.0023888,,436
+GO:0060090,molecular adaptor activity,0.00236564,,440
+GO:0003677,DNA binding,0.00236156,,450
+GO:0120025,plasma membrane bounded cell projection,0.00235864,,448
+GO:0021549,cerebellum development,0.002355,,470
+GO:0050795,regulation of behavior,0.002354,,470
+GO:0010648,negative regulation of cell communication,0.0023501,,406
+GO:0002643,regulation of tolerance induction,0.00233466,,426
+GO:0022607,cellular component assembly,0.00232928,,404
+GO:0010629,negative regulation of gene expression,0.00232474,,446
+GO:0016788,"hydrolase activity, acting on ester bonds",0.00232282,,452
+GO:0030159,signaling receptor complex adaptor activity,0.00232058,,488
+GO:0002669,positive regulation of T cell anergy,0.00230656,,432
+GO:0032753,positive regulation of interleukin-4 production,0.00229616,,418
+GO:0043368,positive T cell selection,0.00228814,,460
+GO:0010810,regulation of cell-substrate adhesion,0.00226662,,434
+GO:0043565,sequence-specific DNA binding,0.002254,,476
+GO:0120036,plasma membrane bounded cell projection organization,0.00224752,,504
+GO:0032649,regulation of type II interferon production,0.00224402,,458
+GO:0009968,negative regulation of signal transduction,0.00224166,,438
+GO:0001776,leukocyte homeostasis,0.00223756,,456
+GO:0007611,learning or memory,0.00222252,,486
+GO:0043383,negative T cell selection,0.00221718,,440
+GO:0032673,regulation of interleukin-4 production,0.00219668,,422
+GO:0010605,negative regulation of macromolecule metabolic process,0.0021954,,402
+GO:0002664,regulation of T cell tolerance induction,0.00219086,,414
+GO:0002913,positive regulation of lymphocyte anergy,0.00219028,,416
+GO:0030054,cell junction,0.00218852,,424
+GO:0007172,signal complex assembly,0.0021868,,472
+GO:0032729,positive regulation of type II interferon production,0.00218438,,374
+GO:0042608,T cell receptor binding,0.00217758,,430
+GO:0042106,gamma-delta T cell receptor complex,0.0021727,,438
+GO:0048585,negative regulation of response to stimulus,0.0021202,,388
+GO:0140535,intracellular protein-containing complex,0.00210618,,432
+GO:0002666,positive regulation of T cell tolerance induction,0.00210174,,412
+GO:0044309,neuron spine,0.00209724,,428
+GO:0046640,regulation of alpha-beta T cell proliferation,0.00209506,,444
+GO:0002263,cell activation involved in immune response,0.0020768,,376
+GO:0002667,regulation of T cell anergy,0.0020767,,426
+GO:0043005,neuron projection,0.0020556,,402
+GO:0043231,intracellular membrane-bounded organelle,0.00202984,EBAG9,372
+GO:0051897,positive regulation of phosphatidylinositol 3-kinase/protein kinase B signal transduction,0.0020224,,358
+GO:0043229,intracellular organelle,0.00201766,EBAG9,378
+GO:0046635,positive regulation of alpha-beta T cell activation,0.00188688,,378
+GO:0005576,extracellular region,0.00188482,CD27,364
+GO:0042129,regulation of T cell proliferation,0.00188256,CD70,342
+GO:0070663,regulation of leukocyte proliferation,0.00183436,CD70,322
+GO:0051281,positive regulation of release of sequestered calcium ion into cytosol,0.00182182,,296
+GO:0046634,regulation of alpha-beta T cell activation,0.00180852,,374
+GO:0002335,mature B cell differentiation,0.00179158,,334
+GO:0002285,lymphocyte activation involved in immune response,0.00178764,,318
+GO:0050855,regulation of B cell receptor signaling pathway,0.00178038,,338
+GO:0070665,positive regulation of leukocyte proliferation,0.00177702,CD70,336
+GO:0032944,regulation of mononuclear cell proliferation,0.00177026,CD70,330
+GO:0042127,regulation of cell population proliferation,0.00176276,CD70,360
+GO:0060284,regulation of cell development,0.00174872,CD27,292
+GO:0050793,regulation of developmental process,0.0017465,CD27,336
+GO:0050671,positive regulation of lymphocyte proliferation,0.001744,CD70,356
+GO:0050854,regulation of antigen receptor-mediated signaling pathway,0.00174048,,322
+GO:1903706,regulation of hemopoiesis,0.00173422,CD27,298
+GO:0001923,B-1 B cell differentiation,0.0017269,,344
+GO:0051279,regulation of release of sequestered calcium ion into cytosol,0.00172596,,362
+GO:0045595,regulation of cell differentiation,0.00172134,CD27,286
+GO:0002366,leukocyte activation involved in immune response,0.00171736,,328
+GO:0032946,positive regulation of mononuclear cell proliferation,0.00170426,CD70,302
+GO:0002322,B cell proliferation involved in immune response,0.00170294,,328
+GO:0042102,positive regulation of T cell proliferation,0.00169958,CD70,302
+GO:1902105,regulation of leukocyte differentiation,0.00169534,CD27,310
+GO:0002312,B cell activation involved in immune response,0.00168574,,316
+GO:0051896,regulation of phosphatidylinositol 3-kinase/protein kinase B signal transduction,0.00166992,,310
+GO:0051094,positive regulation of developmental process,0.0016358,CD27,282
+GO:0050853,B cell receptor signaling pathway,0.00162928,,308
+GO:0051282,regulation of sequestering of calcium ion,0.00162472,,272
+GO:2000026,regulation of multicellular organismal development,0.00162462,CD27,294
+GO:0019882,antigen processing and presentation,0.0016071,,254
+GO:0008284,positive regulation of cell population proliferation,0.00155518,CD70,310
+GO:1903708,positive regulation of hemopoiesis,0.00152248,CD27,276
+GO:0045597,positive regulation of cell differentiation,0.00151268,CD27,292
+GO:0010720,positive regulation of cell development,0.0014823,CD27,266
+GO:0050670,regulation of lymphocyte proliferation,0.0014479,CD70,294
+GO:0050867,positive regulation of cell activation,0.00143974,"CD27, CD70",248
+GO:0042288,MHC class I protein binding,0.00138222,,254
+GO:0022407,regulation of cell-cell adhesion,0.00134232,"CD27, CD70",194
+GO:0023024,MHC class I protein complex binding,0.0013411,,256
+GO:0010557,positive regulation of macromolecule biosynthetic process,0.0013198,,206
+GO:0044853,plasma membrane raft,0.0012842,,224
+GO:0051240,positive regulation of multicellular organismal process,0.00124606,"CD27, CD70",230
+GO:0045065,cytotoxic T cell differentiation,0.00123524,,246
+GO:0002696,positive regulation of leukocyte activation,0.00123462,"CD27, CD70",212
+GO:0043227,membrane-bounded organelle,0.00122644,"CD70, EBAG9",186
+GO:1902107,positive regulation of leukocyte differentiation,0.00120992,CD27,260
+GO:0043226,organelle,0.00119724,"CD70, EBAG9",162
+GO:0050870,positive regulation of T cell activation,0.00116482,"CD27, CD70",234
+GO:0050863,regulation of T cell activation,0.00115416,"CD27, CD70",198
+GO:0043067,regulation of programmed cell death,0.00114466,CD27,210
+GO:0048523,negative regulation of cellular process,0.00113734,CD27,204
+GO:0098590,plasma membrane region,0.00113688,,240
+GO:0042981,regulation of apoptotic process,0.001122,CD27,216
+GO:0046914,transition metal ion binding,0.0011208,,220
+GO:0042803,protein homodimerization activity,0.0011106,,194
+GO:0030155,regulation of cell adhesion,0.00110298,"CD27, CD70",196
+GO:0045785,positive regulation of cell adhesion,0.00108708,"CD27, CD70",202
+GO:0019899,enzyme binding,0.00107148,,204
+GO:0001817,regulation of cytokine production,0.00106666,,214
+GO:0008270,zinc ion binding,0.00105922,,194
+GO:0046872,metal ion binding,0.00104374,,218
+GO:0036094,small molecule binding,0.00103938,,192
+GO:0019900,kinase binding,0.00102084,,180
+GO:0001819,positive regulation of cytokine production,0.00101864,,226
+GO:0048519,negative regulation of biological process,0.00100924,CD27,182
+GO:0080134,regulation of response to stress,0.00100376,,182
+GO:0046983,protein dimerization activity,0.00100068,,212
+GO:0032663,regulation of interleukin-2 production,0.00099368,,190
+GO:0022409,positive regulation of cell-cell adhesion,0.00098952,"CD27, CD70",174
+GO:0019901,protein kinase binding,0.00098738,,212
+GO:0043167,ion binding,0.0009728,,182
+GO:0010604,positive regulation of macromolecule metabolic process,0.0009496,,178
+GO:1903039,positive regulation of leukocyte cell-cell adhesion,0.0009425,"CD27, CD70",178
+GO:0009893,positive regulation of metabolic process,0.00093902,,180
+GO:0042113,B cell activation,0.000929,CD70,182
+GO:0050850,positive regulation of calcium-mediated signaling,0.0009274,,194
+GO:0050848,regulation of calcium-mediated signaling,0.00091406,,174
+GO:1903037,regulation of leukocyte cell-cell adhesion,0.00090252,"CD27, CD70",170
+GO:0010628,positive regulation of gene expression,0.00090058,,180
+GO:0043169,cation binding,0.00086476,,172
+GO:0031347,regulation of defense response,0.00084882,,192
+GO:0009891,positive regulation of biosynthetic process,0.00084688,,182
+GO:0051251,positive regulation of lymphocyte activation,0.00083648,"CD27, CD70",174
+GO:0051928,positive regulation of calcium ion transport,0.0008198,,134
+GO:0034764,positive regulation of transmembrane transport,0.00081136,,144
+GO:1904427,positive regulation of calcium ion transmembrane transport,0.00079946,,142
+GO:0034765,regulation of monoatomic ion transmembrane transport,0.00075668,,140
+GO:0016043,cellular component organization,0.00075586,,130
+GO:0045058,T cell selection,0.00073224,,136
+GO:1904062,regulation of monoatomic cation transmembrane transport,0.00072292,,142
+GO:0032743,positive regulation of interleukin-2 production,0.00071174,,138
+GO:0071840,cellular component organization or biogenesis,0.00070994,,180
+GO:0034762,regulation of transmembrane transport,0.00070482,,120
+GO:0010959,regulation of metal ion transport,0.00064888,,112
+GO:0043270,positive regulation of monoatomic ion transport,0.00064578,,142
+GO:0048856,anatomical structure development,0.00064518,,124
+GO:1903169,regulation of calcium ion transmembrane transport,0.0006406,,134
+GO:0032879,regulation of localization,0.00062258,,110
+GO:0043269,regulation of monoatomic ion transport,0.00062006,,124
+GO:1904064,positive regulation of cation transmembrane transport,0.00057758,,134
+GO:0034767,positive regulation of monoatomic ion transmembrane transport,0.00055296,,116
+GO:0051050,positive regulation of transport,0.0005493,,128
+GO:0051049,regulation of transport,0.0005232,,98
+GO:0009889,regulation of biosynthetic process,0.00052238,,96
+GO:0010556,regulation of macromolecule biosynthetic process,0.00051916,,88
+GO:0051924,regulation of calcium ion transport,0.0005135,,114
+GO:0042287,MHC protein binding,0.00050738,,78
+GO:0005515,protein binding,0.00047938,"CD27, CD70, EBAG9",102
+GO:0023023,MHC protein complex binding,0.00043986,,90
+GO:0010468,regulation of gene expression,0.00043668,,70
+GO:0023056,positive regulation of signaling,0.00043606,CD27,64
+GO:0032395,MHC class II receptor activity,0.00039254,,64
+GO:0005488,binding,0.00038096,"CD27, CD70, EBAG9",64
+GO:0030183,B cell differentiation,0.00037232,,86
+GO:0043207,response to external biotic stimulus,0.00036974,,86
+GO:1902533,positive regulation of intracellular signal transduction,0.00034222,CD27,74
+GO:0042802,identical protein binding,0.00034124,,72
+GO:0044419,biological process involved in interspecies interaction between organisms,0.00032136,,72
+GO:0009617,response to bacterium,0.0003106,,64
+GO:0051707,response to other organism,0.00030446,,58
+GO:0010647,positive regulation of cell communication,0.00030098,CD27,58
+GO:0009967,positive regulation of signal transduction,0.0002989,CD27,56
+GO:0009966,regulation of signal transduction,0.00029684,CD27,48
+GO:0015026,coreceptor activity,0.0002906,,72
+GO:0009605,response to external stimulus,0.00028048,,72
+GO:0023051,regulation of signaling,0.00027948,CD27,56
+GO:0010646,regulation of cell communication,0.00027796,CD27,62
+GO:0051249,regulation of lymphocyte activation,0.0002706,"CD27, CD70",36
+GO:0060255,regulation of macromolecule metabolic process,0.0002615,,76
+GO:0009607,response to biotic stimulus,0.00025034,,42
+GO:0019222,regulation of metabolic process,0.00024818,,52
+GO:0007167,enzyme-linked receptor protein signaling pathway,0.00024088,,32
+GO:1902531,regulation of intracellular signal transduction,0.00023724,CD27,48
+GO:0048522,positive regulation of cellular process,0.00022724,"CD27, CD70",42
+GO:0051239,regulation of multicellular organismal process,0.00020466,"CD27, CD70",36
+GO:0004888,transmembrane signaling receptor activity,0.00018492,CD27,46
+GO:0002694,regulation of leukocyte activation,0.00018004,"CD27, CD70",42
+GO:0030217,T cell differentiation,0.00016244,,32
+GO:0005102,signaling receptor binding,0.00016114,CD70,42
+GO:0044877,protein-containing complex binding,0.00015714,,34
+GO:0050865,regulation of cell activation,0.00014818,"CD27, CD70",44
+GO:0007169,cell surface receptor protein tyrosine kinase signaling pathway,0.00013878,,24
+GO:0045121,membrane raft,0.00011664,,22
+GO:0140375,immune receptor activity,0.0001148,,20
+GO:0098552,side of membrane,0.0001042,CD27,16
+GO:0009897,external side of plasma membrane,0.00010358,CD27,10
+GO:0003674,molecular_function,0.00008376,"CD27, CD70, EBAG9",8
+GO:0002521,leukocyte differentiation,0.00006854,,16
+GO:1903131,mononuclear cell differentiation,0.00005052,,12
+GO:0030098,lymphocyte differentiation,0.00004486,,12
+GO:0048869,cellular developmental process,0.0000409,,12
+GO:0030154,cell differentiation,0.00003588,,10
+GO:0098857,membrane microdomain,0.00003506,,12
+GO:0046631,alpha-beta T cell activation,0.00002162,,4
+GO:0042105,alpha-beta T cell receptor complex,0.00001092,,2
+GO:0032502,developmental process,7.3e-6,,2
+GO:0008150,biological_process,3.92e-6,"CD27, CD70, EBAG9",2
+GO:0060089,molecular transducer activity,2.44e-6,CD27,2
 GO:0001775,cell activation,0.0,"CD27, CD70",0
 GO:0002250,adaptive immune response,0.0,"CD27, CD70, EBAG9",0
 GO:0002253,activation of immune response,0.0,,0
 GO:0002376,immune system process,0.0,"CD27, CD70, EBAG9",0
 GO:0002429,immune response-activating cell surface receptor signaling pathway,0.0,,0
-GO:0002521,leukocyte differentiation,0.0,,0
 GO:0002682,regulation of immune system process,0.0,"CD27, CD70",0
 GO:0002684,positive regulation of immune system process,0.0,"CD27, CD70",0
 GO:0002757,immune response-activating signaling pathway,0.0,,0
 GO:0002764,immune response-regulating signaling pathway,0.0,,0
 GO:0002768,immune response-regulating cell surface receptor signaling pathway,0.0,,0
-GO:0004888,transmembrane signaling receptor activity,0.0,CD27,0
 GO:0005575,cellular_component,0.0,"CD27, CD70, EBAG9",0
 GO:0005886,plasma membrane,0.0,"CD27, CD70",0
 GO:0006955,immune response,0.0,"CD27, CD70, EBAG9",0
 GO:0007165,signal transduction,0.0,"CD27, CD70",0
 GO:0007166,cell surface receptor signaling pathway,0.0,"CD27, CD70",0
-GO:0008150,biological_process,0.0,"CD27, CD70, EBAG9",0
 GO:0009987,cellular process,0.0,"CD27, CD70, EBAG9",0
 GO:0016020,membrane,0.0,"CD27, CD70, EBAG9",0
-GO:0030098,lymphocyte differentiation,0.0,,0
 GO:0032501,multicellular organismal process,0.0,"CD27, CD70",0
 GO:0032991,protein-containing complex,0.0,,0
 GO:0038023,signaling receptor activity,0.0,CD27,0
 GO:0042101,T cell receptor complex,0.0,,0
-GO:0042105,alpha-beta T cell receptor complex,0.0,,0
 GO:0042110,T cell activation,0.0,"CD27, CD70",0
 GO:0043235,receptor complex,0.0,,0
-GO:0046631,alpha-beta T cell activation,0.0,,0
+GO:0045321,leukocyte activation,0.0,"CD27, CD70",0
 GO:0046649,lymphocyte activation,0.0,"CD27, CD70",0
 GO:0048518,positive regulation of biological process,0.0,"CD27, CD70",0
 GO:0048583,regulation of response to stimulus,0.0,CD27,0
 GO:0048584,positive regulation of response to stimulus,0.0,CD27,0
-GO:0048869,cellular developmental process,0.0,,0
 GO:0050776,regulation of immune response,0.0,,0
 GO:0050778,positive regulation of immune response,0.0,,0
 GO:0050789,regulation of biological process,0.0,"CD27, CD70, EBAG9",0
 GO:0050794,regulation of cellular process,0.0,"CD27, CD70, EBAG9",0
 GO:0050851,antigen receptor-mediated signaling pathway,0.0,,0
+GO:0050852,T cell receptor signaling pathway,0.0,,0
 GO:0050896,response to stimulus,0.0,"CD27, CD70, EBAG9",0
-GO:0051249,regulation of lymphocyte activation,0.0,"CD27, CD70",0
 GO:0065007,biological regulation,0.0,"CD27, CD70, EBAG9",0
 GO:0098796,membrane protein complex,0.0,,0
 GO:0098797,plasma membrane protein complex,0.0,,0

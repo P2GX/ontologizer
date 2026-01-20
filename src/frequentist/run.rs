@@ -3,15 +3,12 @@ use std::collections::HashSet;
 
 use crate::core::AnnotationIndex;
 
-use crate::core::result::{EnrichmentResult, Measure};
+use crate::core::result::EnrichmentResult;
 use crate::frequentist::algorithm::{OneSidedEnrichmentTest, StatisticalTest};
 use crate::frequentist::correction::{BonferroniHolm, Correction};
-use crate::frequentist::distribution::{DiscreteDistribution, Hypergeometric, LogFactorialCache};
+use crate::frequentist::distribution::{Hypergeometric, LogFactorialCache};
 use crate::frequentist::measure::PValue;
-use ontolius::{
-    ontology::{OntologyTerms, csr::FullCsrOntology},
-    term::MinimalTerm,
-};
+use ontolius::ontology::csr::FullCsrOntology;
 
 #[allow(non_snake_case)]
 pub fn run(

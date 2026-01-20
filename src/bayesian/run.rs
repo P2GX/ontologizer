@@ -11,20 +11,21 @@ use std::collections::HashSet;
 
 pub fn run(
     ontology: &FullCsrOntology,
-    annotation_index: AnnotationIndex,
+    annotations: AnnotationIndex,
     study_genes: HashSet<String>,
 ) -> EnrichmentResult {
     let p = 0.01;
     let alpha = 0.05;
     let beta = 0.10;
 
-    let n_genes = annotation_index.get_genes().len();
-    let n_terms = annotation_index.get_terms().len();
+    let n_genes = annotations.get_genes().len();
+    let n_terms = annotations.get_terms().len();
 
-    let terms_to_genes = annotation_index.get_terms_to_genes(true);
+    let terms_to_genes = annotations.get_terms_to_genes(true);
 
+    // Boolean where vector where vec[i] = 1 if gene with index i is in study genes, otherwise vec[i] = 0.
     let observed_genes: Vec<bool> = (0..n_genes)
-        .map(|i| study_genes.contains(annotation_index.get_gene_by_index(i)))
+        .map(|i| study_genes.contains(annotations.get_gene_by_index(i)))
         .collect();
 
     let model = OrModel::new(
@@ -42,14 +43,8 @@ pub fn run(
     let measures: Vec<Probability> = algorithm.sample::<ProbabilityRecorder>(&mut state);
 
     // Create the Result (Eagerly resolves all strings)
-    let mut result = EnrichmentResult::from_measure(
-        &measures,
-        &ontology,
-        annotation_index.get_terms(),
-        annotation_index.get_genes(),
-        &observed_genes,
-        &terms_to_genes,
-    );
+    let mut result =
+        EnrichmentResult::from_measure(&measures, &ontology, &annotations, &observed_genes);
 
     // Optional: Sort
     result.sort_by_score(true); // descending for probability

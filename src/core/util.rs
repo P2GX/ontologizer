@@ -1,7 +1,3 @@
-use oboannotation::{
-    go::{GoGafAnnotationLoader, stats::get_annotation_map},
-    io::AnnotationLoader,
-};
 use std::hash::Hash;
 use std::{
     collections::HashSet,

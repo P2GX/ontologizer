@@ -142,6 +142,7 @@ mod test {
     use crate::bayesian::recorder::ProbabilityRecorder;
     use crate::bayesian::state::MgsaState;
     use crate::core::result::Measure;
+    use indexmap::{IndexSet, indexset};
 
     fn approx_equal(a: f64, b: f64, epsilon: f64) -> bool {
         (a - b).abs() < epsilon
@@ -150,7 +151,7 @@ mod test {
     fn test_network(
         raw_state: Vec<bool>,
         observations: &Vec<bool>,
-        state_to_observations: &Vec<Vec<usize>>,
+        state_to_observations: &Vec<IndexSet<usize>>,
         p: f64,
         alpha: f64,
         beta: f64,
@@ -190,14 +191,15 @@ mod test {
         let beta = 0.10;
 
         let state = vec![false; n];
-        let mut state_to_observations: Vec<Vec<usize>> = (0..n).map(|_| (0..n).collect()).collect();
+        let mut state_to_observations: Vec<IndexSet<usize>> =
+            (0..n).map(|_| (0..n).collect()).collect();
 
         // Observations
         let mut observations = vec![false; n];
 
         observations[0] = true;
 
-        state_to_observations[0] = vec![0];
+        state_to_observations[0] = indexset! {0};
 
         let model = OrModel::new(
             state_to_observations.clone(),
@@ -286,10 +288,10 @@ mod test {
         let beta = 0.1;
 
         let raw_state = vec![false, false, false];
-        let state_to_observations: Vec<Vec<usize>> = vec![
-            vec![0, 1, 2],
-            vec![0, 1, 2, 3, 4],
-            vec![0, 1, 2, 3, 4, 5, 6],
+        let state_to_observations: Vec<IndexSet<usize>> = vec![
+            indexset! {0, 1, 2},
+            indexset! {0, 1, 2, 3, 4},
+            indexset! {0, 1, 2, 3, 4, 5, 6},
         ];
 
         // Observations
@@ -320,7 +322,7 @@ mod test {
         let beta = 0.1;
 
         let raw_state = vec![false];
-        let state_to_observations: Vec<Vec<usize>> = vec![vec![0]];
+        let state_to_observations: Vec<IndexSet<usize>> = vec![indexset! {0}];
 
         // Active Observation O=(1)
         let observations = vec![true];
@@ -358,7 +360,7 @@ mod test {
         let beta: f64 = 0.1;
 
         let raw_state = vec![false, false];
-        let state_to_observations: Vec<Vec<usize>> = vec![vec![0], vec![0]];
+        let state_to_observations: Vec<IndexSet<usize>> = vec![indexset! {0}, indexset! {0}];
 
         // Active Observation O=(1)
         let observations = vec![true];
@@ -406,7 +408,7 @@ mod test {
         let beta: f64 = 0.1;
 
         let raw_state = vec![false, false];
-        let state_to_observations: Vec<Vec<usize>> = vec![vec![0, 1], vec![0, 1]];
+        let state_to_observations: Vec<IndexSet<usize>> = vec![indexset! {0, 1}, indexset! {0, 1}];
 
         // Active Observation O=(1)
         let observations = vec![true, true];
@@ -458,9 +460,9 @@ mod test {
         let beta: f64 = 0.1;
 
         let raw_state = vec![false, false];
-        let state_to_observations: Vec<Vec<usize>> = vec![
-            vec![0],    // Term 0
-            vec![0, 1], // Term 1
+        let state_to_observations: Vec<IndexSet<usize>> = vec![
+            indexset! {0},    // Term 0
+            indexset! {0, 1}, // Term 1
         ];
 
         let observations = vec![true, false];
