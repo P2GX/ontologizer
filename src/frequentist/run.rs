@@ -3,8 +3,9 @@ use std::collections::HashSet;
 
 use crate::core::AnnotationIndex;
 
-use crate::core::result::EnrichmentResult;
+use crate::core::result::{EnrichmentResult, Measure};
 use crate::frequentist::algorithm::{OneSidedEnrichmentTest, StatisticalTest};
+use crate::frequentist::correction::{BonferroniHolm, Correction};
 use crate::frequentist::distribution::{DiscreteDistribution, Hypergeometric, LogFactorialCache};
 use crate::frequentist::measure::PValue;
 use ontolius::{
@@ -13,18 +14,16 @@ use ontolius::{
 };
 
 #[allow(non_snake_case)]
-fn run(
+pub fn run(
     ontology: &FullCsrOntology,
-    annotations: &AnnotationIndex,
-    study_genes: &HashSet<String>,
+    annotations: AnnotationIndex,
+    study_genes: HashSet<String>,
 ) -> EnrichmentResult {
     let n = study_genes.len();
     let N = annotations.get_genes().len();
 
     let cache = LogFactorialCache::new(N);
     let test = OneSidedEnrichmentTest;
-
-    let mut measures: Vec<PValue> = Vec::new();
 
     let observed_genes: Vec<bool> = (0..N)
         .map(|i| study_genes.contains(annotations.get_gene_by_index(i)))
@@ -38,6 +37,7 @@ fn run(
     let terms_to_genes = annotations.get_terms_to_genes(true);
 
     let mut measures: Vec<PValue> = Vec::new();
+
     for population_genes_indices in terms_to_genes {
         let K = population_genes_indices.len();
 
@@ -53,6 +53,9 @@ fn run(
 
         measures.push(measure);
     }
+
+    let correction = BonferroniHolm;
+    correction.adjust(&mut measures, |m| &mut m.pvalue);
 
     // Create the Result
     let mut result =
@@ -118,7 +121,7 @@ mod test {
 
         let study_gene_set = core::overlap_sets(&annotated_genes, &study_genes);
 
-        let result = run(&ontology, &annotation_index, &study_gene_set);
+        let result = run(&ontology, annotation_index, study_gene_set);
 
         // Serialize to CSV
         let mut wtr = Writer::from_path("tests/data/GOnone/results_f.csv").unwrap();

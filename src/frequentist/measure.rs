@@ -1,7 +1,7 @@
 use crate::core::result::Measure;
 
 pub struct PValue {
-    pvalue: f64,
+    pub(crate) pvalue: f64,
     // (n_annotated_study, n_annotated_pop, n_study, n_pop)
     counts: (u32, u32, u32, u32),
 }
