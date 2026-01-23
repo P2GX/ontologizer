@@ -91,7 +91,7 @@ fn main() {
     }
 
     // Serialize to CSV
-    let output_filename = format!("/result/{}_results.csv", problem.method);
+    let output_filename = format!("result/{}_results.csv", problem.method);
     let mut wtr = Writer::from_path(&output_filename).unwrap();
     for item in result.items {
         wtr.serialize(item).unwrap();
