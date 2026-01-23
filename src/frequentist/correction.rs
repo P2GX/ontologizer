@@ -1,3 +1,4 @@
+///
 pub trait Correction {
     fn adjust<T, F>(&self, items: &mut [T], extract: F)
     where

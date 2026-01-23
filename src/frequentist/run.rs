@@ -5,7 +5,7 @@ use crate::core::AnnotationIndex;
 
 use crate::core::result::EnrichmentResult;
 use crate::frequentist::algorithm::{OneSidedEnrichmentTest, StatisticalTest};
-use crate::frequentist::correction::{BonferroniHolm, Correction};
+use crate::frequentist::correction::{Bonferroni, BonferroniHolm, Correction};
 use crate::frequentist::distribution::{Hypergeometric, LogFactorialCache};
 use crate::frequentist::measure::PValue;
 use ontolius::ontology::csr::FullCsrOntology;
@@ -64,16 +64,110 @@ pub fn run(
     result
 }
 
+/// Calculates enrichment statistics based on raw indices.
+///
+/// This function is designed for testing and scenarios where the ontology
+/// structure is abstracted away into vectors of indices.
+///
+/// # Arguments
+/// * `population_size` (N) - Total number of items in the population.
+/// * `study_total` (n) - Total size of the study.
+/// * `study_indices` - Indices of items in the study.
+/// * `population_terms` - A slice of terms, where each term is a vector of item indices.
+#[allow(non_snake_case)]
+pub fn calculate_enrichment_from_indices(
+    population_size: usize,
+    study_total: usize,
+    study_indices: &[usize],
+    population_terms: &[Vec<usize>],
+) -> Vec<PValue> {
+    let cache = LogFactorialCache::new(population_size);
+    let test = OneSidedEnrichmentTest;
+
+    // Convert slice to HashSet for O(1) lookups during intersection
+    let study_set: HashSet<usize> = study_indices.iter().cloned().collect();
+
+    let mut measures: Vec<PValue> = Vec::with_capacity(population_terms.len());
+
+    for term_indices in population_terms {
+        let K = term_indices.len();
+
+        // Calculate intersection (k)
+        let k = term_indices
+            .iter()
+            .filter(|idx| study_set.contains(idx))
+            .count();
+
+        let hypergeo = Hypergeometric::new(study_total, K, population_size, &cache);
+        let raw_p_value = test.calculate(&hypergeo, k);
+
+        // Counts: (k=Annotated_Study, n=Total_Study, K=Annotated_Pop, N=Total_Pop)
+        let counts = (
+            k as u32,
+            study_total as u32,
+            K as u32,
+            population_size as u32,
+        );
+        let measure = PValue::new(raw_p_value, counts);
+
+        measures.push(measure);
+    }
+
+    // Apply Correction
+    let correction = Bonferroni;
+    correction.adjust(&mut measures, |m| &mut m.pvalue);
+
+    measures
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::core;
+    use crate::core::result::Measure;
     use csv::Writer;
     use oboannotation::go::stats::get_annotation_map;
     use oboannotation::go::{GoAnnotations, GoGafAnnotationLoader};
     use oboannotation::io::AnnotationLoader;
     use ontolius::io::OntologyLoaderBuilder;
     use std::process;
+
+    #[test]
+    fn test_vector_based_logic() {
+        let N = 10; // population gene count
+        let n = 2; // gene gene count
+        let study_indices = vec![1, 2];
+        let mut terms = vec![
+            vec![1, 2, 3], // Term A: K=3, k=2 (1,2 overlap)
+            vec![1, 2],    // Term B: K=2, k=2 (1,2 overlap)
+            vec![4, 5],    // Term C: K=2, k=0 (no overlap)
+        ];
+
+        let results = calculate_enrichment_from_indices(N, n, &study_indices, &terms);
+
+        // Term A: k=2, n=2, K=3, N=10.
+        // Hypergeometric(x=2, n=2, K=3, N=10)
+        // Probability of drawing 2 specific items from 10 when target group is size 3.
+        for result in &results {
+            println!("P-value: {}", result.pvalue);
+        }
+        // Check counts structure
+        // (k, n, K, N)
+        assert_eq!(
+            results[0].diagnostics().unwrap(),
+            format!("{:?}", (2, 2, 3, 10))
+        ); // Term A
+
+        assert_eq!(
+            results[1].diagnostics().unwrap(),
+            format!("{:?}", (2, 2, 2, 10))
+        ); // Term B
+
+        assert_eq!(
+            results[2].diagnostics().unwrap(),
+            format!("{:?}", (0, 2, 2, 10))
+        ); // Term C
+    }
 
     #[test]
     fn test_go_analysis() {
