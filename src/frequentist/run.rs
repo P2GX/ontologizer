@@ -5,7 +5,8 @@ use crate::core::AnnotationIndex;
 
 use crate::core::result::EnrichmentResult;
 use crate::frequentist::algorithm::{OneSidedEnrichmentTest, StatisticalTest};
-use crate::frequentist::correction::{Bonferroni, BonferroniHolm, Correction};
+use crate::frequentist::correction;
+use crate::frequentist::correction::Correction;
 use crate::frequentist::distribution::{Hypergeometric, LogFactorialCache};
 use crate::frequentist::measure::PValue;
 use ontolius::ontology::csr::FullCsrOntology;
@@ -51,7 +52,7 @@ pub fn run(
         measures.push(measure);
     }
 
-    let correction = BonferroniHolm;
+    let correction = correction::None;
     correction.adjust(&mut measures, |m| &mut m.pvalue);
 
     // Create the Result
@@ -114,7 +115,7 @@ pub fn calculate_enrichment_from_indices(
     }
 
     // Apply Correction
-    let correction = Bonferroni;
+    let correction = correction::None;
     correction.adjust(&mut measures, |m| &mut m.pvalue);
 
     measures

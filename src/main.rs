@@ -30,6 +30,7 @@ fn main() {
     let config_path = if args.len() > 1 {
         &args[1]
     } else {
+        println!("No config file provided. Loading from '/problem.json'");
         "problem.json"
     };
 

@@ -154,10 +154,10 @@ impl<'a> DiscreteDistribution for Hypergeometric<'a> {
 
         let (k_min, k_max) = self.support();
         if k < k_min {
-            return 0.0;
+            return 1.0;
         }
         if k >= k_max {
-            return 1.0;
+            return 0.0;
         }
 
         let mut sum = 0f64;
