@@ -1,4 +1,24 @@
-use crate::bayesian::proposer::{Increment, MgsaMove, ToggleSwap};
+/// Explore the sample space by flipping the value of one element,
+/// or by exchanging the (different) values of two elements.
+#[derive(Clone, Copy, Debug)]
+pub enum ToggleSwap {
+    Toggle(usize),
+    Swap(usize, usize),
+}
+
+/// A move specifically for continuous parameters.
+#[derive(Clone, Copy, Debug)]
+pub struct Increment {
+    pub index: usize,
+    pub delta: f64,
+}
+
+/// A move that can either be a Term change or a Parameter change.
+#[derive(Clone, Debug)]
+pub enum MgsaMove {
+    Term(ToggleSwap),
+    Parameter(Increment),
+}
 
 // A trait that guarantees that *STATE* knows how to sample itself by drawing and applying *MOVE*.
 pub trait State {
