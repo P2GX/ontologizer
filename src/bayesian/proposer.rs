@@ -164,12 +164,13 @@ impl Proposer<ParameterState> for GaussianProposer {
         let noise = self.distribution.sample(rng);
         let mut new_value = old_value + noise;
 
-        // Reflection for [0, 1] bounds
-        if new_value < 0.0 {
-            new_value = -new_value;
-        }
-        if new_value > 1.0 {
-            new_value = 2.0 - new_value;
+        // Reflection for [0, 1] bounds with loop to ensure safety
+        while new_value < 0.0 || new_value > 1.0 {
+            if new_value < 0.0 {
+                new_value = -new_value;
+            } else if new_value > 1.0 {
+                new_value = 2.0 - new_value;
+            }
         }
 
         // We store the effective delta so apply/revert is simple arithmetic
