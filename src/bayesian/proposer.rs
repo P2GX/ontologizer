@@ -1,4 +1,6 @@
-use crate::bayesian::state::{MgsaState, ParameterState, State, TermState};
+use crate::bayesian::state::{
+    Increment, MgsaMove, MgsaState, ParameterState, State, TermState, ToggleSwap,
+};
 use rand::{Rng, RngExt};
 use rand_distr::{Distribution, Normal};
 
@@ -10,30 +12,6 @@ pub trait Proposer<S: State> {
     fn log_proposal(&self, state: &S) -> f64;
     /// Calculates q(x'|x) / q(x|x')
     fn log_proposal_ratio(&self, state: &S, m: &S::Move) -> Option<f64>;
-}
-
-// --- Moves ---
-
-/// Explore the sample space by flipping the value of one element,
-/// or by exchanging the (different) values of two elements.
-#[derive(Clone, Copy, Debug)]
-pub enum ToggleSwap {
-    Toggle(usize),
-    Swap(usize, usize),
-}
-
-/// A move specifically for continuous parameters.
-#[derive(Clone, Copy, Debug)]
-pub struct Increment {
-    pub index: usize,
-    pub delta: f64,
-}
-
-/// A move that can either be a Term change or a Parameter change.
-#[derive(Clone, Debug)]
-pub enum MgsaMove {
-    Term(ToggleSwap),
-    Parameter(Increment),
 }
 
 // --- Term Proposer ---
@@ -70,6 +48,26 @@ impl Proposer<TermState> for ToggleProposer {
         _m: &<TermState as State>::Move,
     ) -> Option<f64> {
         Some(0.0)
+    }
+}
+
+impl Proposer<MgsaState> for ToggleProposer {
+    fn propose<R: Rng>(&self, state: &MgsaState, rng: &mut R) -> MgsaMove {
+        let m = <Self as Proposer<TermState>>::propose(self, &state.terms, rng);
+        MgsaMove::Term(m)
+    }
+
+    fn log_proposal(&self, state: &MgsaState) -> f64 {
+        <Self as Proposer<TermState>>::log_proposal(self, &state.terms)
+    }
+
+    fn log_proposal_ratio(&self, state: &MgsaState, m: &MgsaMove) -> Option<f64> {
+        match m {
+            MgsaMove::Term(tm) => {
+                <Self as Proposer<TermState>>::log_proposal_ratio(self, &state.terms, tm)
+            }
+            MgsaMove::Parameter(_) => None,
+        }
     }
 }
 
