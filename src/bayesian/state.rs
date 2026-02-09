@@ -4,35 +4,21 @@ use ToggleSwap::*;
 // A trait that guarantees that *STATE* knows how to sample itself by drawing and applying *MOVE*.
 pub trait State {
     type Move;
-    type Value: Copy;
-    fn get(&self, i: usize) -> Self::Value;
-    fn n_all(&self) -> usize;
     fn apply(&mut self, m: &Self::Move);
     fn revert(&mut self, m: &Self::Move);
 }
 
 // A trait that guarantees that *STATE* takes boolean values (active/inactive).
-pub trait BinaryParameterState: State<Value = bool> {
-    fn get_active(&self, k: usize) -> usize;
-    fn get_inactive(&self, k: usize) -> usize;
-    fn n_active(&self) -> usize;
-    fn n_inactive(&self) -> usize;
-}
-
-pub(crate) struct MgsaState {
-    // Parameters
-    terms: Vec<bool>, // maybe BitSet later
-
+pub(crate) struct TermState {
+    terms: Vec<bool>,
     active_indices: Vec<usize>,
     inactive_indices: Vec<usize>,
-
     term_map: Vec<usize>,
 }
 
-impl MgsaState {
-    pub(crate) fn new(terms: Vec<bool>) -> MgsaState {
+impl TermState {
+    pub(crate) fn new(terms: Vec<bool>) -> TermState {
         let n = terms.len();
-
         let mut active_indices = Vec::with_capacity(n);
         let mut inactive_indices = Vec::with_capacity(n);
         let mut term_map = vec![0; n];
@@ -47,7 +33,7 @@ impl MgsaState {
             }
         }
 
-        MgsaState {
+        TermState {
             terms,
             active_indices,
             inactive_indices,
@@ -55,33 +41,31 @@ impl MgsaState {
         }
     }
 
-    /// Returns true if the cached counts and lists match the actual vector data (debug only).
-    fn check_consistency(&self) -> bool {
-        let n_on_vec = self.terms.iter().filter(|&&t| t).count();
-        let n_off_vec = self.terms.iter().filter(|&&t| !t).count();
-
-        // Check counts
-        if n_on_vec != self.active_indices.len() || n_off_vec != self.inactive_indices.len() {
-            return false;
-        }
-
-        // Check Map Integrity
-        for (idx, &term_idx) in self.active_indices.iter().enumerate() {
-            if !self.terms[term_idx] || self.term_map[term_idx] != idx {
-                return false;
-            }
-        }
-        for (idx, &term_idx) in self.inactive_indices.iter().enumerate() {
-            if self.terms[term_idx] || self.term_map[term_idx] != idx {
-                return false;
-            }
-        }
-
-        true
+    fn n_terms(&self) -> usize {
+        self.terms.len()
     }
 
+    pub fn get(&self, i: usize) -> bool {
+        self.terms[i]
+    }
+
+    pub(crate) fn n_active(&self) -> usize {
+        self.active_indices.len()
+    }
+    pub(crate) fn n_inactive(&self) -> usize {
+        self.inactive_indices.len()
+    }
+    pub(crate) fn get_active(&self, k: usize) -> usize {
+        self.active_indices[k]
+    }
+    pub(crate) fn get_inactive(&self, k: usize) -> usize {
+        self.inactive_indices[k]
+    }
+
+    /// Returns true if the cached counts and lists match the actual vector data (debug only).
+
     // Swap is implemented as two toggles.
-    fn toggle_term(&mut self, term_idx: usize) {
+    fn toggle(&mut self, term_idx: usize) {
         let is_becoming_active = !self.terms[term_idx];
         self.terms[term_idx] = is_becoming_active;
 
@@ -127,52 +111,128 @@ impl MgsaState {
         self.term_map[term_idx] = dest.len();
         dest.push(term_idx);
     }
+
+    fn check_consistency(&self) -> bool {
+        let n_on_vec = self.terms.iter().filter(|&&t| t).count();
+        let n_off_vec = self.terms.iter().filter(|&&t| !t).count();
+
+        // Check counts
+        if n_on_vec != self.active_indices.len() || n_off_vec != self.inactive_indices.len() {
+            return false;
+        }
+
+        // Check Map Integrity
+        for (idx, &term_idx) in self.active_indices.iter().enumerate() {
+            if !self.terms[term_idx] || self.term_map[term_idx] != idx {
+                return false;
+            }
+        }
+        for (idx, &term_idx) in self.inactive_indices.iter().enumerate() {
+            if self.terms[term_idx] || self.term_map[term_idx] != idx {
+                return false;
+            }
+        }
+        true
+    }
 }
 
-impl State for MgsaState {
+impl State for TermState {
     type Move = ToggleSwap;
-    type Value = bool;
 
-    fn get(&self, i: usize) -> bool {
-        self.terms[i]
-    }
-
-    fn n_all(&self) -> usize {
-        self.terms.len()
-    }
     /// Revert move and update n_on, n_off count
     fn apply(&mut self, m: &ToggleSwap) {
         match *m {
-            Toggle(i) => self.toggle_term(i),
+            Toggle(i) => self.toggle(i),
             Swap(i, j) => {
                 // A swap is just two toggles (On->Off, Off->On)
-                self.toggle_term(i);
-                self.toggle_term(j);
+                self.toggle(i);
+                self.toggle(j);
             }
         }
-        // debug_assert!(self.check_consistency());
     }
-
     /// Revert move and update n_on, n_off count
     fn revert(&mut self, m: &ToggleSwap) {
         self.apply(m)
     }
 }
 
-impl BinaryParameterState for MgsaState {
-    fn get_active(&self, k: usize) -> usize {
-        self.active_indices[k]
+#[derive(Clone, Debug)]
+pub struct ParameterState {
+    p: f64,
+    alpha: f64,
+    beta: f64,
+}
+
+impl ParameterState {
+    pub fn new(p: f64, alpha: f64, beta: f64) -> Self {
+        Self { p, alpha, beta }
     }
 
-    fn get_inactive(&self, k: usize) -> usize {
-        self.inactive_indices[k]
+    /// Updates a parameter by index (0=p, 1=alpha, 2=beta) ensuring [0,1] bounds.
+    pub fn update(&mut self, index: usize, delta: f64) {
+        match index {
+            0 => self.p = (self.p + delta),
+            1 => self.alpha = (self.alpha + delta),
+            2 => self.beta = (self.beta + delta),
+            _ => panic!("Invalid parameter index: {}", index),
+        }
     }
-    fn n_active(&self) -> usize {
-        self.active_indices.len()
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Increment {
+    pub index: usize,
+    pub delta: f64,
+}
+
+impl State for ParameterState {
+    type Move = Increment;
+
+    fn apply(&mut self, m: &Self::Move) {
+        self.update(m.index, m.delta);
     }
 
-    fn n_inactive(&self) -> usize {
-        self.inactive_indices.len()
+    fn revert(&mut self, m: &Self::Move) {
+        self.update(m.index, -m.delta);
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum MgsaMove {
+    Term(ToggleSwap),
+    Parameter(Increment),
+}
+
+/// The composite state containing both terms and hyperparameters.
+pub struct MgsaState {
+    pub terms: TermState,
+    pub params: ParameterState,
+}
+
+impl MgsaState {
+    pub fn new(terms: Vec<bool>, p: f64, alpha: f64, beta: f64) -> Self {
+        Self {
+            terms: TermState::new(terms),
+            params: ParameterState::new(p, alpha, beta),
+        }
+    }
+}
+
+impl State for MgsaState {
+    type Move = MgsaMove;
+
+    fn apply(&mut self, m: &Self::Move) {
+        match m {
+            MgsaMove::Term(ts) => self.terms.apply(ts),
+            MgsaMove::Parameter(inc) => self.params.apply(inc),
+        }
+    }
+
+    fn revert(&mut self, m: &Self::Move) {
+        match m {
+            MgsaMove::Term(ts) => self.terms.revert(ts),
+            MgsaMove::Parameter(inc) => self.params.revert(inc),
+        }
     }
 }
 
@@ -195,7 +255,7 @@ mod tests {
         #[test]
         fn test_initialization_and_consistency() {
             // T0=On, T1=Off
-            let state = MgsaState::new(vec![true, false]);
+            let state = TermState::new(vec![true, false]);
 
             assert_eq!(state.n_active(), 1);
             assert_eq!(state.n_inactive(), 1);
@@ -209,7 +269,7 @@ mod tests {
 
         #[test]
         fn test_toggle_updates() {
-            let mut state = MgsaState::new(vec![true, false]);
+            let mut state = TermState::new(vec![true, false]);
 
             // --- Action: Toggle T1 ON ---
             state.apply(&Toggle(1));
@@ -228,7 +288,7 @@ mod tests {
 
         #[test]
         fn test_swap_move() {
-            let mut state = MgsaState::new(vec![true, false]);
+            let mut state = TermState::new(vec![true, false]);
 
             // Swap(0, 1) should flip both: T0->Off, T1->On
             state.apply(&Swap(0, 1));
