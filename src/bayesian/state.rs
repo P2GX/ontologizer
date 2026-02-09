@@ -1,5 +1,4 @@
-use crate::bayesian::proposer::ToggleSwap;
-use ToggleSwap::*;
+use crate::bayesian::proposer::{Increment, MgsaMove, ToggleSwap};
 
 // A trait that guarantees that *STATE* knows how to sample itself by drawing and applying *MOVE*.
 pub trait State {
@@ -142,8 +141,8 @@ impl State for TermState {
     /// Revert move and update n_on, n_off count
     fn apply(&mut self, m: &ToggleSwap) {
         match *m {
-            Toggle(i) => self.toggle(i),
-            Swap(i, j) => {
+            ToggleSwap::Toggle(i) => self.toggle(i),
+            ToggleSwap::Swap(i, j) => {
                 // A swap is just two toggles (On->Off, Off->On)
                 self.toggle(i);
                 self.toggle(j);
@@ -179,12 +178,6 @@ impl ParameterState {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-pub struct Increment {
-    pub index: usize,
-    pub delta: f64,
-}
-
 impl State for ParameterState {
     type Move = Increment;
 
@@ -195,12 +188,6 @@ impl State for ParameterState {
     fn revert(&mut self, m: &Self::Move) {
         self.update(m.index, -m.delta);
     }
-}
-
-#[derive(Clone, Debug)]
-pub enum MgsaMove {
-    Term(ToggleSwap),
-    Parameter(Increment),
 }
 
 /// The composite state containing both terms and hyperparameters.
@@ -272,14 +259,14 @@ mod tests {
             let mut state = TermState::new(vec![true, false]);
 
             // --- Action: Toggle T1 ON ---
-            state.apply(&Toggle(1));
+            state.apply(&ToggleSwap::Toggle(1));
 
             assert_eq!(state.n_active(), 2);
             assert!(state.get(1)); // T1 should be true
             assert!(state.check_consistency());
 
             // --- Action: Toggle T0 OFF ---
-            state.apply(&Toggle(0));
+            state.apply(&ToggleSwap::Toggle(0));
 
             assert_eq!(state.n_active(), 1);
             assert!(!state.get(0)); // T0 should be false
@@ -291,7 +278,7 @@ mod tests {
             let mut state = TermState::new(vec![true, false]);
 
             // Swap(0, 1) should flip both: T0->Off, T1->On
-            state.apply(&Swap(0, 1));
+            state.apply(&ToggleSwap::Swap(0, 1));
 
             assert!(!state.get(0));
             assert!(state.get(1));
