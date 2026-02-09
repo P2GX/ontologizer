@@ -167,6 +167,18 @@ impl ParameterState {
         Self { p, alpha, beta }
     }
 
+    pub fn p(&self) -> f64 {
+        self.p
+    }
+
+    pub fn alpha(&self) -> f64 {
+        self.alpha
+    }
+
+    pub fn beta(&self) -> f64 {
+        self.beta
+    }
+
     /// Updates a parameter by index (0=p, 1=alpha, 2=beta) ensuring [0,1] bounds.
     pub fn update(&mut self, index: usize, delta: f64) {
         match index {
