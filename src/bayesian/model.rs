@@ -1,5 +1,4 @@
-use crate::bayesian::proposer::{MgsaMove, ToggleSwap};
-use crate::bayesian::state::{MgsaState, State};
+use crate::bayesian::state::{MgsaMove, MgsaState, State, ToggleSwap};
 use indexmap::IndexSet;
 use rand::{Rng, RngExt};
 
@@ -23,6 +22,19 @@ pub trait Model {
         None
     }
 
+    // Log probability P(O | S) to find an Observable configuration given a State configuration.
+    fn log_likelihood(&self, state: &Self::State, cache: &Self::Cache) -> f64;
+
+    // Fast implementation for log likelihood ratio P(O|S2)/P(O|S1). May not be available for the specific move.
+    fn log_likelihood_ratio(
+        &self,
+        state: &Self::State,
+        _cache: &Self::Cache,
+        _m: &<Self::State as State>::Move,
+    ) -> Option<f64> {
+        None
+    }
+
     fn create_cache(&self, state: &Self::State) -> Self::Cache;
 
     fn update_cache(
@@ -38,19 +50,6 @@ pub trait Model {
         state: &Self::State,
         m: &<Self::State as State>::Move,
     );
-
-    // Log probability P(O | S) to find an Observable configuration given a State configuration.
-    fn log_likelihood(&self, state: &Self::State, cache: &Self::Cache) -> f64;
-
-    // Fast implementation for log likelihood ratio P(O|S2)/P(O|S1). May not be available for the specific move.
-    fn log_likelihood_ratio(
-        &self,
-        state: &Self::State,
-        _cache: &Self::Cache,
-        _m: &<Self::State as State>::Move,
-    ) -> Option<f64> {
-        None
-    }
 }
 
 pub struct OrCache {
@@ -203,55 +202,6 @@ impl Model for OrModel {
         }
     }
 
-    // Log probability P(O | H, alpha, beta)p(H|T) to find an observed Gene configuration given a Terms configuration.
-    fn log_likelihood(&self, state: &MgsaState, cache: &OrCache) -> f64 {
-        (cache.n_true_pos as f64) * (1. - state.params.beta()).ln()
-            + (cache.n_false_pos as f64) * state.params.alpha().ln()
-            + (cache.n_true_neg as f64) * (1. - state.params.alpha()).ln()
-            + (cache.n_false_neg as f64) * state.params.beta().ln()
-    }
-
-    fn log_likelihood_ratio(
-        &self,
-        state: &Self::State,
-        cache: &Self::Cache,
-        m: &<Self::State as State>::Move,
-    ) -> Option<f64> {
-        match m {
-            MgsaMove::Term(_) => None,
-            MgsaMove::Parameter(inc) => {
-                // p changes don't affect Likelihood P(O|...)
-                if inc.index == 0 {
-                    return Some(0.0);
-                }
-
-                let alpha_old = state.params.alpha();
-                let beta_old = state.params.beta();
-
-                let mut alpha_new = alpha_old;
-                let mut beta_new = beta_old;
-
-                let n10 = cache.n_false_pos as f64;
-                let n00 = cache.n_true_neg as f64;
-                let n01 = cache.n_false_neg as f64;
-                let n11 = cache.n_true_pos as f64;
-
-                let mut log_ll_ratio = 0.0;
-                if inc.index == 1 {
-                    // Only Alpha terms
-                    log_ll_ratio += n10 * (alpha_new / alpha_old).ln();
-                    log_ll_ratio += n00 * ((1.0 - alpha_new) / (1.0 - alpha_old)).ln();
-                } else {
-                    // Only Beta terms
-                    log_ll_ratio += n01 * (beta_new / beta_old).ln();
-                    log_ll_ratio += n11 * ((1.0 - beta_new) / (1.0 - beta_old)).ln();
-                }
-
-                Some(log_ll_ratio)
-            }
-        }
-    }
-
     fn create_cache(&self, state: &MgsaState) -> OrCache {
         let n_genes = self.observations.len();
         let mut latent = vec![0; n_genes];
@@ -309,5 +259,54 @@ impl Model for OrModel {
 
     fn revert_cache(&self, cache: &mut OrCache, state: &MgsaState, m: &MgsaMove) {
         self.update_cache(cache, state, m);
+    }
+
+    // Log probability P(O | H, alpha, beta)p(H|T) to find an observed Gene configuration given a Terms configuration.
+    fn log_likelihood(&self, state: &MgsaState, cache: &OrCache) -> f64 {
+        (cache.n_true_pos as f64) * (1. - state.params.beta()).ln()
+            + (cache.n_false_pos as f64) * state.params.alpha().ln()
+            + (cache.n_true_neg as f64) * (1. - state.params.alpha()).ln()
+            + (cache.n_false_neg as f64) * state.params.beta().ln()
+    }
+
+    fn log_likelihood_ratio(
+        &self,
+        state: &Self::State,
+        cache: &Self::Cache,
+        m: &<Self::State as State>::Move,
+    ) -> Option<f64> {
+        match m {
+            MgsaMove::Term(_) => None,
+            MgsaMove::Parameter(inc) => {
+                // p changes don't affect Likelihood P(O|...)
+                if inc.index == 0 {
+                    return Some(0.0);
+                }
+
+                let alpha_old = state.params.alpha();
+                let beta_old = state.params.beta();
+
+                let mut alpha_new = alpha_old;
+                let mut beta_new = beta_old;
+
+                let n10 = cache.n_false_pos as f64;
+                let n00 = cache.n_true_neg as f64;
+                let n01 = cache.n_false_neg as f64;
+                let n11 = cache.n_true_pos as f64;
+
+                let mut log_ll_ratio = 0.0;
+                if inc.index == 1 {
+                    // Only Alpha terms
+                    log_ll_ratio += n10 * (alpha_new / alpha_old).ln();
+                    log_ll_ratio += n00 * ((1.0 - alpha_new) / (1.0 - alpha_old)).ln();
+                } else {
+                    // Only Beta terms
+                    log_ll_ratio += n01 * (beta_new / beta_old).ln();
+                    log_ll_ratio += n11 * ((1.0 - beta_new) / (1.0 - beta_old)).ln();
+                }
+
+                Some(log_ll_ratio)
+            }
+        }
     }
 }
