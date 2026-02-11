@@ -21,3 +21,25 @@ impl Measure for Probability {
         Some(self.swap.to_string())
     }
 }
+
+#[derive(Debug)]
+pub struct Mean {
+    mean: f64,
+    swap: usize,
+}
+
+impl Mean {
+    pub fn new(mean: f64, swap: usize) -> Self {
+        Mean { mean, swap }
+    }
+}
+
+impl Measure for Mean {
+    fn score(&self) -> f64 {
+        self.mean
+    }
+
+    fn diagnostics(&self) -> Option<String> {
+        Some(self.swap.to_string())
+    }
+}
