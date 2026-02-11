@@ -16,19 +16,19 @@ pub trait Proposer<S: State> {
 
 // --- Term Proposer ---
 
-pub struct ToggleProposer;
-impl ToggleProposer {
+pub struct TermToggleProposer;
+impl TermToggleProposer {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Proposer<TermState> for ToggleProposer {
+impl Proposer<TermState> for TermToggleProposer {
     /// Draw a random number representing the index to all possible toggles and swaps and propose
     /// the corresponding toggle or swap.
     fn propose<R: Rng>(&self, state: &TermState, rng: &mut R) -> <TermState as State>::Move {
         // Every possible state transition is equally likely.
-        let n = state.n_all();
+        let n = state.n_terms();
 
         let x = rng.random_range(0..n);
 
@@ -36,7 +36,7 @@ impl Proposer<TermState> for ToggleProposer {
     }
 
     fn log_proposal(&self, state: &TermState) -> f64 {
-        let n = state.n_all();
+        let n = state.n_terms();
 
         -(n as f64).ln() // It is log(1/n)
     }
@@ -51,7 +51,7 @@ impl Proposer<TermState> for ToggleProposer {
     }
 }
 
-impl Proposer<MgsaState> for ToggleProposer {
+impl Proposer<MgsaState> for TermToggleProposer {
     fn propose<R: Rng>(&self, state: &MgsaState, rng: &mut R) -> MgsaMove {
         let m = <Self as Proposer<TermState>>::propose(self, &state.terms, rng);
         MgsaMove::Term(m)
@@ -71,19 +71,20 @@ impl Proposer<MgsaState> for ToggleProposer {
     }
 }
 
-pub struct ToggleSwapProposer;
-impl ToggleSwapProposer {
+pub struct TermToggleSwapProposer;
+
+impl TermToggleSwapProposer {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Proposer<TermState> for ToggleSwapProposer {
+impl Proposer<TermState> for TermToggleSwapProposer {
     /// Draw a random number representing the index to all possible toggles and swaps and propose
     /// the corresponding toggle or swap.
     fn propose<R: Rng>(&self, state: &TermState, rng: &mut R) -> <TermState as State>::Move {
         // Every possible state transition is equally likely.
-        let n = state.n_all();
+        let n = state.n_terms();
         let na = state.n_active();
         let ni = state.n_inactive();
 
@@ -105,7 +106,7 @@ impl Proposer<TermState> for ToggleSwapProposer {
     }
 
     fn log_proposal(&self, state: &TermState) -> f64 {
-        let n = state.n_all();
+        let n = state.n_terms();
         let na = state.n_active();
         let ni = state.n_inactive();
 
@@ -116,7 +117,7 @@ impl Proposer<TermState> for ToggleSwapProposer {
     fn log_proposal_ratio(&self, state: &TermState, m: &<TermState as State>::Move) -> Option<f64> {
         match *m {
             ToggleSwap::Toggle(i) => {
-                let n_current = (state.n_all() + state.n_active() * state.n_inactive()) as f64;
+                let n_current = (state.n_terms() + state.n_active() * state.n_inactive()) as f64;
 
                 // Calculate the change in possible moves (delta).
 
@@ -137,71 +138,114 @@ impl Proposer<TermState> for ToggleSwapProposer {
     }
 }
 
+impl Proposer<MgsaState> for TermToggleSwapProposer {
+    fn propose<R: Rng>(&self, state: &MgsaState, rng: &mut R) -> <MgsaState as State>::Move {
+        let m = <Self as Proposer<TermState>>::propose(self, &state.terms, rng);
+        MgsaMove::Term(m)
+    }
+
+    fn log_proposal(&self, state: &MgsaState) -> f64 {
+        <Self as Proposer<TermState>>::log_proposal(self, &state.terms)
+    }
+
+    fn log_proposal_ratio(&self, state: &MgsaState, m: &<MgsaState as State>::Move) -> Option<f64> {
+        match m {
+            MgsaMove::Term(tm) => {
+                <Self as Proposer<TermState>>::log_proposal_ratio(self, &state.terms, tm)
+            }
+            MgsaMove::Parameter(_) => None,
+        }
+    }
+}
 // --- Parameter Proposer ---
-pub struct GaussianProposer {
-    distribution: Normal<f64>,
+pub struct ParameterGaussProposer {
+    gaussian: Normal<f64>,
 }
 
-impl GaussianProposer {
+impl ParameterGaussProposer {
     pub fn new(sigma: f64) -> Self {
         Self {
-            distribution: Normal::new(0.0, sigma).expect("Invalid sigma for GaussianProposer"),
+            gaussian: Normal::new(0.0, sigma).expect("Invalid sigma for GaussianProposer"),
         }
     }
 }
 
-impl Proposer<ParameterState> for GaussianProposer {
+impl Proposer<ParameterState> for ParameterGaussProposer {
     fn propose<R: Rng>(
         &self,
         state: &ParameterState,
         rng: &mut R,
     ) -> <ParameterState as State>::Move {
-        let index = rng.random_range(0..state.n_all());
-        let old_value = state.get(index);
+        // sample on logit space ln(p / (1-p)) because [0, 1] becomes [-oo, oo]
+        let index = 0;
+        let p = state.get(index);
+        let logit = (p / (1. - p)).ln();
 
-        let noise = self.distribution.sample(rng);
-        let mut new_value = old_value + noise;
+        let noise = self.gaussian.sample(rng);
+        let logit_new = logit + noise;
 
-        // Reflection for [0, 1] bounds with loop to ensure safety
-        while new_value < 0.0 || new_value > 1.0 {
-            if new_value < 0.0 {
-                new_value = -new_value;
-            } else if new_value > 1.0 {
-                new_value = 2.0 - new_value;
-            }
-        }
+        let p_new = 1.0 / (1.0 + (-logit_new).exp());
 
-        // We store the effective delta so apply/revert is simple arithmetic
-        let delta = new_value - old_value;
-
+        let delta = p_new - p;
         Increment { index, delta }
     }
 
-    fn log_proposal(&self, _state: &ParameterState) -> f64 {
-        0.0 // Symmetric proposal
+    fn log_proposal(&self, state: &ParameterState) -> f64 {
+        let p = state.p();
+        let alpha = state.alpha();
+        let beta = state.beta();
+
+        -(p * (1. - p)).ln() - (alpha * (1. - alpha)).ln() - (beta * (1. - beta)).ln()
     }
 
     fn log_proposal_ratio(
         &self,
-        _state: &ParameterState,
-        _m: &<ParameterState as State>::Move,
+        state: &ParameterState,
+        m: &<ParameterState as State>::Move,
     ) -> Option<f64> {
-        Some(0.0) // Symmetric proposal (Gaussian)
+        let index = m.index;
+        let p = state.get(index);
+        let p_new = (p + m.delta);
+
+        let f1 = (p * (1.0 - p)).ln();
+        let f2 = (p_new * (1.0 - p_new)).ln();
+
+        // ln(p(1-p)) - ln(p'(1-p'))
+        Some(f1 - f2)
     }
 }
 
+impl Proposer<MgsaState> for ParameterGaussProposer {
+    fn propose<R: Rng>(&self, state: &MgsaState, rng: &mut R) -> <MgsaState as State>::Move {
+        let m = <Self as Proposer<ParameterState>>::propose(self, &state.params, rng);
+        MgsaMove::Parameter(m)
+    }
+
+    fn log_proposal(&self, state: &MgsaState) -> f64 {
+        <Self as Proposer<ParameterState>>::log_proposal(self, &state.params)
+    }
+
+    fn log_proposal_ratio(&self, state: &MgsaState, m: &<MgsaState as State>::Move) -> Option<f64> {
+        match m {
+            MgsaMove::Term(_) => None,
+            MgsaMove::Parameter(pm) => {
+                <Self as Proposer<ParameterState>>::log_proposal_ratio(self, &state.params, pm)
+            }
+        }
+    }
+}
 // --- Mixed Proposer ---
 
 pub struct MixedProposer {
-    term_proposer: ToggleSwapProposer,
-    param_proposer: GaussianProposer,
+    term_proposer: TermToggleSwapProposer,
+    param_proposer: ParameterGaussProposer,
     term_update_prob: f64,
 }
 
 impl MixedProposer {
     pub fn new(
-        term_proposer: ToggleSwapProposer,
-        param_proposer: GaussianProposer,
+        term_proposer: TermToggleSwapProposer,
+        param_proposer: ParameterGaussProposer,
         term_update_prob: f64,
     ) -> Self {
         Self {
@@ -223,8 +267,9 @@ impl Proposer<MgsaState> for MixedProposer {
         }
     }
 
-    fn log_proposal(&self, _state: &MgsaState) -> f64 {
-        0.0
+    fn log_proposal(&self, state: &MgsaState) -> f64 {
+        self.term_proposer.log_proposal(&state.terms)
+            + self.param_proposer.log_proposal(&state.params)
     }
 
     fn log_proposal_ratio(&self, state: &MgsaState, m: &MgsaMove) -> Option<f64> {
