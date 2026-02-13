@@ -1,8 +1,10 @@
 use crate::core::AnnotationIndex;
+use csv::Writer;
 use ontolius::ontology::OntologyTerms;
 use ontolius::ontology::csr::FullCsrOntology;
 use ontolius::term::MinimalTerm;
 use serde::{Deserialize, Serialize, Serializer};
+use std::path::Path;
 
 pub trait Measure {
     /// Returns an iterator over the score for each term.
@@ -94,5 +96,22 @@ impl EnrichmentResult {
             self.items
                 .sort_by(|a, b| a.score.partial_cmp(&b.score).unwrap())
         }
+    }
+
+    /// Saves the result to a CSV file.
+    ///
+    /// This writes the global parameters as commented lines (header)
+    /// before writing the standard CSV table.
+    pub fn save_to_csv<P: AsRef<Path>>(&self, path: P) -> std::io::Result<()> {
+        let mut wtr = Writer::from_path("parameters.csv")?;
+        for item in &self.items {
+            wtr.serialize(item)?;
+        }
+
+        let mut wtr = Writer::from_path("terms.csv")?;
+        for item in &self.items {
+            wtr.serialize(item)?;
+        }
+        Ok(())
     }
 }

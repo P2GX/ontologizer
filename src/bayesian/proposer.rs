@@ -4,18 +4,27 @@ use crate::bayesian::state::{
 use rand::{Rng, RngExt};
 use rand_distr::{Distribution, Normal};
 
-/// Allows to sample from the sample space and to find the corresponding transition probability.
+/// A generic interface for generating transitions (moves) in the state space.
+///
+/// It handles the proposal distribution $q(x'|x)$ required for the Metropolis-Hastings algorithm.
 pub trait Proposer<S: State> {
     /// Generates move x -> x'
     fn propose<R: Rng>(&self, state: &S, rng: &mut R) -> S::Move;
+
     /// Calculates q(x'|x)
     fn log_proposal(&self, state: &S) -> f64;
+
     /// Calculates q(x'|x) / q(x|x')
     fn log_proposal_ratio(&self, state: &S, m: &S::Move) -> Option<f64>;
 }
 
-// --- Term Proposer ---
+// ==========================================
+// TERM PROPOSERS
+// ==========================================
 
+/// A simple proposer that only toggles terms active/inactive.
+///
+/// It chooses a term uniformly at random and flips its state.
 pub struct TermToggleProposer;
 impl TermToggleProposer {
     pub fn new() -> Self {
@@ -27,18 +36,16 @@ impl Proposer<TermState> for TermToggleProposer {
     /// Draw a random number representing the index to all possible toggles and swaps and propose
     /// the corresponding toggle or swap.
     fn propose<R: Rng>(&self, state: &TermState, rng: &mut R) -> <TermState as State>::Move {
-        // Every possible state transition is equally likely.
-        let n = state.n_terms();
-
-        let x = rng.random_range(0..n);
-
-        ToggleSwap::Toggle(x)
+        // Uniformly select a term inde
+        let n_terms = state.n_terms();
+        let idx = rng.random_range(0..n_terms);
+        ToggleSwap::Toggle(idx)
     }
 
     fn log_proposal(&self, state: &TermState) -> f64 {
-        let n = state.n_terms();
-
-        -(n as f64).ln() // It is log(1/n)
+        // q(x'|x) = 1/N
+        let n_terms = state.n_terms();
+        -(n_terms as f64).ln()
     }
 
     ///
@@ -47,10 +54,13 @@ impl Proposer<TermState> for TermToggleProposer {
         _state: &TermState,
         _m: &<TermState as State>::Move,
     ) -> Option<f64> {
+        // The distribution is symmetric: q(x'|x) = q(x|x') = 1/N
+        // log(1) = 0
         Some(0.0)
     }
 }
 
+// Implement for MgsaState wrapper
 impl Proposer<MgsaState> for TermToggleProposer {
     fn propose<R: Rng>(&self, state: &MgsaState, rng: &mut R) -> MgsaMove {
         let m = <Self as Proposer<TermState>>::propose(self, &state.terms, rng);
@@ -71,6 +81,9 @@ impl Proposer<MgsaState> for TermToggleProposer {
     }
 }
 
+/// A proposer that mixes simple Toggles with Swaps.
+///
+/// A "Swap" exchanges an active term with an inactive one, preserving the total count.
 pub struct TermToggleSwapProposer;
 
 impl TermToggleSwapProposer {
@@ -84,60 +97,71 @@ impl Proposer<TermState> for TermToggleSwapProposer {
     /// the corresponding toggle or swap.
     fn propose<R: Rng>(&self, state: &TermState, rng: &mut R) -> <TermState as State>::Move {
         // Every possible state transition is equally likely.
-        let n = state.n_terms();
-        let na = state.n_active();
-        let ni = state.n_inactive();
+        let n_terms = state.n_terms();
+        let n_active = state.n_active();
+        let n_inactive = state.n_inactive();
 
-        let m = n + na * ni;
-        let x = rng.random_range(0..m);
+        let m = n_terms + n_active * n_inactive;
+        let choice = rng.random_range(0..m);
 
-        // In m cases we flip the state of a single term.
-        if x < n {
-            ToggleSwap::Toggle(x)
-        }
-        // in m_on * m_off cases we swap the states of two terms with different states.
-        else {
-            // map random number x to pairs of indices a, b
-            let k = x - n;
-            let i = state.get_active(k % na);
-            let j = state.get_inactive(k / na);
-            ToggleSwap::Swap(i, j)
+        if choice < n_terms {
+            // Case 1: Toggle
+            ToggleSwap::Toggle(choice)
+        } else {
+            // Case 2: Swap
+            // Map the random choice back to a specific (Active, Inactive) pair
+            let k = choice - n_terms;
+            let active_idx = state.get_active(k % n_active);
+            let inactive_idx = state.get_inactive(k / n_active);
+            ToggleSwap::Swap(active_idx, inactive_idx)
         }
     }
 
     fn log_proposal(&self, state: &TermState) -> f64 {
-        let n = state.n_terms();
-        let na = state.n_active();
-        let ni = state.n_inactive();
+        let n_terms = state.n_terms();
+        let n_active = state.n_active();
+        let n_inactive = state.n_inactive();
 
-        -((n + na * ni) as f64).ln() // It is log(1/n)
+        let m = n_terms + n_active * n_inactive;
+        -(m as f64).ln()
     }
 
     ///
     fn log_proposal_ratio(&self, state: &TermState, m: &<TermState as State>::Move) -> Option<f64> {
         match *m {
             ToggleSwap::Toggle(i) => {
-                let n_current = (state.n_terms() + state.n_active() * state.n_inactive()) as f64;
+                let n_terms = state.n_terms();
+                let n_active = state.n_active();
+                let n_inactive = state.n_inactive();
+                let current_space_size = (n_terms + n_active * n_inactive) as f64;
 
-                // Calculate the change in possible moves (delta).
-
-                // Active -> Inactive: new_n = current_n + n_on - n_off - 1
-                // Inactive -> Active: new_n = current_n + n_off - n_on - 1
+                // Calculate the new space size after the toggle
+                // Active -> Inactive: n_active decreases by 1, n_inactive increases by 1
+                // Inactive -> Active: n_active increases by 1, n_inactive decreases by 1
                 let diff = state.n_active() as f64 - state.n_inactive() as f64;
-                // If terms[i] is true (Active->Inactive), we use 'diff-1'.
-                // If terms[i] is false (Inactive->Active), we use '-diff-1'.
-                let delta = if state.get(i) { diff } else { -diff } - 1.0;
 
-                let n_proposed = n_current + delta;
-                Some((n_proposed / n_current).ln())
+                // If terms[i] is true (Active->Inactive), new product is (na-1)(ni+1) = na*ni + na - ni - 1
+                // Delta = na - ni - 1
+
+                // If terms[i] is false (Inactive->Active), new product is (na+1)(ni-1) = na*ni - na + ni - 1
+                // Delta = -na + ni - 1 = -(na - ni) - 1
+
+                let delta = if state.get(i) { diff } else { -diff } - 1.0;
+                let proposed_space_size = current_space_size + delta;
+
+                // log( q(x'|x) / q(x|x')
+                // Ratio = (1/current) / (1/proposed) = proposed / current.
+                // Log = ln(proposed) - ln(current).
+                Some((proposed_space_size / current_space_size).ln())
             }
-            // Swapping preserves n_on and n_off, so the state space size N stays constant.
+            // Swapping preserves na and ni, so the state space size N stays constant.
             // ln(N / N) = ln(1) = 0
             ToggleSwap::Swap(_, _) => Some(0.0),
         }
     }
 }
 
+// Implement for MgsaState wrapper
 impl Proposer<MgsaState> for TermToggleSwapProposer {
     fn propose<R: Rng>(&self, state: &MgsaState, rng: &mut R) -> <MgsaState as State>::Move {
         let m = <Self as Proposer<TermState>>::propose(self, &state.terms, rng);
@@ -157,7 +181,15 @@ impl Proposer<MgsaState> for TermToggleSwapProposer {
         }
     }
 }
-// --- Parameter Proposer ---
+
+// ==========================================
+// PARAMETER PROPOSERS
+// ==========================================
+
+/// A Random Walk Metropolis proposer for continuous parameters (p, alpha, beta).
+///
+/// It proposes moves in the logit space to respect the [0, 1] bounds naturally,
+/// adding Gaussian noise to the transformed variable.
 pub struct ParameterGaussProposer {
     gaussian: Normal<f64>,
 }
@@ -176,18 +208,22 @@ impl Proposer<ParameterState> for ParameterGaussProposer {
         state: &ParameterState,
         rng: &mut R,
     ) -> <ParameterState as State>::Move {
-        // sample on logit space ln(p / (1-p)) because [0, 1] becomes [-oo, oo]
-        let index = rng.random_range(0..state.n_params());
-        let x = state.get(index);
-        let logit = (x / (1. - x)).ln();
+        // Pick a parameter index uniformly
+        let idx = rng.random_range(0..state.n_params());
+        let parameter = state.get(idx);
 
+        // Transform to logit space: y = ln(x / (1-x))
+        let logit = (parameter / (1. - parameter)).ln();
+
+        // Add Gaussian noise: N(0, sigma)
         let noise = self.gaussian.sample(rng);
         let logit_new = logit + noise;
 
+        // Transform back: x' = sigmoid(y')
         let x_new = 1.0 / (1.0 + (-logit_new).exp());
 
-        let delta = x_new - x;
-        Increment { index, delta }
+        let delta = x_new - parameter;
+        Increment { index: idx, delta }
     }
 
     fn log_proposal(&self, state: &ParameterState) -> f64 {
@@ -203,18 +239,22 @@ impl Proposer<ParameterState> for ParameterGaussProposer {
         state: &ParameterState,
         m: &<ParameterState as State>::Move,
     ) -> Option<f64> {
-        let index = m.index;
-        let p = state.get(index);
-        let p_new = p + m.delta;
+        // q(x'|x) for a logit-normal random walk includes the Jacobian of the transformation.
+        // Ratio = (x(1-x)) / (x'(1-x'))
+        // Log Ratio = ln(x(1-x)) - ln(x'(1-x'))
+        let idx = m.index;
+        let parameter = state.get(idx);
+        let parameter_new = parameter + m.delta;
 
-        let f1 = (p * (1.0 - p)).ln();
-        let f2 = (p_new * (1.0 - p_new)).ln();
+        let log_jac_current = (parameter * (1.0 - parameter)).ln();
+        let log_jac_proposed = (parameter_new * (1.0 - parameter_new)).ln();
 
         // ln(p(1-p)) - ln(p'(1-p'))
-        Some(f1 - f2)
+        Some(log_jac_current - log_jac_proposed)
     }
 }
 
+// Implement for MgsaState wrapper
 impl Proposer<MgsaState> for ParameterGaussProposer {
     fn propose<R: Rng>(&self, state: &MgsaState, rng: &mut R) -> <MgsaState as State>::Move {
         let m = <Self as Proposer<ParameterState>>::propose(self, &state.params, rng);
@@ -234,8 +274,12 @@ impl Proposer<MgsaState> for ParameterGaussProposer {
         }
     }
 }
-// --- Mixed Proposer ---
 
+// ==========================================
+// MIXED PROPOSER
+// ==========================================
+
+/// A proposer that selects between Term moves and Parameter moves based on a probability.
 pub struct MixedProposer {
     term_proposer: TermToggleSwapProposer,
     param_proposer: ParameterGaussProposer,

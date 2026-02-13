@@ -24,12 +24,12 @@ pub fn run(
     let test = OneSidedEnrichmentTest;
 
     let observed_genes: Vec<bool> = (0..N)
-        .map(|i| study_genes.contains(annotations.get_gene_by_index(i)))
+        .map(|i| study_genes.contains(annotations.get_gene_by_idx(i)))
         .collect();
 
     let study_gene_indices: IndexSet<usize> = study_genes
         .iter()
-        .filter_map(|gene| annotations.get_index_by_gene(gene))
+        .filter_map(|gene| annotations.get_idx_by_gene(gene))
         .collect();
 
     let terms_to_genes = annotations.get_terms_to_genes(true);

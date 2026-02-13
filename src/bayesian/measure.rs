@@ -2,7 +2,9 @@ use crate::core::result::Measure;
 
 #[derive(Debug)]
 pub struct Probability {
+    /// The probability score.
     probability: f64,
+    /// Diagnostic metric (e.g., number of swaps or visits).
     swap: usize,
 }
 
@@ -22,9 +24,11 @@ impl Measure for Probability {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Mean {
+    /// The mean value.
     mean: f64,
+    /// Diagnostic metric (e.g., number of swaps or visits).
     swap: usize,
 }
 

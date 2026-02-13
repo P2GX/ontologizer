@@ -1,15 +1,19 @@
 use crate::bayesian::state::{MgsaMove, MgsaState, State, ToggleSwap};
 use indexmap::IndexSet;
 
-// A trait that connects *STATE* and *OBSERVATION* by assigning probabilities.
+/// A trait that connects a *State* configuration with *Observations* by assigning probabilities.
+///
+/// It defines the logic for the Prior P(S) and Likelihood P(O|S).
 pub trait Model {
     type State: State;
     type Cache;
 
-    // Log probability P(S) to find a State configuration
+    /// Calculates the log prior probability P(S) of a state configuration.
     fn log_prior(&self, state: &Self::State) -> f64;
 
-    // Fast implementation for log probability ratio P(S2)/P(S1). May not be available for the specific move.
+    /// Fast implementation for the log prior ratio P(S')/P(S).
+    ///
+    /// Returns `None` if an optimized calculation is not available for the specific move.
     fn log_prior_ratio(
         &self,
         _state: &Self::State,
@@ -18,10 +22,12 @@ pub trait Model {
         None
     }
 
-    // Log probability P(O | S) to find an Observable configuration given a State configuration.
+    /// Calculates the log likelihood P(O | S) of the observations given the state.
     fn log_likelihood(&self, state: &Self::State, cache: &Self::Cache) -> f64;
 
-    // Fast implementation for log likelihood ratio P(O|S2)/P(O|S1). May not be available for the specific move.
+    /// Fast implementation for the log likelihood ratio P(O|S')/P(O|S).
+    ///
+    /// Returns `None` if an optimized calculation is not available for the specific move.
     fn log_likelihood_ratio(
         &self,
         _state: &Self::State,
@@ -31,14 +37,18 @@ pub trait Model {
         None
     }
 
+    /// Creates a new cache based on the current state.
     fn create_cache(&self, state: &Self::State) -> Self::Cache;
 
+    /// Updates the cache incrementally after a state change (move).
     fn update_cache(
         &self,
         cache: &mut Self::Cache,
         state: &Self::State,
         m: &<Self::State as State>::Move,
     );
+
+    /// Reverts the cache incrementally after reversing a state change.
 
     fn revert_cache(
         &self,
@@ -48,19 +58,22 @@ pub trait Model {
     );
 }
 
+#[derive(Debug, Clone)]
 pub struct OrCache {
+    /// Number of active terms targeting each gene (the latent signal).
     pub latent: Vec<usize>,
 
-    // Confusion Matrix Counts
+    /// Confusion Matrix Counts
     pub n_tp: usize, // Model = 1 | Observed = 1
     pub n_fp: usize, // Model = 0 | Observed = 1 (alpha)
     pub n_tn: usize, // Model = 0 | Observed = 0
     pub n_fn: usize, // Model = 1 | Observed = 0 (beta)
 }
 
+/// The "Noisy-OR" Bayesian Network model.
 pub struct OrModel {
     terms_to_genes: Vec<IndexSet<usize>>, // Adjacency list (Term -> Genes)
-    observations: Vec<bool>,
+    obs_genes: Vec<bool>,
     p_prior: (f64, f64),
     alpha_prior: (f64, f64),
     beta_prior: (f64, f64),
@@ -74,18 +87,19 @@ impl OrModel {
         alpha: f64,
         beta: f64,
     ) -> OrModel {
-        // We define a "tightness" factor.
-        // 1.0 = exactly at the unimodal limit (flattest bell curve possible).
-        // 0.1 = very sharp peak (10% of the max allowed variance).
+        // Define a "tightness" factor.
+        // 1.0 = maximal variance for unimodal distribution (flattest curve possible).
+        // 0.1 = sharp peak (10% of the max allowed variance).
         const VARIANCE_SCALE: f64 = 0.5;
 
         // Calculate safe priors that are guaranteed to be unimodal
         let p_prior = Self::set_unimodal_beta_prior(p, VARIANCE_SCALE);
         let alpha_prior = Self::set_unimodal_beta_prior(alpha, VARIANCE_SCALE);
         let beta_prior = Self::set_unimodal_beta_prior(beta, VARIANCE_SCALE);
+
         Self {
             terms_to_genes,
-            observations: obs_genes,
+            obs_genes: obs_genes,
             p_prior,
             alpha_prior,
             beta_prior,
@@ -94,7 +108,7 @@ impl OrModel {
 
     /// Sets Beta parameters given a mean and a variance scaling factor.
     /// scale = 1.0 sets variance to the maximum possible value that preserves unimodality.
-    /// scale < 1.0 yields tighter (sharper) distributions.
+    /// scale < 1.0 sharper distributions.
     fn set_unimodal_beta_prior(mean: f64, scale: f64) -> (f64, f64) {
         // 1. Calculate the strict upper bound for variance to ensure alpha (a) > 1 and beta (b) > 1
         let max_unimodal_var = if mean <= 0.5 {
@@ -104,7 +118,6 @@ impl OrModel {
         };
 
         // 2. Apply the scaling factor (e.g., 50% of the limit)
-
         let var = max_unimodal_var * scale;
         // 3. Calculate shape parameters alpha (a), beta (b)
         // nu = [mu(1-mu) / var] - 1
@@ -142,7 +155,7 @@ impl OrModel {
                     // Critical transition: 0 -> 1 (Gene becomes Predicted True)
                     if cache.latent[g] == 0 {
                         // Model 0 -> 1
-                        if self.observations[g] {
+                        if self.obs_genes[g] {
                             // Observed = 1
                             // FP -> TP
                             cache.n_fp -= 1;
@@ -160,7 +173,7 @@ impl OrModel {
                     // Critical transition: 1 -> 0 (Gene becomes Predicted False)
                     if cache.latent[g] == 1 {
                         // Model 1 -> 0
-                        if self.observations[g] {
+                        if self.obs_genes[g] {
                             // Observed = 1
                             // TP -> FP
                             cache.n_tp -= 1;
@@ -190,12 +203,10 @@ impl Model for OrModel {
     type State = MgsaState;
     type Cache = OrCache;
 
-    // Log probability P(T|p)P(p)P(alpha)P(beta),
-    // i.e. log[P(T|p)] + log[P(p)] + log[P(alpha)] + log[P(beta)]
-    // to find a Term configuration
+    // Log probability P(T|p)P(p)P(alpha)P(beta)
     fn log_prior(&self, state: &MgsaState) -> f64 {
-        let m0 = state.terms.n_active() as f64;
-        let m1 = state.terms.n_inactive() as f64;
+        let n_active = state.terms.n_active() as f64;
+        let n_inactive = state.terms.n_inactive() as f64;
 
         let p = state.params.p();
         let alpha = state.params.alpha();
@@ -205,7 +216,7 @@ impl Model for OrModel {
         let (alpha_a, alpha_b) = self.alpha_prior;
         let (beta_a, beta_b) = self.beta_prior;
 
-        let log_prior_t = m0 * p.ln() + m1 * (1. - p).ln();
+        let log_prior_t = n_active * p.ln() + n_inactive * (1. - p).ln();
         let log_prior_p = (p_a - 1.0) * p.ln() + (p_b - 1.0) * (1.0 - p).ln();
         let log_prior_alpha = (alpha_a - 1.0) * alpha.ln() + (alpha_b - 1.0) * (1.0 - alpha).ln();
         let log_prior_beta = (beta_a - 1.0) * beta.ln() + (beta_b - 1.0) * (1.0 - beta).ln();
@@ -230,16 +241,16 @@ impl Model for OrModel {
             },
             MgsaMove::Parameter(inc) => match inc.index {
                 0 => {
-                    let m0 = state.terms.n_active() as f64;
-                    let m1 = state.terms.n_inactive() as f64;
+                    let n_active = state.terms.n_active() as f64;
+                    let n_inactive = state.terms.n_inactive() as f64;
 
                     let p = state.params.p();
                     let p_new = p + inc.delta;
 
                     let (p_a, p_b) = self.p_prior;
 
-                    let log_prior_ratio = m0 * (p_new / p).ln()
-                        + m1 * ((1. - p_new) / (1. - p)).ln()
+                    let log_prior_ratio = n_active * (p_new / p).ln()
+                        + n_inactive * ((1. - p_new) / (1. - p)).ln()
                         + (p_a - 1.0) * (p_new / p).ln()
                         + (p_b - 1.0) * ((1. - p_new) / (1. - p)).ln();
                     Some(log_prior_ratio)
@@ -251,7 +262,7 @@ impl Model for OrModel {
 
                     let log_prior_ratio = (alpha_a - 1.0) * (alpha_new / alpha).ln()
                         + (alpha_b - 1.0) * ((1. - alpha_new) / (1. - alpha)).ln();
-                    return Some(log_prior_ratio);
+                    Some(log_prior_ratio)
                 }
                 2 => {
                     let beta = state.params.beta();
@@ -267,7 +278,7 @@ impl Model for OrModel {
         }
     }
 
-    // Log probability P(O | H, alpha, beta)p(H|T) to find an observed Gene configuration given a Terms configuration.
+    // Log probability P(O | H, alpha, beta).
     fn log_likelihood(&self, state: &MgsaState, cache: &OrCache) -> f64 {
         (cache.n_fp as f64) * state.params.alpha().ln()
             + (cache.n_tn as f64) * (1. - state.params.alpha()).ln()
@@ -317,7 +328,7 @@ impl Model for OrModel {
     }
 
     fn create_cache(&self, state: &MgsaState) -> OrCache {
-        let n_genes = self.observations.len();
+        let n_genes = self.obs_genes.len();
         let mut latent = vec![0; n_genes];
 
         // Calculate Latent (O(N) full scan)
@@ -335,7 +346,7 @@ impl Model for OrModel {
         let mut n_tn = 0;
         let mut n_fn = 0;
 
-        for (i, &obs) in self.observations.iter().enumerate() {
+        for (i, &obs) in self.obs_genes.iter().enumerate() {
             let predicted = latent[i] > 0;
             match (predicted, obs) {
                 (true, true) => n_tp += 1,
@@ -373,5 +384,37 @@ impl Model for OrModel {
 
     fn revert_cache(&self, cache: &mut OrCache, state: &MgsaState, m: &MgsaMove) {
         self.update_cache(cache, state, m);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Test that the prior shaping logic correctly produces Beta distributions
+    /// where both alpha (a) > 1 and beta (b) > 1, ensuring unimodality (bell curve shape).
+    #[test]
+    fn test_unimodal_prior_construction() {
+        // Case 1: Mean 0.1 (Small)
+        let (a, b) = OrModel::set_unimodal_beta_prior(0.1, 1.0);
+        assert!(a > 1.0, "Alpha parameter must be > 1 for unimodality");
+        assert!(b > 1.0, "Beta parameter must be > 1 for unimodality");
+
+        let calculated_mean = a / (a + b);
+        assert!((calculated_mean - 0.1).abs() < 1e-6);
+
+        // Case 2: Mean 0.9 (Large)
+        let (a, b) = OrModel::set_unimodal_beta_prior(0.9, 1.0);
+        assert!(a > 1.0);
+        assert!(b > 1.0);
+
+        let calculated_mean = a / (a + b);
+        assert!((calculated_mean - 0.9).abs() < 1e-6);
+
+        // Case 3: Mean 0.5 (Middle)
+        let (a, b) = OrModel::set_unimodal_beta_prior(0.5, 0.5); // Tighter variance
+        assert!(a > 1.0);
+        assert!(b > 1.0);
+        assert_eq!(a, b, "For mean 0.5, a and b should be equal");
     }
 }

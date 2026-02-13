@@ -1,38 +1,48 @@
-/// Explore the sample space by flipping the value of one element,
-/// or by exchanging the (different) values of two elements.
+/// Represents a discrete change in the Term activation state.
 #[derive(Clone, Copy, Debug)]
 pub enum ToggleSwap {
     Toggle(usize),
     Swap(usize, usize),
 }
 
-/// A move specifically for continuous parameters.
+/// Represents a continuous change in a parameter value.
 #[derive(Clone, Copy, Debug)]
 pub struct Increment {
     pub index: usize,
     pub delta: f64,
 }
 
-/// A move that can either be a Term change or a Parameter change.
+/// A union of possible moves in the MGSA state space.
 #[derive(Clone, Debug)]
 pub enum MgsaMove {
     Term(ToggleSwap),
     Parameter(Increment),
 }
 
-// A trait that guarantees that *STATE* knows how to sample itself by drawing and applying *MOVE*.
+/// A trait defining the minimal requirements for a state in the Metropolis-Hastings algorithm.
+///
+/// A state must be able to apply a move to transition to a new state,
+/// and revert that move to return to the previous state.
 pub trait State {
     type Move;
     fn apply(&mut self, m: &Self::Move);
     fn revert(&mut self, m: &Self::Move);
 }
 
-// A trait that guarantees that *STATE* takes boolean values (active/inactive).
+// ==========================================
+// TERM STATE
+// ==========================================
+
+/// Manages the configuration of active terms.
+///
+/// It maintains efficient indices to allow O(1) sampling of active/inactive terms.
 pub(crate) struct TermState {
-    terms: Vec<bool>,
-    active_indices: Vec<usize>,
-    inactive_indices: Vec<usize>,
+    terms: Vec<bool>,             // Boolean vector indicating if term `i` is active.
+    active_indices: Vec<usize>,   // List of indices where `terms[i]` is true.
+    inactive_indices: Vec<usize>, // List of indices where `terms[i]` is false.
     term_map: Vec<usize>,
+    // A map pointing to the position of each term index in either `active_indices` or `inactive_indices`.
+    // `active_indices[term_map[i]] == i` if `terms[i]` is true.
 }
 
 impl TermState {
@@ -81,19 +91,16 @@ impl TermState {
         self.inactive_indices[k]
     }
 
-    /// Returns true if the cached counts and lists match the actual vector data (debug only).
-
-    // Swap is implemented as two toggles.
+    /// Toggles the state of a term (On <-> Off) and updates internal indices
     fn toggle(&mut self, term_idx: usize) {
         let is_becoming_active = !self.terms[term_idx];
         self.terms[term_idx] = is_becoming_active;
 
-        // Update of Active/Inactive lists
         if is_becoming_active {
-            // Move from Inactive -> Active
+            // Move from Inactive list to Active list
             self.move_index(term_idx, false);
         } else {
-            // Move from Active -> Inactive
+            // Move from Active list to Inactive list
             self.move_index(term_idx, true);
         }
     }
@@ -113,17 +120,17 @@ impl TermState {
         // Let last map is crucial because it omits the need to scan active_indices/inactive_indices
         // to find the position of a certain term_idx i and allows access directly by i=term_map[k].
 
-        let source_idx = self.term_map[term_idx]; // index in source that has to be removed
+        let source_pos = self.term_map[term_idx]; // index in source that has to be removed
 
         // `remove` removes one element and shifts over the remaining elements, O(n)
         // `swap_remove` moves the last element to the position of the removed element, O(1)
         // The drawback: we must update the map for that moved element.
         let last_element = source[source.len() - 1];
-        source.swap_remove(source_idx);
+        source.swap_remove(source_pos);
 
         // Update map for the element that was swapped into the gap (unless we removed the last one)
-        if source_idx < source.len() {
-            self.term_map[last_element] = source_idx;
+        if source_pos < source.len() {
+            self.term_map[last_element] = source_pos;
         }
 
         // Add to Destination
@@ -131,6 +138,7 @@ impl TermState {
         dest.push(term_idx);
     }
 
+    #[cfg(test)]
     fn check_consistency(&self) -> bool {
         let n_on_vec = self.terms.iter().filter(|&&t| t).count();
         let n_off_vec = self.terms.iter().filter(|&&t| !t).count();
@@ -158,7 +166,6 @@ impl TermState {
 impl State for TermState {
     type Move = ToggleSwap;
 
-    /// Revert move and update n_on, n_off count
     fn apply(&mut self, m: &ToggleSwap) {
         match *m {
             ToggleSwap::Toggle(i) => self.toggle(i),
@@ -169,12 +176,16 @@ impl State for TermState {
             }
         }
     }
-    /// Revert move and update n_on, n_off count
+
     fn revert(&mut self, m: &ToggleSwap) {
+        // Reverting a toggle/swap is the same as applying it again
         self.apply(m)
     }
 }
 
+// ==========================================
+// PARAMETER STATE
+// ==========================================
 #[derive(Clone, Debug)]
 pub struct ParameterState {
     p: f64,
@@ -194,15 +205,13 @@ impl ParameterState {
     pub fn p(&self) -> f64 {
         self.p
     }
-
     pub fn alpha(&self) -> f64 {
         self.alpha
     }
-
     pub fn beta(&self) -> f64 {
         self.beta
     }
-    /// Get a parameter by index (0=p, 1=alpha, 2=beta)
+
     pub fn get(&self, index: usize) -> f64 {
         match index {
             0 => self.p,
@@ -212,12 +221,11 @@ impl ParameterState {
         }
     }
 
-    /// Updates a parameter by index (0=p, 1=alpha, 2=beta).
     pub fn update(&mut self, index: usize, delta: f64) {
         match index {
-            0 => self.p = self.p + delta,
-            1 => self.alpha = self.alpha + delta,
-            2 => self.beta = self.beta + delta,
+            0 => self.p += delta,
+            1 => self.alpha += delta,
+            2 => self.beta += delta,
             _ => panic!("Invalid parameter index: {}", index),
         }
     }
@@ -235,7 +243,11 @@ impl State for ParameterState {
     }
 }
 
-/// The composite state containing both terms and hyperparameters.
+// ==========================================
+// MGSA COMPOSITE STATE
+// ==========================================
+
+/// The full state of the MGSA algorithm, combining discrete Terms and continuous Parameters.
 pub struct MgsaState {
     pub terms: TermState,
     pub params: ParameterState,
