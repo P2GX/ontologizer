@@ -46,7 +46,7 @@ pub struct EnrichmentResult {
 }
 
 impl EnrichmentResult {
-    pub fn from_measure<M: Measure>(
+    pub fn from_measures<M: Measure>(
         measures: &Vec<M>,
         ontology: &FullCsrOntology,
         annotation_index: &AnnotationIndex,

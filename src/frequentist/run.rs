@@ -57,7 +57,7 @@ pub fn run(
 
     // Create the Result
     let mut result =
-        EnrichmentResult::from_measure(&measures, &ontology, &annotations, &observed_genes);
+        EnrichmentResult::from_measures(&measures, &ontology, &annotations, &observed_genes);
 
     // Optional: Sort
     result.sort_by_score(false); // ascending for p-value
@@ -138,7 +138,7 @@ mod test {
         let N = 10; // population gene count
         let n = 2; // gene gene count
         let study_indices = vec![1, 2];
-        let mut terms = vec![
+        let terms = vec![
             vec![1, 2, 3], // Term A: K=3, k=2 (1,2 overlap)
             vec![1, 2],    // Term B: K=2, k=2 (1,2 overlap)
             vec![4, 5],    // Term C: K=2, k=0 (no overlap)
