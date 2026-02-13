@@ -145,12 +145,6 @@ mod test {
     use crate::bayesian::state::MgsaState;
     use crate::core::result::Measure;
     use indexmap::{IndexSet, indexset};
-    fn beta_parameter(mean: f64, var: f64) -> (f64, f64) {
-        let nu = mean * (1. - mean) / var - 1.;
-        let a = mean * nu;
-        let b = (1. - mean) * nu;
-        (a, b)
-    }
 
     fn approx_equal(a: f64, b: f64, epsilon: f64) -> bool {
         (a - b).abs() < epsilon
@@ -163,15 +157,46 @@ mod test {
         p: f64,
         alpha: f64,
         beta: f64,
-        posterior: Vec<f64>,
     ) {
-        let model = OrModel::new(terms_to_obs_genes.clone(), obs_genes.clone());
+        let model = OrModel::new(
+            terms_to_obs_genes.clone(),
+            obs_genes.clone(),
+            p,
+            alpha,
+            beta,
+        );
         let mut state = MgsaState::new(terms, p, alpha, beta);
+        let cache = model.create_cache(&state);
+
+        let p_prior = model.get_p_prior_params();
+        let alpha_prior = model.get_alpha_prior_params();
+        let beta_prior = model.get_beta_prior_params();
+
+        let n_active = state.n_terms_active();
+        let n_inactive = state.n_terms_inactive();
+
+        let p_post = (p_prior.0 + n_active as f64, p_prior.1 + n_inactive as f64);
+
+        let n_tp = cache.n_tp;
+        let n_fp = cache.n_fp;
+        let n_tn = cache.n_tn;
+        let n_fn = cache.n_fn;
+
+        let alpha_post = (alpha_prior.0 + n_fp as f64, alpha_prior.1 + n_tn as f64);
+        let beta_post = (beta_prior.0 + n_fn as f64, beta_prior.1 + n_tp as f64);
+
+        let post = vec![
+            p_post.0 / (p_post.0 + p_post.1),
+            alpha_post.0 / (alpha_post.0 + alpha_post.1),
+            beta_post.0 / (beta_post.0 + beta_post.1),
+        ];
+
         let proposer = ParameterGaussProposer::new(1.0);
         let mut algorithm = MetropolisHasting::new(model, proposer, 500_000, 50_000);
+
         let measure: Vec<Mean> = algorithm.sample::<ParameterRecorder>(&mut state);
         println! {"{:?}", measure.iter().map(|m| m.score()).collect::<Vec<_>>()}
-        for (measure, theo) in measure.iter().zip(posterior) {
+        for (measure, theo) in measure.iter().zip(post) {
             assert!(approx_equal(measure.score(), theo, 0.05));
         }
     }
@@ -179,13 +204,13 @@ mod test {
     fn test_term_inference(
         terms: Vec<bool>,
         obs_genes: &Vec<bool>,
-        terms_to_obs_genes: &Vec<IndexSet<usize>>,
+        terms_to_genes: &Vec<IndexSet<usize>>,
         p: f64,
         alpha: f64,
         beta: f64,
         posterior: Vec<f64>,
     ) {
-        let model = OrModel::new(terms_to_obs_genes.clone(), obs_genes.clone());
+        let model = OrModel::new(terms_to_genes.clone(), obs_genes.clone(), p, alpha, beta);
 
         let mut state = MgsaState::new(terms, p, alpha, beta);
         let proposer = TermToggleProposer::new();
@@ -204,63 +229,13 @@ mod test {
         let alpha: f64 = 0.05;
         let beta: f64 = 0.1;
 
-        // let prior_p: (f64, f64) = beta_parameter(p, p * (1. - p));
-        // let prior_alpha: (f64, f64) = beta_parameter(alpha, alpha * (1. - alpha));
-        // let prior_beta: (f64, f64) = beta_parameter(beta, beta * (1. - beta));
-
         let terms = vec![false, false, false, true];
         let terms_to_genes: Vec<IndexSet<usize>> =
             vec![indexset! {0}, indexset! {1}, indexset! {2}, indexset! {3}];
         // Observed gene state
-        let hidden_genes = vec![false, false, false, true];
-        // Observed gene state
         let obs_genes = vec![false, false, false, true];
 
-        // active terms / terms
-        let post_p = (
-            1. + terms.iter().filter(|&t| *t == true).count() as f64,
-            1. + terms.iter().filter(|&t| *t == false).count() as f64,
-        );
-
-        let mut n_false_positive = 0;
-        let mut n_true_negative = 0;
-        let mut n_false_negative = 0;
-        let mut n_true_positive = 0;
-
-        for (&hid, &obs) in hidden_genes.iter().zip(&obs_genes) {
-            if hid == true && obs == true {
-                n_true_positive += 1
-            }
-            if hid == false && obs == true {
-                n_false_positive += 1
-            }
-            if hid == true && obs == false {
-                n_false_negative += 1
-            }
-            if hid == false && obs == false {
-                n_true_negative += 1
-            }
-        }
-
-        let post_alpha = (1. + n_false_positive as f64, 1. + n_true_negative as f64);
-
-        let post_beta = (1. + n_false_negative as f64, 1. + n_true_positive as f64);
-
-        let posterior = vec![
-            post_p.0 / (post_p.0 + post_p.1),
-            post_alpha.0 / (post_alpha.0 + post_alpha.1),
-            post_beta.0 / (post_beta.0 + post_beta.1),
-        ];
-
-        test_parameter_inference(
-            terms.clone(),
-            &obs_genes,
-            &terms_to_genes,
-            p,
-            alpha,
-            beta,
-            posterior,
-        );
+        test_parameter_inference(terms, &obs_genes, &terms_to_genes, p, alpha, beta);
     }
 
     #[test]
@@ -291,14 +266,6 @@ mod test {
             indexset! {16, 17},
         ];
 
-        // Hidden State: Genes 0..5 are True (5 total), 5..20 are False (15 total)
-        let hidden_genes = vec![
-            true, true, true, true, true, // 0-4 (Positives)
-            false, false, false, false, false, // 5-9 (Negatives)
-            false, false, false, false, false, // 10-14 (Negatives)
-            false, false, false, false, false, // 15-19 (Negatives)
-        ];
-
         // Observed State: Constructed to match counts
         // TP=3, FN=2, FP=3, TN=12
         let obs_genes = vec![
@@ -310,51 +277,7 @@ mod test {
             false, false, false, false, false, // 15-19: True Negatives (5)
         ];
 
-        // active terms / terms
-        let post_p = (
-            1. + terms.iter().filter(|&t| *t == true).count() as f64,
-            1. + terms.iter().filter(|&t| *t == false).count() as f64,
-        );
-
-        let mut n_false_positive = 0;
-        let mut n_true_negative = 0;
-        let mut n_false_negative = 0;
-        let mut n_true_positive = 0;
-
-        for (&hid, &obs) in hidden_genes.iter().zip(&obs_genes) {
-            if hid == true && obs == true {
-                n_true_positive += 1
-            }
-            if hid == false && obs == true {
-                n_false_positive += 1
-            }
-            if hid == true && obs == false {
-                n_false_negative += 1
-            }
-            if hid == false && obs == false {
-                n_true_negative += 1
-            }
-        }
-
-        let post_alpha = (1. + n_false_positive as f64, 1. + n_true_negative as f64);
-
-        let post_beta = (1. + n_false_negative as f64, 1. + n_true_positive as f64);
-
-        let posterior = vec![
-            post_p.0 / (post_p.0 + post_p.1),
-            post_alpha.0 / (post_alpha.0 + post_alpha.1),
-            post_beta.0 / (post_beta.0 + post_beta.1),
-        ];
-
-        test_parameter_inference(
-            terms.clone(),
-            &obs_genes,
-            &terms_to_genes,
-            p,
-            alpha,
-            beta,
-            posterior,
-        );
+        test_parameter_inference(terms, &obs_genes, &terms_to_genes, p, alpha, beta);
     }
 
     #[test]
@@ -534,16 +457,16 @@ mod test {
         let beta = 0.1;
 
         let raw_state = vec![false, false, false];
-        let state_to_observations: Vec<IndexSet<usize>> = vec![
+        let terms_to_genes: Vec<IndexSet<usize>> = vec![
             indexset! {0, 1, 2},
             indexset! {0, 1, 2, 3, 4},
             indexset! {0, 1, 2, 3, 4, 5, 6},
         ];
 
         // Observations
-        let observations = vec![true, true, true, false, false, false, false];
+        let genes = vec![true, true, true, false, false, false, false];
 
-        let model = OrModel::new(state_to_observations.clone(), observations.clone());
+        let model = OrModel::new(terms_to_genes.clone(), genes.clone(), p, alpha, beta);
 
         let mut state = MgsaState::new(raw_state, p, alpha, beta);
         let proposer = TermToggleProposer::new();
@@ -608,17 +531,16 @@ mod test {
         let beta = 0.10;
 
         let state = vec![false; n];
-        let mut state_to_observations: Vec<IndexSet<usize>> =
-            (0..n).map(|_| (0..n).collect()).collect();
+        let mut terms_to_genes: Vec<IndexSet<usize>> = (0..n).map(|_| (0..n).collect()).collect();
 
         // Observations
-        let mut observations = vec![false; n];
+        let mut genes = vec![false; n];
 
-        observations[0] = true;
+        genes[0] = true;
 
-        state_to_observations[0] = indexset! {0};
+        terms_to_genes[0] = indexset! {0};
 
-        let model = OrModel::new(state_to_observations.clone(), observations.clone());
+        let model = OrModel::new(terms_to_genes.clone(), genes.clone(), p, alpha, beta);
 
         let mut state = MgsaState::new(state, p, alpha, beta);
         let proposer = TermToggleSwapProposer::new();
