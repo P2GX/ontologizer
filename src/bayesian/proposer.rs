@@ -177,16 +177,16 @@ impl Proposer<ParameterState> for ParameterGaussProposer {
         rng: &mut R,
     ) -> <ParameterState as State>::Move {
         // sample on logit space ln(p / (1-p)) because [0, 1] becomes [-oo, oo]
-        let index = 0;
-        let p = state.get(index);
-        let logit = (p / (1. - p)).ln();
+        let index = rng.random_range(0..state.n_params());
+        let x = state.get(index);
+        let logit = (x / (1. - x)).ln();
 
         let noise = self.gaussian.sample(rng);
         let logit_new = logit + noise;
 
-        let p_new = 1.0 / (1.0 + (-logit_new).exp());
+        let x_new = 1.0 / (1.0 + (-logit_new).exp());
 
-        let delta = p_new - p;
+        let delta = x_new - x;
         Increment { index, delta }
     }
 
@@ -205,7 +205,7 @@ impl Proposer<ParameterState> for ParameterGaussProposer {
     ) -> Option<f64> {
         let index = m.index;
         let p = state.get(index);
-        let p_new = (p + m.delta);
+        let p_new = p + m.delta;
 
         let f1 = (p * (1.0 - p)).ln();
         let f2 = (p_new * (1.0 - p_new)).ln();

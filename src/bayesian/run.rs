@@ -1,8 +1,7 @@
 use crate::bayesian::algorithm::{Algorithm, MetropolisHasting};
-use crate::bayesian::measure::Probability;
 use crate::bayesian::model::OrModel;
-use crate::bayesian::proposer::UniformToggleProposer;
-use crate::bayesian::recorder::ProbabilityRecorder;
+use crate::bayesian::proposer::{MixedProposer, ParameterGaussProposer, TermToggleSwapProposer};
+use crate::bayesian::recorder::MgsaRecorder;
 use crate::bayesian::state::MgsaState;
 use crate::core::AnnotationIndex;
 use crate::core::result::EnrichmentResult;
@@ -14,7 +13,7 @@ pub fn run(
     annotations: AnnotationIndex,
     study_genes: HashSet<String>,
 ) -> EnrichmentResult {
-    let p = 0.01;
+    let p = 0.05;
     let alpha = 0.05;
     let beta = 0.10;
 
@@ -24,29 +23,26 @@ pub fn run(
     let terms_to_genes = annotations.get_terms_to_genes(true);
 
     // Boolean where vector where vec[i] = 1 if gene with index i is in study genes, otherwise vec[i] = 0.
-    let observed_genes: Vec<bool> = (0..n_genes)
+    let obs_genes: Vec<bool> = (0..n_genes)
         .map(|i| study_genes.contains(annotations.get_gene_by_index(i)))
         .collect();
 
-    let model = OrModel::new(
-        terms_to_genes.clone(),
-        observed_genes.clone(),
-        p,
-        alpha,
-        beta,
-    );
+    let model = OrModel::new(terms_to_genes.clone(), obs_genes.clone(), p, alpha, beta);
 
-    let mut state = MgsaState::new(vec![false; n_terms]);
-    let proposer = UniformToggleProposer::new();
+    let mut state = MgsaState::new(vec![false; n_terms], p, alpha, beta);
+    let proposer = MixedProposer::new(
+        TermToggleSwapProposer::new(),
+        ParameterGaussProposer::new(1.0),
+        0.95,
+    );
     let mut algorithm = MetropolisHasting::new(model, proposer, 50_000_000, 1_000_000);
 
-    let measures: Vec<Probability> = algorithm.sample::<ProbabilityRecorder>(&mut state);
+    let (measures, parameter) = algorithm.sample::<MgsaRecorder>(&mut state);
 
     // Create the Result (Eagerly resolves all strings)
     let mut result =
-        EnrichmentResult::from_measure(&measures, &ontology, &annotations, &observed_genes);
+        EnrichmentResult::from_measures(&measures, &ontology, &annotations, &obs_genes);
 
-    // Optional: Sort
     result.sort_by_score(true); // descending for probability
 
     result
@@ -54,7 +50,6 @@ pub fn run(
 
 #[cfg(test)]
 mod test {
-    use super::*; // Use super to access run()
     use crate::core::AnnotationIndex;
     use crate::core::load_gene_set;
     use csv::Writer;

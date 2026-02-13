@@ -1,14 +1,10 @@
 use crate::bayesian::state::{MgsaMove, MgsaState, State, ToggleSwap};
 use indexmap::IndexSet;
-use rand::{Rng, RngExt};
 
 // A trait that connects *STATE* and *OBSERVATION* by assigning probabilities.
 pub trait Model {
     type State: State;
     type Cache;
-
-    // Initialize the State
-    fn initialize_state<R: Rng>(&self, rng: &mut R) -> Self::State;
 
     // Log probability P(S) to find a State configuration
     fn log_prior(&self, state: &Self::State) -> f64;
@@ -28,7 +24,7 @@ pub trait Model {
     // Fast implementation for log likelihood ratio P(O|S2)/P(O|S1). May not be available for the specific move.
     fn log_likelihood_ratio(
         &self,
-        state: &Self::State,
+        _state: &Self::State,
         _cache: &Self::Cache,
         _m: &<Self::State as State>::Move,
     ) -> Option<f64> {
@@ -56,36 +52,80 @@ pub struct OrCache {
     pub latent: Vec<usize>,
 
     // Confusion Matrix Counts
-    pub n_true_pos: usize,  // Model = 1 | Observed = 1
-    pub n_false_pos: usize, // Model = 0 | Observed = 1 (alpha)
-    pub n_true_neg: usize,  // Model = 0 | Observed = 0
-    pub n_false_neg: usize, // Model = 1 | Observed = 0 (beta)
+    pub n_tp: usize, // Model = 1 | Observed = 1
+    pub n_fp: usize, // Model = 0 | Observed = 1 (alpha)
+    pub n_tn: usize, // Model = 0 | Observed = 0
+    pub n_fn: usize, // Model = 1 | Observed = 0 (beta)
 }
 
 pub struct OrModel {
-    p_init: f64,     // probability of term being active
-    alpha_init: f64, // probability of a gene being incorrectly observed active.
-    beta_init: f64,  // probability of a gene being incorrectly observed inactive.
-
     terms_to_genes: Vec<IndexSet<usize>>, // Adjacency list (Term -> Genes)
     observations: Vec<bool>,
+    p_prior: (f64, f64),
+    alpha_prior: (f64, f64),
+    beta_prior: (f64, f64),
 }
 
 impl OrModel {
     pub fn new(
         terms_to_genes: Vec<IndexSet<usize>>,
-        observations: Vec<bool>,
+        obs_genes: Vec<bool>,
         p: f64,
         alpha: f64,
         beta: f64,
     ) -> OrModel {
+        // We define a "tightness" factor.
+        // 1.0 = exactly at the unimodal limit (flattest bell curve possible).
+        // 0.1 = very sharp peak (10% of the max allowed variance).
+        const VARIANCE_SCALE: f64 = 0.5;
+
+        // Calculate safe priors that are guaranteed to be unimodal
+        let p_prior = Self::set_unimodal_beta_prior(p, VARIANCE_SCALE);
+        let alpha_prior = Self::set_unimodal_beta_prior(alpha, VARIANCE_SCALE);
+        let beta_prior = Self::set_unimodal_beta_prior(beta, VARIANCE_SCALE);
         Self {
-            p_init: p,
-            alpha_init: alpha,
-            beta_init: beta,
             terms_to_genes,
-            observations,
+            observations: obs_genes,
+            p_prior,
+            alpha_prior,
+            beta_prior,
         }
+    }
+
+    /// Sets Beta parameters given a mean and a variance scaling factor.
+    /// scale = 1.0 sets variance to the maximum possible value that preserves unimodality.
+    /// scale < 1.0 yields tighter (sharper) distributions.
+    fn set_unimodal_beta_prior(mean: f64, scale: f64) -> (f64, f64) {
+        // 1. Calculate the strict upper bound for variance to ensure alpha (a) > 1 and beta (b) > 1
+        let max_unimodal_var = if mean <= 0.5 {
+            (mean.powi(2) * (1.0 - mean)) / (1.0 + mean)
+        } else {
+            (mean * (1.0 - mean).powi(2)) / (2.0 - mean)
+        };
+
+        // 2. Apply the scaling factor (e.g., 50% of the limit)
+
+        let var = max_unimodal_var * scale;
+        // 3. Calculate shape parameters alpha (a), beta (b)
+        // nu = [mu(1-mu) / var] - 1
+        let nu = (mean * (1.0 - mean) / var) - 1.0;
+        let a = mean * nu;
+        let b = (1.0 - mean) * nu;
+
+        (a, b)
+    }
+
+    #[cfg(test)]
+    pub fn get_p_prior_params(&self) -> (f64, f64) {
+        self.p_prior
+    }
+    #[cfg(test)]
+    pub fn get_alpha_prior_params(&self) -> (f64, f64) {
+        self.alpha_prior
+    }
+    #[cfg(test)]
+    pub fn get_beta_prior_params(&self) -> (f64, f64) {
+        self.beta_prior
     }
 
     /// Helper: Updates latent counts and confusion matrix based on a term toggle.
@@ -105,13 +145,13 @@ impl OrModel {
                         if self.observations[g] {
                             // Observed = 1
                             // FP -> TP
-                            cache.n_false_pos -= 1;
-                            cache.n_true_pos += 1;
+                            cache.n_fp -= 1;
+                            cache.n_tp += 1;
                         } else {
                             // Observed = 0
                             // TN -> FN
-                            cache.n_true_neg -= 1;
-                            cache.n_false_neg += 1;
+                            cache.n_tn -= 1;
+                            cache.n_fn += 1;
                         }
                     }
                     cache.latent[g] += 1;
@@ -123,13 +163,13 @@ impl OrModel {
                         if self.observations[g] {
                             // Observed = 1
                             // TP -> FP
-                            cache.n_true_pos -= 1;
-                            cache.n_false_pos += 1;
+                            cache.n_tp -= 1;
+                            cache.n_fp += 1;
                         } else {
                             // Observed = 0
                             // FN -> TN
-                            cache.n_false_neg -= 1;
-                            cache.n_true_neg += 1;
+                            cache.n_fn -= 1;
+                            cache.n_tn += 1;
                         }
                     }
                     if cache.latent[g] > 0 {
@@ -150,21 +190,26 @@ impl Model for OrModel {
     type State = MgsaState;
     type Cache = OrCache;
 
-    fn initialize_state<R: Rng>(&self, rng: &mut R) -> MgsaState {
-        let n_terms = self.terms_to_genes.len();
-        // Sample random terms based on fixed p
-        let terms = (0..n_terms).map(|_| rng.random_bool(self.p_init)).collect();
-        MgsaState::new(terms, self.p_init, self.alpha_init, self.beta_init)
-    }
-
-    // Log probability P(T|p)P(p)P(alpha)P(beta) to find a Term configuration
+    // Log probability P(T|p)P(p)P(alpha)P(beta),
+    // i.e. log[P(T|p)] + log[P(p)] + log[P(alpha)] + log[P(beta)]
+    // to find a Term configuration
     fn log_prior(&self, state: &MgsaState) -> f64 {
         let m0 = state.terms.n_active() as f64;
         let m1 = state.terms.n_inactive() as f64;
-        let p = state.params.p();
 
-        let log_prior = m0 * p.ln() + m1 * (1. - p).ln();
-        log_prior
+        let p = state.params.p();
+        let alpha = state.params.alpha();
+        let beta = state.params.beta();
+
+        let (p_a, p_b) = self.p_prior;
+        let (alpha_a, alpha_b) = self.alpha_prior;
+        let (beta_a, beta_b) = self.beta_prior;
+
+        let log_prior_t = m0 * p.ln() + m1 * (1. - p).ln();
+        let log_prior_p = (p_a - 1.0) * p.ln() + (p_b - 1.0) * (1.0 - p).ln();
+        let log_prior_alpha = (alpha_a - 1.0) * alpha.ln() + (alpha_b - 1.0) * (1.0 - alpha).ln();
+        let log_prior_beta = (beta_a - 1.0) * beta.ln() + (beta_b - 1.0) * (1.0 - beta).ln();
+        log_prior_t + log_prior_p + log_prior_alpha + log_prior_beta
     }
 
     fn log_prior_ratio(&self, state: &MgsaState, m: &MgsaMove) -> Option<f64> {
@@ -183,21 +228,90 @@ impl Model for OrModel {
                 }
                 ToggleSwap::Swap(_, _) => Some(0.0),
             },
-            MgsaMove::Parameter(inc) => {
-                if inc.index == 0 {
-                    // log [ P(T|p_new) / P(T|p_old)]
-                    let p_old = state.params.p();
-                    let p_new = p_old + inc.delta;
-
+            MgsaMove::Parameter(inc) => match inc.index {
+                0 => {
                     let m0 = state.terms.n_active() as f64;
                     let m1 = state.terms.n_inactive() as f64;
 
-                    let log_prior_ratio =
-                        m0 * (p_new / p_old).ln() + m1 * ((1. - p_new) / (1 - p_old)).ln();
+                    let p = state.params.p();
+                    let p_new = p + inc.delta;
+
+                    let (p_a, p_b) = self.p_prior;
+
+                    let log_prior_ratio = m0 * (p_new / p).ln()
+                        + m1 * ((1. - p_new) / (1. - p)).ln()
+                        + (p_a - 1.0) * (p_new / p).ln()
+                        + (p_b - 1.0) * ((1. - p_new) / (1. - p)).ln();
                     Some(log_prior_ratio)
-                } else {
-                    Some(0.0)
                 }
+                1 => {
+                    let alpha = state.params.alpha();
+                    let alpha_new = state.params.alpha() + inc.delta;
+                    let (alpha_a, alpha_b) = self.alpha_prior;
+
+                    let log_prior_ratio = (alpha_a - 1.0) * (alpha_new / alpha).ln()
+                        + (alpha_b - 1.0) * ((1. - alpha_new) / (1. - alpha)).ln();
+                    return Some(log_prior_ratio);
+                }
+                2 => {
+                    let beta = state.params.beta();
+                    let beta_new = state.params.beta() + inc.delta;
+                    let (beta_a, beta_b) = self.beta_prior;
+
+                    let log_prior_ratio = (beta_a - 1.0) * (beta_new / beta).ln()
+                        + (beta_b - 1.0) * ((1. - beta_new) / (1. - beta)).ln();
+                    Some(log_prior_ratio)
+                }
+                _ => None,
+            },
+        }
+    }
+
+    // Log probability P(O | H, alpha, beta)p(H|T) to find an observed Gene configuration given a Terms configuration.
+    fn log_likelihood(&self, state: &MgsaState, cache: &OrCache) -> f64 {
+        (cache.n_fp as f64) * state.params.alpha().ln()
+            + (cache.n_tn as f64) * (1. - state.params.alpha()).ln()
+            + (cache.n_fn as f64) * state.params.beta().ln()
+            + (cache.n_tp as f64) * (1. - state.params.beta()).ln()
+    }
+
+    fn log_likelihood_ratio(
+        &self,
+        state: &Self::State,
+        cache: &Self::Cache,
+        m: &<Self::State as State>::Move,
+    ) -> Option<f64> {
+        match m {
+            MgsaMove::Term(_) => None,
+            MgsaMove::Parameter(inc) => {
+                // p changes don't affect Likelihood P(O|...)
+                if inc.index == 0 {
+                    return Some(0.0);
+                }
+
+                let alpha = state.params.alpha();
+                let beta = state.params.beta();
+
+                let alpha_new = alpha + inc.delta;
+                let beta_new = beta + inc.delta;
+
+                let n_tp = cache.n_tp as f64;
+                let n_fp = cache.n_fp as f64;
+                let n_tn = cache.n_tn as f64;
+                let n_fn = cache.n_fn as f64;
+
+                let mut log_ll_ratio = 0.0;
+                if inc.index == 1 {
+                    // Only Alpha terms
+                    log_ll_ratio += n_fp * (alpha_new / alpha).ln();
+                    log_ll_ratio += n_tn * ((1.0 - alpha_new) / (1.0 - alpha)).ln();
+                } else {
+                    // Only Beta terms
+                    log_ll_ratio += n_fn * (beta_new / beta).ln();
+                    log_ll_ratio += n_tp * ((1.0 - beta_new) / (1.0 - beta)).ln();
+                }
+
+                Some(log_ll_ratio)
             }
         }
     }
@@ -233,10 +347,10 @@ impl Model for OrModel {
 
         OrCache {
             latent,
-            n_true_pos: n_tp,
-            n_false_pos: n_fp,
-            n_true_neg: n_tn,
-            n_false_neg: n_fn,
+            n_tp,
+            n_fp,
+            n_tn,
+            n_fn,
         }
     }
 
@@ -259,54 +373,5 @@ impl Model for OrModel {
 
     fn revert_cache(&self, cache: &mut OrCache, state: &MgsaState, m: &MgsaMove) {
         self.update_cache(cache, state, m);
-    }
-
-    // Log probability P(O | H, alpha, beta)p(H|T) to find an observed Gene configuration given a Terms configuration.
-    fn log_likelihood(&self, state: &MgsaState, cache: &OrCache) -> f64 {
-        (cache.n_true_pos as f64) * (1. - state.params.beta()).ln()
-            + (cache.n_false_pos as f64) * state.params.alpha().ln()
-            + (cache.n_true_neg as f64) * (1. - state.params.alpha()).ln()
-            + (cache.n_false_neg as f64) * state.params.beta().ln()
-    }
-
-    fn log_likelihood_ratio(
-        &self,
-        state: &Self::State,
-        cache: &Self::Cache,
-        m: &<Self::State as State>::Move,
-    ) -> Option<f64> {
-        match m {
-            MgsaMove::Term(_) => None,
-            MgsaMove::Parameter(inc) => {
-                // p changes don't affect Likelihood P(O|...)
-                if inc.index == 0 {
-                    return Some(0.0);
-                }
-
-                let alpha_old = state.params.alpha();
-                let beta_old = state.params.beta();
-
-                let mut alpha_new = alpha_old;
-                let mut beta_new = beta_old;
-
-                let n10 = cache.n_false_pos as f64;
-                let n00 = cache.n_true_neg as f64;
-                let n01 = cache.n_false_neg as f64;
-                let n11 = cache.n_true_pos as f64;
-
-                let mut log_ll_ratio = 0.0;
-                if inc.index == 1 {
-                    // Only Alpha terms
-                    log_ll_ratio += n10 * (alpha_new / alpha_old).ln();
-                    log_ll_ratio += n00 * ((1.0 - alpha_new) / (1.0 - alpha_old)).ln();
-                } else {
-                    // Only Beta terms
-                    log_ll_ratio += n01 * (beta_new / beta_old).ln();
-                    log_ll_ratio += n11 * ((1.0 - beta_new) / (1.0 - beta_old)).ln();
-                }
-
-                Some(log_ll_ratio)
-            }
-        }
     }
 }

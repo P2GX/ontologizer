@@ -60,7 +60,7 @@ impl TermState {
         }
     }
 
-    fn n_terms(&self) -> usize {
+    pub(crate) fn n_terms(&self) -> usize {
         self.terms.len()
     }
 
@@ -187,6 +187,10 @@ impl ParameterState {
         Self { p, alpha, beta }
     }
 
+    pub fn n_params(&self) -> usize {
+        3
+    }
+
     pub fn p(&self) -> f64 {
         self.p
     }
@@ -198,13 +202,22 @@ impl ParameterState {
     pub fn beta(&self) -> f64 {
         self.beta
     }
+    /// Get a parameter by index (0=p, 1=alpha, 2=beta)
+    pub fn get(&self, index: usize) -> f64 {
+        match index {
+            0 => self.p,
+            1 => self.alpha,
+            2 => self.beta,
+            _ => panic!("Invalid parameter index: {}", index),
+        }
+    }
 
-    /// Updates a parameter by index (0=p, 1=alpha, 2=beta) ensuring [0,1] bounds.
+    /// Updates a parameter by index (0=p, 1=alpha, 2=beta).
     pub fn update(&mut self, index: usize, delta: f64) {
         match index {
-            0 => self.p = (self.p + delta),
-            1 => self.alpha = (self.alpha + delta),
-            2 => self.beta = (self.beta + delta),
+            0 => self.p = self.p + delta,
+            1 => self.alpha = self.alpha + delta,
+            2 => self.beta = self.beta + delta,
             _ => panic!("Invalid parameter index: {}", index),
         }
     }
@@ -234,6 +247,17 @@ impl MgsaState {
             terms: TermState::new(terms),
             params: ParameterState::new(p, alpha, beta),
         }
+    }
+
+    pub(crate) fn n_terms(&self) -> usize {
+        self.terms.n_terms()
+    }
+
+    pub(crate) fn n_terms_active(&self) -> usize {
+        self.terms.active_indices.len()
+    }
+    pub(crate) fn n_terms_inactive(&self) -> usize {
+        self.terms.inactive_indices.len()
     }
 }
 
