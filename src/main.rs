@@ -16,7 +16,7 @@ mod core;
 mod frequentist;
 
 #[derive(Deserialize, Debug)]
-struct Problem {
+struct Config {
     method: String,
     study_genes_path: String,
     population_genes_path: String,
@@ -42,7 +42,7 @@ fn main() {
     });
     let reader = BufReader::new(file);
 
-    let problem: Problem = serde_json::from_reader(reader).unwrap_or_else(|err| {
+    let problem: Config = serde_json::from_reader(reader).unwrap_or_else(|err| {
         eprintln!("Error parsing JSON config: {}", err);
         process::exit(1);
     });

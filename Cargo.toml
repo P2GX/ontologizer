@@ -1,20 +1,23 @@
 [package]
 name = "ontologizer"
 version = "0.1.1"
-keywords = ["Ontologizer", "Gene_Ontology"]
-description = "todo"
 edition = "2024"
+keywords = ["Ontologizer", "Gene_Ontology", "Enrichment_Analysis"]
+description = "todo"
 license = "MIT"
 readme = "README.md"
+
+
+[lib]
+name = "ga4ghphetools"
+path = "src/lib.rs"
+
 
 [[bin]]
 name = "ontologizer"
 path = "src/main.rs"
 required-features = ["cli"]
 
-[features]
-default = ["cli"]
-cli = ["clap"]  # Enable clap when the CLI feature is enabled
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -27,6 +30,10 @@ rand = "0.10.0"
 rand_distr = "0.6.0"
 csv = "1.4.0"
 serde_json = "1.0.145"
+
+[features]
+default = ["cli"]
+cli = ["clap"]
 
 [dev-dependencies]
 rstest = "0.26.1"
