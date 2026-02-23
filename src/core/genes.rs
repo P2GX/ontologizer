@@ -40,11 +40,11 @@ impl GeneSet {
         })
     }
 
-    pub fn recognized_genes(self) -> HashSet<String> {
-        self.recognized_genes
+    pub fn recognized_genes(&self) -> &HashSet<String> {
+        &self.recognized_genes
     }
 
-    pub fn unrecognized_genes(self) -> HashSet<String> {
-        self.unrecognized_genes
+    pub fn unrecognized_genes(&self) -> &HashSet<String> {
+        &self.unrecognized_genes
     }
 }

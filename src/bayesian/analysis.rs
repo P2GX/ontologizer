@@ -118,7 +118,11 @@ mod test {
             Some(&population_genes.recognized_genes()),
         );
 
-        (ontology, annotation_index, study_genes.recognized_genes())
+        (
+            ontology,
+            annotation_index,
+            study_genes.recognized_genes().clone(),
+        )
     }
 
     #[test]
