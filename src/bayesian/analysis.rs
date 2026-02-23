@@ -4,6 +4,7 @@ use crate::bayesian::proposer::{MixedProposer, ParameterGaussProposer, TermToggl
 use crate::bayesian::recorder::MgsaRecorder;
 use crate::bayesian::state::MgsaState;
 use crate::core::AnnotationIndex;
+use crate::core::Ontology;
 use crate::core::result::EnrichmentResult;
 use ontolius::ontology::csr::FullCsrOntology;
 use std::collections::HashSet;
@@ -14,13 +15,12 @@ pub fn analysis(
     study_genes: HashSet<String>,
 ) -> EnrichmentResult {
     // --- Configuration ---
-    let p = 0.05;
-    let alpha = 0.05;
-    let beta = 0.10;
+    let p_init = 0.05;
+    let alpha_init = 0.05;
+    let beta_init = 0.10;
 
     let iterations = 50_000_000;
     let burn_in = 1_000_000;
-    let term_update_prob = 0.95; // 95% Term moves, 5% Parameter moves
 
     // --- Data Preparation ---
     let n_genes = annotations.get_genes().len();
@@ -35,14 +35,20 @@ pub fn analysis(
         .collect();
 
     // --- Model & State Initialization ---
-    let model = OrModel::new(terms_to_genes.clone(), obs_genes.clone(), p, alpha, beta);
-    let mut state = MgsaState::new(vec![false; n_terms], p, alpha, beta);
+    let model = OrModel::new(
+        terms_to_genes.clone(),
+        obs_genes.clone(),
+        p_init,
+        alpha_init,
+        beta_init,
+    );
+    let mut state = MgsaState::new(vec![false; n_terms], p_init, alpha_init, beta_init);
 
     // --- Algorithm Setup ---
     let proposer = MixedProposer::new(
         TermToggleSwapProposer::new(),
         ParameterGaussProposer::new(1.0),
-        term_update_prob,
+        0.90, // 90% Term moves, 10% Parameter moves
     );
     let mut algorithm = MetropolisHastings::new(model, proposer, iterations, burn_in);
 

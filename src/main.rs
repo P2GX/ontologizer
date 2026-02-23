@@ -5,25 +5,31 @@ use oboannotation::go::{GoAnnotations, GoGafAnnotationLoader};
 use oboannotation::io::AnnotationLoader;
 
 use csv::Writer;
+use ontologizer;
+use ontologizer::{AnnotationIndex, EnrichmentResult, GeneSet};
 use serde::Deserialize;
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::process;
 
-use ontologizer;
-use ontologizer::{AnnotationIndex, GeneSet};
-
 #[derive(Deserialize, Debug)]
-struct Config {
-    method: String,
-    ontology_path: String,
-    annotation_path: String,
-    study_genes_path: String,
-    population_genes_path: String,
+pub struct Config {
+    pub ontology_path: String,
+    pub annotation_path: String,
+    pub study_genes_path: String,
+    pub population_genes_path: String,
+    #[serde(flatten)]
+    pub method: MethodConfig,
 }
 
-fn main() {
+#[derive(Deserialize, Debug)]
+#[serde(tag = "method", rename_all = "lowercase")]
+pub enum MethodConfig {
+    Frequentist,
+    Bayesian,
+}
+pub fn main() {
     let args: Vec<String> = env::args().collect();
 
     let config_path = if args.len() > 1 {
@@ -45,14 +51,6 @@ fn main() {
         eprintln!("Error parsing JSON config: {}", err);
         process::exit(1);
     });
-
-    if problem.method != "frequentist" && problem.method != "bayesian" {
-        eprintln!(
-            "Error: Method argument must be `frequentist` or `bayesian`, got `{}`.",
-            problem.method
-        );
-        process::exit(1);
-    }
 
     // ------ Load Gene Ontology and Annotations ------
     let ontology_loader = OntologyLoaderBuilder::new().obographs_parser().build();
@@ -86,23 +84,21 @@ fn main() {
         Some(&population_genes.recognized_genes()),
     );
 
-    let result;
-    if problem.method == "frequentist" {
-        result = ontologizer::frequentist_analysis(
+    let result: EnrichmentResult = match problem.method {
+        MethodConfig::Frequentist => ontologizer::frequentist_analysis(
             &ontology,
             annotation_index,
             study_genes.recognized_genes(),
-        );
-    } else {
-        result = ontologizer::bayesian_analysis(
+        ),
+        MethodConfig::Bayesian => ontologizer::bayesian_analysis(
             &ontology,
             annotation_index,
             study_genes.recognized_genes(),
-        )
-    }
+        ),
+    };
 
     // Serialize to CSV
-    let output_filename = format!("result/{}_results.csv", problem.method);
+    let output_filename = format!("result/{:?}_results.csv", problem.method);
     let mut wtr = Writer::from_path(&output_filename).unwrap();
     for item in result.items {
         wtr.serialize(item).unwrap();
