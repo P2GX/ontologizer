@@ -87,13 +87,13 @@ pub fn main() {
     let result: EnrichmentResult = match problem.method {
         MethodConfig::Frequentist => ontologizer::frequentist_analysis(
             &ontology,
-            annotation_index,
-            study_genes.recognized_genes(),
+            &annotation_index,
+            &study_genes.recognized_genes(),
         ),
         MethodConfig::Bayesian => ontologizer::bayesian_analysis(
             &ontology,
-            annotation_index,
-            study_genes.recognized_genes(),
+            &annotation_index,
+            &study_genes.recognized_genes(),
         ),
     };
 

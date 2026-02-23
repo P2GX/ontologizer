@@ -14,8 +14,8 @@ use ontolius::ontology::csr::FullCsrOntology;
 #[allow(non_snake_case)]
 pub fn analysis(
     ontology: &FullCsrOntology,
-    annotations: AnnotationIndex,
-    study_genes: HashSet<String>,
+    annotations: &AnnotationIndex,
+    study_genes: &HashSet<String>,
 ) -> EnrichmentResult {
     let n = study_genes.len();
     let N = annotations.get_genes().len();
@@ -213,7 +213,11 @@ mod test {
             Some(&population_genes.recognized_genes()),
         );
 
-        let result = analysis(&ontology, annotation_index, study_genes.recognized_genes());
+        let result = analysis(
+            &ontology,
+            &annotation_index,
+            &study_genes.recognized_genes(),
+        );
 
         // Serialize to CSV
         let mut wtr = Writer::from_path("tests/data/GOnone/results_f.csv").unwrap();

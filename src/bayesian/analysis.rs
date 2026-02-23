@@ -10,8 +10,8 @@ use std::collections::HashSet;
 
 pub fn analysis(
     ontology: &FullCsrOntology,
-    annotations: AnnotationIndex,
-    study_genes: HashSet<String>,
+    annotations: &AnnotationIndex,
+    study_genes: &HashSet<String>,
 ) -> EnrichmentResult {
     // --- Configuration ---
     let p_init = 0.05;
@@ -131,7 +131,7 @@ mod test {
             "tests/data/GOnone/population.txt",
         );
 
-        let result = super::analysis(&ontology, annotation_index, study_genes);
+        let result = super::analysis(&ontology, &annotation_index, &study_genes);
 
         // Assertions: Verify we got results and they are valid probabilities
         assert!(!result.items.is_empty(), "Result set should not be empty");
@@ -152,7 +152,7 @@ mod test {
             "tests/data/GO0090717/population.txt",
         );
 
-        let result = super::analysis(&ontology, annotation_index, study_genes);
+        let result = super::analysis(&ontology, &annotation_index, &study_genes);
 
         // Check if the target term is in the top results
         let target_item = result.items.iter().find(|i| i.id == target_term);
