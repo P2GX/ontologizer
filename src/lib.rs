@@ -2,7 +2,7 @@ mod bayesian;
 mod core;
 mod frequentist;
 
-pub use core::{AnnotationIndex, EnrichmentItem, EnrichmentResult, GeneSet, Ontology};
+pub use core::{AnnotationIndex, EnrichmentItem, EnrichmentResult, GeneSet};
 
 pub use bayesian::analysis::analysis as bayesian_analysis;
 

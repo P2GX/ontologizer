@@ -4,7 +4,6 @@ use crate::bayesian::proposer::{MixedProposer, ParameterGaussProposer, TermToggl
 use crate::bayesian::recorder::MgsaRecorder;
 use crate::bayesian::state::MgsaState;
 use crate::core::AnnotationIndex;
-use crate::core::Ontology;
 use crate::core::result::EnrichmentResult;
 use ontolius::ontology::csr::FullCsrOntology;
 use std::collections::HashSet;
