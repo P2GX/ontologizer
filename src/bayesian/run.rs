@@ -8,7 +8,7 @@ use crate::core::result::EnrichmentResult;
 use ontolius::ontology::csr::FullCsrOntology;
 use std::collections::HashSet;
 
-pub fn run(
+pub fn analysis(
     ontology: &FullCsrOntology,
     annotations: AnnotationIndex,
     study_genes: HashSet<String>,
@@ -60,8 +60,8 @@ pub fn run(
 
 #[cfg(test)]
 mod test {
+    use crate::GeneSet;
     use crate::core::AnnotationIndex;
-    use crate::core::load_gene_set;
     use csv::Writer;
     use oboannotation::go::{GoAnnotations, GoGafAnnotationLoader};
     use oboannotation::io::AnnotationLoader;
@@ -69,6 +69,7 @@ mod test {
     use ontolius::ontology::csr::FullCsrOntology;
     use std::collections::HashSet;
     use std::path::Path;
+    use std::process;
 
     /// Helper to load test data and avoid code duplication in tests.
     fn load_test_data(
@@ -85,9 +86,6 @@ mod test {
             );
         }
 
-        let study_genes = load_gene_set(study_path).expect("Failed to parse study genes");
-        let population_genes = load_gene_set(pop_path).expect("Failed to parse population genes");
-
         let ontology_loader = OntologyLoaderBuilder::new().obographs_parser().build();
         let ontology: FullCsrOntology = ontology_loader
             .load_from_path(go_path)
@@ -98,11 +96,24 @@ mod test {
             .load_from_path(gaf_path)
             .expect("Failed to load GAF");
 
-        // Construct the index
-        let annotation_index =
-            AnnotationIndex::new(annotations, &ontology, Some(&population_genes));
+        let study_genes = GeneSet::from_file(study_path, &annotations).unwrap_or_else(|err| {
+            eprintln!("Error: {}", err);
+            process::exit(1);
+        });
 
-        (ontology, annotation_index, study_genes)
+        let population_genes = GeneSet::from_file(pop_path, &annotations).unwrap_or_else(|err| {
+            eprintln!("Error: {}", err);
+            process::exit(1);
+        });
+
+        // Construct the index
+        let annotation_index = AnnotationIndex::new(
+            annotations,
+            &ontology,
+            Some(&population_genes.recognized_genes()),
+        );
+
+        (ontology, annotation_index, study_genes.recognized_genes())
     }
 
     #[test]
@@ -115,17 +126,11 @@ mod test {
             "tests/data/GOnone/population.txt",
         );
 
-        let result = super::run(&ontology, annotation_index, study_genes);
+        let result = super::analysis(&ontology, annotation_index, study_genes);
 
         // Assertions: Verify we got results and they are valid probabilities
         assert!(!result.items.is_empty(), "Result set should not be empty");
         assert!(result.items[0].score <= 1.0 && result.items[0].score >= 0.0);
-
-        // Serialize to CSV
-        let mut wtr = Writer::from_path("tests/data/GOnone/results.csv").unwrap();
-        for item in result.items {
-            wtr.serialize(item).unwrap();
-        }
     }
 
     #[test]
@@ -142,7 +147,7 @@ mod test {
             "tests/data/GO0090717/population.txt",
         );
 
-        let result = super::run(&ontology, annotation_index, study_genes);
+        let result = super::analysis(&ontology, annotation_index, study_genes);
 
         // Check if the target term is in the top results
         let target_item = result.items.iter().find(|i| i.id == target_term);

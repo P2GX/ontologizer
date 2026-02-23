@@ -1,8 +1,7 @@
 mod annotations;
-mod problem;
+mod genes;
 pub(crate) mod result;
-mod util;
-
-pub use util::{load_gene_set, overlap_sets};
 
 pub use annotations::AnnotationIndex;
+
+pub use genes::GeneSet;

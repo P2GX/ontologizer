@@ -12,7 +12,7 @@ use crate::frequentist::measure::PValue;
 use ontolius::ontology::csr::FullCsrOntology;
 
 #[allow(non_snake_case)]
-pub fn run(
+pub fn analysis(
     ontology: &FullCsrOntology,
     annotations: AnnotationIndex,
     study_genes: HashSet<String>,
@@ -124,10 +124,9 @@ pub fn calculate_enrichment_from_indices(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::core;
+    use crate::GeneSet;
     use crate::core::result::Measure;
     use csv::Writer;
-    use oboannotation::go::stats::get_annotation_map;
     use oboannotation::go::{GoAnnotations, GoGafAnnotationLoader};
     use oboannotation::io::AnnotationLoader;
     use ontolius::io::OntologyLoaderBuilder;
@@ -180,15 +179,6 @@ mod test {
         let study_genes_path = "tests/data/GOnone/study.txt";
 
         // ------ Load Gene Sets ------
-        let study_genes = core::load_gene_set(study_genes_path).unwrap_or_else(|err| {
-            eprintln!("Error: {}", err);
-            process::exit(1);
-        });
-
-        let population_genes = core::load_gene_set(population_genes_path).unwrap_or_else(|err| {
-            eprintln!("Error: {}", err);
-            process::exit(1);
-        });
 
         // ------ Load Gene Ontology and Annotations ------
         let ontology_loader = OntologyLoaderBuilder::new().obographs_parser().build();
@@ -205,15 +195,25 @@ mod test {
             .load_from_path(gaf_path)
             .expect("Could not load GAF file");
 
-        let annotation_index =
-            AnnotationIndex::new(annotations, &ontology, Some(&population_genes));
-        let annotated_genes = get_annotation_map(&annotation_index.annotations)
-            .into_keys()
-            .collect();
+        let study_genes =
+            GeneSet::from_file(study_genes_path, &annotations).unwrap_or_else(|err| {
+                eprintln!("Error: {}", err);
+                process::exit(1);
+            });
 
-        let study_gene_set = core::overlap_sets(&annotated_genes, &study_genes);
+        let population_genes = GeneSet::from_file(population_genes_path, &annotations)
+            .unwrap_or_else(|err| {
+                eprintln!("Error: {}", err);
+                process::exit(1);
+            });
 
-        let result = run(&ontology, annotation_index, study_gene_set);
+        let annotation_index = AnnotationIndex::new(
+            annotations,
+            &ontology,
+            Some(&population_genes.recognized_genes()),
+        );
+
+        let result = analysis(&ontology, annotation_index, study_genes.recognized_genes());
 
         // Serialize to CSV
         let mut wtr = Writer::from_path("tests/data/GOnone/results_f.csv").unwrap();

@@ -9,7 +9,7 @@ readme = "README.md"
 
 
 [lib]
-name = "ga4ghphetools"
+name = "ontologizer"
 path = "src/lib.rs"
 
 

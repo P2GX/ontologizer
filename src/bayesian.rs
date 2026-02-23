@@ -1,8 +1,7 @@
 mod algorithm;
+mod measure;
 mod model;
 mod proposer;
-pub(crate) mod recorder;
-mod run;
-pub use run::run;
-mod measure;
+mod recorder;
+pub mod run;
 mod state;

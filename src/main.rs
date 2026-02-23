@@ -11,17 +11,16 @@ use std::fs::File;
 use std::io::BufReader;
 use std::process;
 
-mod bayesian;
-mod core;
-mod frequentist;
+use ontologizer;
+use ontologizer::{AnnotationIndex, GeneSet};
 
 #[derive(Deserialize, Debug)]
 struct Config {
     method: String,
-    study_genes_path: String,
-    population_genes_path: String,
     ontology_path: String,
     annotation_path: String,
+    study_genes_path: String,
+    population_genes_path: String,
 }
 
 fn main() {
@@ -55,18 +54,6 @@ fn main() {
         process::exit(1);
     }
 
-    // ------ Load Gene Sets ------
-    let study_genes = core::load_gene_set(&problem.study_genes_path).unwrap_or_else(|err| {
-        eprintln!("Error: {}", err);
-        process::exit(1);
-    });
-
-    let population_genes =
-        core::load_gene_set(&problem.population_genes_path).unwrap_or_else(|err| {
-            eprintln!("Error: {}", err);
-            process::exit(1);
-        });
-
     // ------ Load Gene Ontology and Annotations ------
     let ontology_loader = OntologyLoaderBuilder::new().obographs_parser().build();
     let ontology: FullCsrOntology = ontology_loader
@@ -81,14 +68,37 @@ fn main() {
         .load_from_path(&problem.annotation_path)
         .expect("Could not load GAF file");
 
-    let annotation_index =
-        core::AnnotationIndex::new(annotations, &ontology, Some(&population_genes));
+    // ------ Load Gene Sets ------
+    let study_genes =
+        GeneSet::from_file(&problem.study_genes_path, &annotations).unwrap_or_else(|err| {
+            eprintln!("Error: {}", err);
+            process::exit(1);
+        });
+    let population_genes = GeneSet::from_file(&problem.population_genes_path, &annotations)
+        .unwrap_or_else(|err| {
+            eprintln!("Error: {}", err);
+            process::exit(1);
+        });
+
+    let annotation_index = AnnotationIndex::new(
+        annotations,
+        &ontology,
+        Some(&population_genes.recognized_genes()),
+    );
 
     let result;
     if problem.method == "frequentist" {
-        result = frequentist::run(&ontology, annotation_index, study_genes);
+        result = ontologizer::frequentist_analysis(
+            &ontology,
+            annotation_index,
+            study_genes.recognized_genes(),
+        );
     } else {
-        result = bayesian::run(&ontology, annotation_index, study_genes)
+        result = ontologizer::bayesian_analysis(
+            &ontology,
+            annotation_index,
+            study_genes.recognized_genes(),
+        )
     }
 
     // Serialize to CSV
