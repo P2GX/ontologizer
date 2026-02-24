@@ -1,7 +1,9 @@
 use crate::core::AnnotationIndex;
 use csv::Writer;
-use ontolius::ontology::OntologyTerms;
+use ontolius::TermId;
+use ontolius::common::go::{BIOLOGICAL_PROCESS, CELLULAR_COMPONENT, MOLECULAR_FUNCTION};
 use ontolius::ontology::csr::FullCsrOntology;
+use ontolius::ontology::{HierarchyQueries, OntologyTerms};
 use ontolius::term::MinimalTerm;
 use serde::{Deserialize, Serialize, Serializer};
 use std::path::Path;
@@ -21,6 +23,9 @@ pub struct EnrichmentItem {
 
     #[serde(rename = "Label")]
     pub label: String,
+
+    #[serde(rename = "Aspect")]
+    pub aspect: String,
 
     /// The primary metric: Posterior Probability (Bayesian) or P-Value (Frequentist)
     #[serde(rename = "Score")]
@@ -71,6 +76,8 @@ impl EnrichmentResult {
                 .map(|t| t.name().to_string())
                 .unwrap_or_else(|| "Unknown Term".to_string());
 
+            let aspect = get_term_aspect(ontology, term_id);
+
             let gene_symbols: Vec<String> = gene_indices
                 .iter()
                 .filter(|&idx| observed_genes[*idx])
@@ -80,6 +87,7 @@ impl EnrichmentResult {
             items.push(EnrichmentItem {
                 id: term_id.to_string(),
                 label,
+                aspect,
                 score: measure.score(),
                 associated_genes: gene_symbols,
                 diagnostics: measure.diagnostics(),
@@ -118,5 +126,17 @@ impl EnrichmentResult {
             wtr.serialize(item)?;
         }
         Ok(())
+    }
+}
+
+fn get_term_aspect(go: &FullCsrOntology, term: &TermId) -> String {
+    if go.is_equal_or_descendant_of(term, &BIOLOGICAL_PROCESS) {
+        "BP".to_string()
+    } else if go.is_equal_or_descendant_of(term, &MOLECULAR_FUNCTION) {
+        "MF".to_string()
+    } else if go.is_equal_or_descendant_of(term, &CELLULAR_COMPONENT) {
+        "CC".to_string()
+    } else {
+        "Unknown".to_string()
     }
 }
