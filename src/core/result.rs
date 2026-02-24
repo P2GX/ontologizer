@@ -5,6 +5,7 @@ use ontolius::ontology::csr::FullCsrOntology;
 use ontolius::term::MinimalTerm;
 use serde::{Deserialize, Serialize, Serializer};
 use std::path::Path;
+use std::slice::Iter;
 
 pub trait Measure {
     /// Returns an iterator over the score for each term.
@@ -86,6 +87,10 @@ impl EnrichmentResult {
         }
 
         EnrichmentResult { items }
+    }
+
+    pub fn iter(&self) -> Iter<'_, EnrichmentItem> {
+        self.items.iter()
     }
 
     pub fn sort_by_score(&mut self, descending: bool) {
