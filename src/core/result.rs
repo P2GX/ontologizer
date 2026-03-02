@@ -18,7 +18,7 @@ pub trait Measure {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnrichmentItem {
-    #[serde(rename = "ID")]
+    #[serde(rename = "Id")]
     pub id: String,
 
     #[serde(rename = "Label")]

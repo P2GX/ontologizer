@@ -18,8 +18,8 @@ pub fn analysis(
     let alpha_init = 0.05;
     let beta_init = 0.10;
 
-    let iterations = 50_000_000;
-    let burn_in = 1_000_000;
+    let iterations = annotations.get_terms().len() * 5_000;
+    let burn_in = annotations.get_terms().len() * 1_000;
 
     // --- Data Preparation ---
     let n_genes = annotations.get_genes().len();
