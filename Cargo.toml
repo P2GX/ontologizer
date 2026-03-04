@@ -30,6 +30,8 @@ float_eq = "1.0.1"
 indexmap = "2.11.3"
 rand = "0.10.0"
 rand_distr = "0.6.0"
+flate2 = "1.1.9"
+ureq = "3.2.0"
 
 [features]
 default = ["cli"]
