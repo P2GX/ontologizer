@@ -1,4 +1,5 @@
 mod annotations;
+mod config;
 mod genes;
 mod ontology;
 pub(crate) mod result;

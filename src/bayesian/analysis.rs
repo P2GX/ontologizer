@@ -5,8 +5,51 @@ use crate::bayesian::recorder::MgsaRecorder;
 use crate::bayesian::state::MgsaState;
 use crate::core::AnnotationIndex;
 use crate::core::result::EnrichmentResult;
+use indexmap::IndexSet;
 use ontolius::ontology::csr::FullCsrOntology;
 use std::collections::HashSet;
+
+pub fn approximate_minimal_term_cover(
+    gene_idxs: &IndexSet<usize>,
+    term_idxs: &IndexSet<usize>,
+    annotations: &AnnotationIndex,
+) -> IndexSet<usize> {
+    let mut uncovered_genes: IndexSet<usize> = gene_idxs.clone();
+    let mut available_terms: IndexSet<usize> = term_idxs.clone();
+    let mut minimal_terms: IndexSet<usize> = IndexSet::new();
+
+    while !uncovered_genes.is_empty() {
+        let mut best_term: Option<usize> = None;
+        let mut max_covered: usize = 0;
+
+        for &term_idx in &available_terms {
+            let term_genes: &IndexSet<usize> = annotations.get_gene_idxs_for_term_idx(term_idx);
+            let covered_count: usize = term_genes.intersection(&uncovered_genes).count();
+
+            if covered_count > max_covered {
+                max_covered = covered_count;
+                best_term = Some(term_idx);
+            }
+        }
+
+        match best_term {
+            Some(term_idx) => {
+                minimal_terms.insert(term_idx);
+                available_terms.swap_remove(&term_idx);
+
+                let term_genes: &IndexSet<usize> = annotations.get_gene_idxs_for_term_idx(term_idx);
+                for &g in term_genes {
+                    // swap_remove provides O(1) removal by swapping the removed element
+                    // with the last element, sacrificing order for performance.
+                    uncovered_genes.swap_remove(&g);
+                }
+            }
+            None => break,
+        }
+    }
+
+    minimal_terms
+}
 
 pub fn analysis(
     ontology: &FullCsrOntology,
@@ -14,7 +57,21 @@ pub fn analysis(
     study_genes: &HashSet<String>,
 ) -> EnrichmentResult {
     // --- Configuration ---
-    let p_init = 0.05;
+
+    // Init prior probability for term activation by assessing the minimal set of terms required
+    // to explain observed genes
+    let n_terms = annotations.get_terms().len();
+    let gene_idxs: IndexSet<usize> = study_genes
+        .iter()
+        .filter_map(|g| annotations.get_idx_by_gene(g))
+        .collect();
+    let term_idxs: IndexSet<usize> = gene_idxs
+        .iter()
+        .flat_map(|&g| annotations.get_term_idxs_for_gene_idx(g).iter().copied())
+        .collect();
+    let n_min_terms = approximate_minimal_term_cover(&gene_idxs, &term_idxs, annotations).len();
+
+    let p_init = n_min_terms as f64 / n_terms as f64;
     let alpha_init = 0.05;
     let beta_init = 0.10;
 
