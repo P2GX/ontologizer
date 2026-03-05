@@ -2,11 +2,11 @@ use oboannotation::go::{GoAnnotations, GoGafAnnotationLoader};
 use oboannotation::io::AnnotationLoader;
 use ontolius::io::OntologyLoaderBuilder;
 use ontolius::ontology::csr::FullCsrOntology;
-use ontologizer::{AnnotationIndex, EnrichmentResult, GeneSet};
+use ontologizer::{AnnotationIndex, EnrichmentResult, GeneSet, Method};
 
 use csv::Writer;
 use flate2::read::GzDecoder;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs::{self, File};
 use std::io::{self, BufReader, BufWriter};
@@ -58,15 +58,9 @@ pub struct Config {
     pub study_genes_path: String,
     pub population_genes_path: String,
     #[serde(flatten)]
-    pub method: MethodConfig,
+    pub method: Method,
 }
 
-#[derive(Deserialize, Debug)]
-#[serde(tag = "method", rename_all = "lowercase")]
-pub enum MethodConfig {
-    Frequentist,
-    Bayesian,
-}
 pub fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -100,6 +94,17 @@ pub fn main() {
         eprintln!("Failed to create data directory at {:?}: {}", data_dir, err);
         process::exit(1);
     });
+
+    let result_dir: PathBuf = current_dir.join("result");
+    fs::create_dir_all(&result_dir).unwrap_or_else(|err| {
+        eprintln!(
+            "Failed to create output directory at {:?}: {}",
+            result_dir, err
+        );
+        process::exit(1);
+    });
+
+    let output_filename: PathBuf = result_dir.join(format!("{:?}_results.csv", config.method));
 
     // ------ Default Data Locations ------
     let ontology_path: PathBuf = data_dir.join("go-basic.json");
@@ -163,12 +168,17 @@ pub fn main() {
 
     println!("Starting enrichment analysis...");
     let result: EnrichmentResult = match config.method {
-        MethodConfig::Frequentist => ontologizer::frequentist_analysis(
+        Method::Frequentist {
+            topology,
+            correction,
+        } => ontologizer::frequentist_analysis(
             &ontology,
             &annotation_index,
             &study_genes.recognized_genes(),
+            &topology,
+            &correction,
         ),
-        MethodConfig::Bayesian => ontologizer::bayesian_analysis(
+        Method::Bayesian => ontologizer::bayesian_analysis(
             &ontology,
             &annotation_index,
             &study_genes.recognized_genes(),
@@ -176,16 +186,6 @@ pub fn main() {
     };
 
     // Serialize to CSV
-    let result_dir: PathBuf = current_dir.join("result");
-    fs::create_dir_all(&result_dir).unwrap_or_else(|err| {
-        eprintln!(
-            "Failed to create output directory at {:?}: {}",
-            result_dir, err
-        );
-        process::exit(1);
-    });
-
-    let output_filename: PathBuf = result_dir.join(format!("{:?}_results.csv", config.method));
     println!("Writing results to: {:?}", output_filename);
 
     let mut wtr = Writer::from_path(&output_filename).unwrap_or_else(|err| {
