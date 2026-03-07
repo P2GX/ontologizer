@@ -16,7 +16,7 @@ pub enum Method {
 
 pub use frequentist::{Correction, Topology};
 
-pub use core::{AnnotationIndex, EnrichmentItem, EnrichmentResult, GeneSet, Ontology};
+pub use core::{AnalysisResult, AnnotationIndex, EnrichmentItem, GeneSet, Ontology};
 
 pub use bayesian::analysis::analysis as bayesian_analysis;
 

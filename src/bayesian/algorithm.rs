@@ -45,9 +45,10 @@ where
         match self.proposer.log_proposal_ratio(state, &m) {
             Some(log_q_ratio) => log_q_ratio,
             None => {
-                let log_q_reverse = self.proposer.log_proposal(state);
-                state.apply(&m);
+                //
                 let log_q_forward = self.proposer.log_proposal(state);
+                state.apply(&m);
+                let log_q_reverse = self.proposer.log_proposal(state);
                 state.revert(&m);
                 log_q_forward - log_q_reverse
             }

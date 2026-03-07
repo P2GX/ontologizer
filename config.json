@@ -1,0 +1,9 @@
+{
+  "study_genes_path": "data/Genes_Yeast/study_genes.txt",
+  "population_genes_path": "data/Genes_Yeast/population_genes.txt",
+  "go_path": "data/GO/go-basic.json",
+  "goa_path": "data/GOA/gene_association.sgd.20260120.gaf",
+  "method": {
+    "method": "bayesian"
+  }
+}

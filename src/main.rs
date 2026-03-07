@@ -2,11 +2,10 @@ use oboannotation::go::{GoAnnotations, GoGafAnnotationLoader};
 use oboannotation::io::AnnotationLoader;
 use ontolius::io::OntologyLoaderBuilder;
 use ontolius::ontology::csr::FullCsrOntology;
-use ontologizer::{AnnotationIndex, EnrichmentResult, GeneSet, Method};
+use ontologizer::{AnalysisResult, AnnotationIndex, GeneSet, Method};
 
-use csv::Writer;
 use flate2::read::GzDecoder;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::env;
 use std::fs::{self, File};
 use std::io::{self, BufReader, BufWriter};
@@ -15,11 +14,6 @@ use std::process;
 
 // Domain-specific URLs for the Gene Ontology (GO) and Annotations.
 const GO_URL: &str = "https://purl.obolibrary.org/obo/go/go-basic.json";
-const GOA_BASE_URL: &str = "http://current.geneontology.org/annotations/";
-
-fn map_organism_to_gaf(organism: &str) -> String {
-    format!("{}goa_{}.gaf.gz", GOA_BASE_URL, organism.to_lowercase())
-}
 
 fn ensure_cached(
     url: &str,
@@ -54,10 +48,10 @@ fn ensure_cached(
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
-    pub organism: String,
     pub study_genes_path: String,
     pub population_genes_path: String,
-    #[serde(flatten)]
+    pub go_path: String,
+    pub goa_path: String,
     pub method: Method,
 }
 
@@ -67,14 +61,14 @@ pub fn main() {
     let config_path = if args.len() > 1 {
         &args[1]
     } else {
-        println!("No config file provided. Loading from 'problem.json'");
-        "problem.json"
+        println!("No config file provided. Loading from 'config.json'");
+        "config.json"
     };
 
     // Open the configuration file
     let file = File::open(config_path).unwrap_or_else(|err| {
         eprintln!("Error opening config file '{}': {}", config_path, err);
-        eprintln!("Usage: cargo run -- [path/to/problem.json]");
+        eprintln!("Usage: cargo run -- [path/to/config.json]");
         process::exit(1);
     });
     let reader = BufReader::new(file);
@@ -104,20 +98,15 @@ pub fn main() {
         process::exit(1);
     });
 
-    let output_filename: PathBuf = result_dir.join(format!("{:?}_results.csv", config.method));
+    let output_filename: PathBuf = result_dir.join(format!("enrichment_result.csv"));
 
     // ------ Default Data Locations ------
-    let ontology_path: PathBuf = data_dir.join("go-basic.json");
-    let annotation_path: PathBuf = data_dir.join(format!("goa_{}.gaf", config.organism));
+    let ontology_path: PathBuf = current_dir.join(&config.go_path);
+    let annotation_path: PathBuf = current_dir.join(&config.goa_path);
 
-    // ------ Ensure Gene Ontology and Annotations exist ------
+    // ------ Ensure Gene Ontology exist ------
     ensure_cached(GO_URL, &ontology_path, false).unwrap_or_else(|err| {
         eprintln!("Failed to fetch ontology: {}", err);
-        process::exit(1);
-    });
-    let goa_url: String = map_organism_to_gaf(&config.organism);
-    ensure_cached(&goa_url, &annotation_path, true).unwrap_or_else(|err| {
-        eprintln!("Failed to fetch annotation: {}", err);
         process::exit(1);
     });
 
@@ -167,7 +156,7 @@ pub fn main() {
     );
 
     println!("Starting enrichment analysis...");
-    let result: EnrichmentResult = match config.method {
+    let results: AnalysisResult = match config.method {
         Method::Frequentist {
             topology,
             correction,
@@ -188,17 +177,12 @@ pub fn main() {
     // Serialize to CSV
     println!("Writing results to: {:?}", output_filename);
 
-    let mut wtr = Writer::from_path(&output_filename).unwrap_or_else(|err| {
-        eprintln!("Error creating output file {:?}: {}", output_filename, err);
-        process::exit(1);
-    });
-
-    for item in result.items {
-        wtr.serialize(item).unwrap_or_else(|err| {
-            eprintln!("Error serializing record: {}", err);
+    results
+        .save_to_csv(&output_filename, true)
+        .unwrap_or_else(|err| {
+            eprintln!("Error writing output file {:?}: {}", output_filename, err);
             process::exit(1);
         });
-    }
 
     println!("Done!");
 }

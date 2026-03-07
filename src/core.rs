@@ -9,4 +9,4 @@ pub use annotations::AnnotationIndex;
 
 pub use genes::GeneSet;
 
-pub use result::{EnrichmentItem, EnrichmentResult};
+pub use result::{AnalysisResult, EnrichmentItem};

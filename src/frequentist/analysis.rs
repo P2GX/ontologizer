@@ -2,7 +2,7 @@ use indexmap::IndexSet;
 use std::collections::HashSet;
 
 use crate::core::AnnotationIndex;
-use crate::core::result::EnrichmentResult;
+use crate::core::result::AnalysisResult;
 use crate::frequentist;
 use crate::frequentist::algorithm::{OneSidedEnrichmentTest, StatisticalTest};
 use crate::frequentist::correction::Adjustment;
@@ -18,7 +18,7 @@ pub fn analysis(
     study_genes: &HashSet<String>,
     topology: &frequentist::Topology,
     correction: &frequentist::Correction,
-) -> EnrichmentResult {
+) -> AnalysisResult {
     let N_pop = annotations.get_genes().len();
     let cache = LogFactorialCache::new(N_pop);
     let test = OneSidedEnrichmentTest;
@@ -51,9 +51,17 @@ pub fn analysis(
     let observed_genes: Vec<bool> = (0..N_pop).map(|i| study_indices.contains(&i)).collect();
 
     let mut result =
-        EnrichmentResult::from_measures(&measures, ontology, annotations, &observed_genes);
+        AnalysisResult::from_measures(&measures, ontology, annotations, &observed_genes);
     result.sort_by_score(false);
-    result
+
+    let topology = format!("{:?}", topology);
+    let correction = format!("{:?}", correction);
+
+    result.with_meta(&[
+        ("Method", "Frequentist"),
+        ("Topology:", &topology),
+        ("Correction:", &correction),
+    ])
 }
 
 #[cfg(test)]

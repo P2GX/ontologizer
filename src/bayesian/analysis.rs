@@ -4,7 +4,7 @@ use crate::bayesian::proposer::{MixedProposer, ParameterGaussProposer, TermToggl
 use crate::bayesian::recorder::MgsaRecorder;
 use crate::bayesian::state::MgsaState;
 use crate::core::AnnotationIndex;
-use crate::core::result::EnrichmentResult;
+use crate::core::result::{AnalysisResult, Measure};
 use indexmap::IndexSet;
 use ontolius::ontology::csr::FullCsrOntology;
 use std::collections::HashSet;
@@ -55,7 +55,7 @@ pub fn analysis(
     ontology: &FullCsrOntology,
     annotations: &AnnotationIndex,
     study_genes: &HashSet<String>,
-) -> EnrichmentResult {
+) -> AnalysisResult {
     // --- Configuration ---
 
     // Init prior probability for term activation by assessing the minimal set of terms required
@@ -65,6 +65,7 @@ pub fn analysis(
         .iter()
         .filter_map(|g| annotations.get_idx_by_gene(g))
         .collect();
+
     let term_idxs: IndexSet<usize> = gene_idxs
         .iter()
         .flat_map(|&g| annotations.get_term_idxs_for_gene_idx(g).iter().copied())
@@ -73,7 +74,7 @@ pub fn analysis(
 
     let p_init = n_min_terms as f64 / n_terms as f64;
     let alpha_init = 0.05;
-    let beta_init = 0.10;
+    let beta_init = 0.05;
 
     let iterations = annotations.get_terms().len() * 5_000;
     let burn_in = annotations.get_terms().len() * 1_000;
@@ -112,12 +113,20 @@ pub fn analysis(
     let (measures, parameter) = algorithm.sample::<MgsaRecorder>(&mut state);
 
     // --- Result Generation ---
-    let mut result =
-        EnrichmentResult::from_measures(&measures, &ontology, &annotations, &obs_genes);
+    let mut result = AnalysisResult::from_measures(&measures, &ontology, &annotations, &obs_genes);
 
     result.sort_by_score(true); // Sort descending by probability
 
-    result
+    let p_str = format!("{:.4}", parameter[0].score());
+    let alpha_str = format!("{:.4}", parameter[1].score());
+    let beta_str = format!("{:.4}", parameter[2].score());
+
+    result.with_meta(&[
+        ("Method", "Bayesian"),
+        ("p", &p_str),
+        ("alpha", &alpha_str),
+        ("beta", &beta_str),
+    ])
 }
 
 #[cfg(test)]

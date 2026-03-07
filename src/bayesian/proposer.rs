@@ -11,10 +11,15 @@ pub trait Proposer<S: State> {
     /// Generates move x -> x'
     fn propose<R: Rng>(&self, state: &S, rng: &mut R) -> S::Move;
 
-    /// Calculates q(x'|x)
+    /// Calculates log q(x'|x), up to an additive constant.
+    ///
+    /// Constant factors that are identical for the forward and reverse proposals — such as
+    /// normalisation constants, symmetric density terms, or terms depending only on unchanged
+    /// parts of the state — may be omitted, because this value is only used inside
+    /// `log_proposal_ratio` where such terms cancel.
     fn log_proposal(&self, state: &S) -> f64;
 
-    /// Calculates q(x'|x) / q(x|x')
+    /// Calculates log( q(x'|x) / q(x|x') )
     fn log_proposal_ratio(&self, state: &S, m: &S::Move) -> Option<f64>;
 }
 
@@ -43,7 +48,7 @@ impl Proposer<TermState> for TermToggleProposer {
     }
 
     fn log_proposal(&self, state: &TermState) -> f64 {
-        // q(x'|x) = 1/N
+        // log q(x'|x) = -ln(N). Exact — no constant factors omitted.
         let n_terms = state.n_terms();
         -(n_terms as f64).ln()
     }
@@ -118,6 +123,7 @@ impl Proposer<TermState> for TermToggleSwapProposer {
     }
 
     fn log_proposal(&self, state: &TermState) -> f64 {
+        // log q(x'|x) = -ln(M). Exact — no constant factors omitted.
         let n_terms = state.n_terms();
         let n_active = state.n_active();
         let n_inactive = state.n_inactive();
@@ -227,6 +233,12 @@ impl Proposer<ParameterState> for ParameterGaussProposer {
     }
 
     fn log_proposal(&self, state: &ParameterState) -> f64 {
+        // log q(x'|x) up to an additive constant. The omitted terms are:
+        //   - ln(1/3): uniform probability of selecting a parameter (same in forward and reverse)
+        //   - log φ(logit(x') - logit(x)): Gaussian density, cancels due to symmetry φ(a) = φ(-a)
+        //   - Jacobian terms for the two unchanged parameters (identical in both states)
+        // Only the Jacobian of the changed parameter survives in the ratio, so the sum over
+        // all three Jacobians here is sufficient when used exclusively in log_proposal_ratio.
         let p = state.p();
         let alpha = state.alpha();
         let beta = state.beta();
@@ -312,6 +324,10 @@ impl Proposer<MgsaState> for MixedProposer {
     }
 
     fn log_proposal(&self, state: &MgsaState) -> f64 {
+        // log q(x'|x) up to an additive constant. The mixing weight (term_update_prob) is omitted
+        // because it is identical for forward and reverse proposals and cancels in the ratio.
+        // For a term move the parameter Jacobian terms are the same in both states and cancel;
+        // for a parameter move the term space-size term is the same in both states and cancels.
         self.term_proposer.log_proposal(&state.terms)
             + self.param_proposer.log_proposal(&state.params)
     }

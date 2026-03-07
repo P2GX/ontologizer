@@ -6,13 +6,13 @@ use ontolius::ontology::csr::FullCsrOntology;
 use ontolius::ontology::{HierarchyQueries, OntologyTerms};
 use ontolius::term::MinimalTerm;
 use serde::{Deserialize, Serialize, Serializer};
+use std::fs::File;
+use std::io::{BufWriter, Write};
 use std::path::Path;
 use std::slice::Iter;
 
 pub trait Measure {
-    /// Returns an iterator over the score for each term.
     fn score(&self) -> f64;
-
     fn diagnostics(&self) -> Option<String>;
 }
 
@@ -49,11 +49,12 @@ where
 }
 
 #[derive(Serialize)]
-pub struct EnrichmentResult {
+pub struct AnalysisResult {
     pub items: Vec<EnrichmentItem>,
+    meta: Option<Vec<(String, String)>>,
 }
 
-impl EnrichmentResult {
+impl AnalysisResult {
     pub fn from_measures<M: Measure>(
         measures: &Vec<M>,
         ontology: &FullCsrOntology,
@@ -94,10 +95,22 @@ impl EnrichmentResult {
             })
         }
 
-        EnrichmentResult { items }
+        AnalysisResult { items, meta: None }
     }
 
-    pub fn iter(&self) -> Iter<'_, EnrichmentItem> {
+    pub fn with_meta(mut self, meta: &[(&str, &str)]) -> Self {
+        self.meta = Some(meta.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect());
+        self
+    }
+
+    pub fn iter_meta(&self) -> Iter<'_, (String, String)> {
+        match &self.meta {
+            Some(meta) => meta.iter(),
+            None => [].iter(),
+        }
+    }
+
+    pub fn iter_items(&self) -> Iter<'_, EnrichmentItem> {
         self.items.iter()
     }
 
@@ -107,24 +120,34 @@ impl EnrichmentResult {
                 .sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
         } else {
             self.items
-                .sort_by(|a, b| a.score.partial_cmp(&b.score).unwrap())
+                .sort_by(|a, b| a.score.partial_cmp(&b.score).unwrap());
         }
     }
 
     /// Saves the result to a CSV file.
     ///
-    /// This writes the global parameters as commented lines (header)
-    /// before writing the standard CSV table.
-    pub fn save_to_csv<P: AsRef<Path>>(&self, path: P) -> std::io::Result<()> {
-        let mut wtr = Writer::from_path("parameters.csv")?;
-        for item in &self.items {
-            wtr.serialize(item)?;
+    /// If `with_meta` is `true`, metadata key-value pairs are written first as
+    /// `!key: value` comment lines (one per line), following the convention used
+    /// by file formats such as GAF. The CSV header and data rows follow immediately after.
+    pub fn save_to_csv<P: AsRef<Path>>(&self, path: P, with_meta: bool) -> std::io::Result<()> {
+        let file = File::create(path)?;
+        let mut buf = BufWriter::new(file);
+
+        if with_meta {
+            if let Some(meta) = &self.meta {
+                for (key, value) in meta {
+                    writeln!(buf, "! {}: {}", key, value)?;
+                }
+            }
         }
 
-        let mut wtr = Writer::from_path("terms.csv")?;
+        let mut wtr = Writer::from_writer(buf);
         for item in &self.items {
-            wtr.serialize(item)?;
+            wtr.serialize(item)
+                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
         }
+        wtr.flush()
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
         Ok(())
     }
 }
