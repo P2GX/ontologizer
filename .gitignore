@@ -1,6 +1,7 @@
 # Rust/Cargo (workspace)
 /target/
 /debug/
+Cargo.lock
 
 # rustfmt backup files
 **/*.rs.bk
