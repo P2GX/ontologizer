@@ -117,10 +117,10 @@ impl AnalysisResult {
     pub fn sort_by_score(&mut self, descending: bool) {
         if descending {
             self.items
-                .sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
+                .sort_by(|a, b| b.score.total_cmp(&a.score));
         } else {
             self.items
-                .sort_by(|a, b| a.score.partial_cmp(&b.score).unwrap());
+                .sort_by(|a, b| a.score.total_cmp(&b.score));
         }
     }
 

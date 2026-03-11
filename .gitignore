@@ -18,8 +18,10 @@
 /tests/data/*.owl
 /test/data/go-basic.json
 
-# Test files
-# /tests/data/*.txt
+# Downloaded GO/GOA data and analysis output (too large for git)
+/data/
+/output/
+/result/
 
 # IDE/editor/OS noise
 .vscode/

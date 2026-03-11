@@ -89,7 +89,7 @@ pub fn main() {
         process::exit(1);
     });
 
-    let result_dir: PathBuf = current_dir.join("result");
+    let result_dir: PathBuf = current_dir.join("output");
     fs::create_dir_all(&result_dir).unwrap_or_else(|err| {
         eprintln!(
             "Failed to create output directory at {:?}: {}",
@@ -98,7 +98,7 @@ pub fn main() {
         process::exit(1);
     });
 
-    let output_filename: PathBuf = result_dir.join(format!("enrichment_result.csv"));
+    let output_filename: PathBuf = result_dir.join("enrichment_result.csv");
 
     // ------ Default Data Locations ------
     let ontology_path: PathBuf = current_dir.join(&config.go_path);

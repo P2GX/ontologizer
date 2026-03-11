@@ -1,67 +1,122 @@
 # Ontologizer
 
-Fast and safe implementation of the Ontologizer
+Fast and safe implementation of the Ontologizer — a tool for Gene Ontology (GO) enrichment analysis using Frequentist (
+hypergeometric test) and Bayesian (inference) methods.
 
-# Gene Symbols
+## Gene Symbols
 
-The user must ensure that gene symbols in the study and population gene set and the gaf file match.
+Gene symbols in the study and population gene sets must match the gene symbols in the `.gaf` annotation file —
+specifically column 2 (`DB_Object_Symbol`).
 
-More specificially, the gene symbols must match the second and third column in the .gaf file.
+## Project Layout
 
-gaf line[2] must agree with the gene symbols provided in the study / population set.
-
-# Usage
-
-To run the example program, enter
-
-```bash
- cargo run --bin onto --features="cli" 
+```
+ontologizer/
+├── examples/                    # Example inputs (tracked in git)
+│   ├── yeast/
+│   │   ├── study_genes.txt      # 493 yeast study genes
+│   │   ├── population_genes.txt # 6010 yeast background genes
+│   │   └── config.json          # Bayesian analysis config
+│   └── go0090717/
+│       ├── study_genes.txt      # Study genes for GO:0090717
+│       ├── population_genes.txt # Background genes
+│       └── config.json          # Frequentist analysis config
+│
+├── data/                        # Downloaded at runtime (gitignored)
+│   ├── go-basic.json            # Auto-downloaded from GO
+│   └── goa_yeast.gaf            # Provide your own annotation file
+│
+└── output/                      # Analysis results (gitignored)
+    └── enrichment_result.csv
 ```
 
-For faster performance, enter
+## Quick Start
+
+### 1. Provide a GO annotation file
+
+Download a `.gaf` file for your organism from
+the [GO Annotation Database](https://current.geneontology.org/products/pages/downloads.html) and place it in `data/`.
+For example:
+
+- Yeast: `data/goa_yeast.gaf`
+- Human: `data/goa_human.gaf`
+
+The GO ontology (`data/go-basic.json`) is downloaded automatically on first run.
+
+### 2. Run an example
+
+Run the yeast Bayesian example (uses `config.json` in the project root by default):
 
 ```bash
-cargo run --release --bin onto --features="cli"
+cargo run --release --features cli
 ```
 
-## To build the binary demo (with clap)
+Or point to a specific example config:
+
+```bash
+cargo run --release --features cli -- examples/yeast/config.json
+cargo run --release --features cli -- examples/go0090717/config.json
+```
+
+Results are written to `output/enrichment_result.csv`.
+
+### 3. Build the binary
 
 ```bash
 cargo build --release --features cli
+./target/release/ontologizer examples/yeast/config.json
 ```
 
-(the binary is then in ``./target/release/rpt``)
-to run it
+## Configuration
 
-```bash
-cargo run --features cli --bin rpt
+Each example ships with a ready-to-use `config.json`. The schema is:
+
+```json
+{
+  "study_genes_path": "examples/yeast/study_genes.txt",
+  "population_genes_path": "examples/yeast/population_genes.txt",
+  "go_path": "data/go-basic.json",
+  "goa_path": "data/goa_yeast.gaf",
+  "method": {
+    "method": "bayesian"
+  }
+}
 ```
 
-## To see private features in documentation
+For frequentist analysis:
+
+```json
+{
+  "method": {
+    "method": "frequentist",
+    "topology": "standard",
+    "correction": "bonferroni"
+  }
+}
+```
+
+**Topology options:** `standard`, `parentUnion`, `parentIntersection`
+
+**Correction options:** `bonferroni`, `bonferroniHolm`, `benjaminiHochberg`, `none`
+
+## Documentation
 
 ```bash
 cargo doc --document-private-items --open
 ```
 
-## Structure
+## Architecture
 
 ```mermaid
 graph TD;
-    %% --- Define specific styles for clarity ---
     classDef file fill:#e1ecf4,stroke:#7a99ac,stroke-width:2px,stroke-dasharray: 5 5;
     classDef struct fill:#f9f2f4,stroke:#c07b8f,stroke-width:2px;
     classDef process fill:#fff7d1,stroke:#dccc73,stroke-width:2px;
 
-    %% --- Main Entry ---
-    %% ProblemFile now acts as the controller for both Data Loading and the Method Decision
-    ProblemFile[("Problem File")]:::file 
+    ProblemFile[("Config File")]:::file
     ProblemFile --> Data_Loading
-    
-    %% --- FIX 1: Explicitly show Problem File controls the Method ---
-    %% Dashed line implies "Configuration/Control" rather than data transformation
     ProblemFile -.->|Specifies Method| BranchDec{"Method?"}
 
-    %% --- Data Loading Phase ---
     subgraph Data_Loading ["Data Loading"]
         direction TB
         SF[("Study Genes")]:::file
@@ -71,27 +126,24 @@ graph TD;
 
         AnnotationIndex["Annotation Index"]:::struct
         AnnotationMap["Annotation Map"]:::struct
-        
+
         SF & PF & GOF & GAF --> AnnotationIndex
         SF & PF & GOF & GAF --> AnnotationMap
     end
 
-    %% --- Enrichment Analysis Block ---
     subgraph Analysis ["Enrichment Analysis"]
         direction TB
-        
-        %% --- BRANCH 1: Frequentist ---
+
         subgraph Frequentist_Module ["Frequentist"]
             direction TB
             FreqData["Data Structure"]:::struct
-            FreqTest["Test:<br/>Hypergeometric"]:::process
-            FreqMeasure["Measure: P-Value<br/>(Floats)"]:::struct
-            
+            FreqTest["Test: Hypergeometric"]:::process
+            FreqMeasure["Measure: P-Value"]:::struct
+
             FreqData --> FreqTest
             FreqTest -->|Produces| FreqMeasure
         end
 
-        %% --- BRANCH 2: Bayesian ---
         subgraph Bayesian_Module ["Bayesian"]
             direction TB
             subgraph BayesianData["Data Structure"]
@@ -100,35 +152,28 @@ graph TD;
                 State["State: State"]:::struct
             end
 
-            Algorithm["Algorithm:<br/>Metropolis-Hasting"]:::process
-            BayesMeasure["Measure: Probability<br/>(Floats)"]:::struct
+            Algorithm["Algorithm: Metropolis-Hastings"]:::process
+            BayesMeasure["Measure: Probability"]:::struct
 
-            %% Algorithm and State create the measure
             Model & Cache & State --> Algorithm
             Algorithm -->|Create| BayesMeasure
         end
     end
 
-    %% --- FIX 2: Data Flow (Derivation) ---
-    %% Show that the Analysis Structs are DERIVED FROM the Index/Map
     AnnotationIndex & AnnotationMap --> FreqData
     AnnotationIndex & AnnotationMap --> BayesianData
 
-    %% --- Control Flow (Decision) ---
-    %% The decision activates the module (Control), separate from the data feeding it
     BranchDec -.-> Frequentist_Module
     BranchDec -.-> Bayesian_Module
 
-    %% --- Convergence and Output ---
     subgraph Output_Phase ["Output Generation"]
-        Result["EnrichmentResult"]:::process
+        Result["AnalysisResult"]:::process
         Writer["CSV Writer"]:::process
-        OutputFile[("Final Output.csv")]:::file
+        OutputFile[("output/enrichment_result.csv")]:::file
 
-        %% Both branches feed into normalization
         FreqMeasure --> Result
         BayesMeasure --> Result
-        
+
         Result --> Writer
         Writer --> OutputFile
     end
