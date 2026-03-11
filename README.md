@@ -99,77 +99,76 @@ For frequentist analysis:
 
 **Correction options:** `bonferroni`, `bonferroniHolm`, `benjaminiHochberg`, `none`
 
-## Documentation
-
-```bash
-cargo doc --document-private-items --open
-```
-
 ## Architecture
 
 ```mermaid
-graph TD;
-    classDef file fill:#e1ecf4,stroke:#7a99ac,stroke-width:2px,stroke-dasharray: 5 5;
-    classDef struct fill:#f9f2f4,stroke:#c07b8f,stroke-width:2px;
-    classDef process fill:#fff7d1,stroke:#dccc73,stroke-width:2px;
+graph TD
+    %% Semantic, high-contrast class definitions
+    classDef file fill:#f8f9fa,stroke:#6c757d,stroke-width:2px,stroke-dasharray: 5 5,color:#212529;
+    classDef struct fill:#e3f2fd,stroke:#0d6efd,stroke-width:2px,color:#052c65;
+    classDef process fill:#e8f5e9,stroke:#198754,stroke-width:2px,color:#0a3622;
+    classDef decision fill:#fff3cd,stroke:#ffc107,stroke-width:2px,color:#664d03;
+    classDef enumType fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px,color:#4a148c;
 
-    ProblemFile[("Config File")]:::file
+    ProblemFile[("<div style='width: 120px; text-align: center;'>Config File</div>")]:::file
     ProblemFile --> Data_Loading
-    ProblemFile -.->|Specifies Method| BranchDec{"Method?"}
 
-    subgraph Data_Loading ["Data Loading"]
+    subgraph Data_Loading ["Load"]
         direction TB
-        SF[("Study Genes")]:::file
-        PF[("Population Genes")]:::file
-        GOF[("Gene Ontology")]:::file
-        GAF[("GO Annotation")]:::file
+  SF[("<div style='width: 120px; text-align: center;'>Study Genes</div>")]:::file
+        PF[("<div style='width: 120px; text-align: center;'>Population Genes</div>")]:::file
+        GOF[("<div style='width: 120px; text-align: center;'>Gene Ontology</div>")]:::file
+        GAF[("<div style='width: 120px; text-align: center;'>GO Annotation</div>")]:::file
 
-        AnnotationIndex["Annotation Index"]:::struct
-        AnnotationMap["Annotation Map"]:::struct
+        AnnotationIndex["AnnotationIndex"]:::struct
 
         SF & PF & GOF & GAF --> AnnotationIndex
-        SF & PF & GOF & GAF --> AnnotationMap
     end
 
     subgraph Analysis ["Enrichment Analysis"]
         direction TB
 
-        subgraph Frequentist_Module ["Frequentist"]
+        subgraph Frequentist_Module ["Frequentist Approach"]
             direction TB
-            FreqData["Data Structure"]:::struct
+            subgraph FreqConfig ["Test Configuration"]
+                Background["Background"]:::enumType
+                Correction["Correction"]:::enumType                    
+            end
             FreqTest["Test: Hypergeometric"]:::process
             FreqMeasure["Measure: P-Value"]:::struct
-
-            FreqData --> FreqTest
-            FreqTest -->|Produces| FreqMeasure
+            
+            Background & Correction --> FreqTest
+            FreqTest --> FreqMeasure
         end
 
-        subgraph Bayesian_Module ["Bayesian"]
+        subgraph Bayesian_Module ["Bayesian Approach"]
             direction TB
-            subgraph BayesianData["Data Structure"]
+            subgraph BayesianData ["Data Structures"]
                 Model["Model: OrModel"]:::struct
                 Cache["Cache: OrCache"]:::struct
-                State["State: State"]:::struct
+                State["State: MgsaState"]:::struct
             end
 
             Algorithm["Algorithm: Metropolis-Hastings"]:::process
-            BayesMeasure["Measure: Probability"]:::struct
+            BayesMeasure["Measure: Posterior Probability"]:::struct
 
             Model & Cache & State --> Algorithm
-            Algorithm -->|Create| BayesMeasure
+            Algorithm --> BayesMeasure
         end
     end
 
-    AnnotationIndex & AnnotationMap --> FreqData
-    AnnotationIndex & AnnotationMap --> BayesianData
+    BranchDec{"Method Selection"}:::decision
 
-    BranchDec -.-> Frequentist_Module
-    BranchDec -.-> Bayesian_Module
+    AnnotationIndex --> BranchDec
 
-    subgraph Output_Phase ["Output Generation"]
-        Result["AnalysisResult"]:::process
+    BranchDec --> FreqConfig
+    BranchDec --> BayesianData
+
+    subgraph Output_Phase ["Output"]
+        direction TB
+        Result["AnalysisResult"]:::struct
         Writer["CSV Writer"]:::process
-        OutputFile[("output/enrichment_result.csv")]:::file
+        OutputFile[("result.csv")]:::file
 
         FreqMeasure --> Result
         BayesMeasure --> Result
