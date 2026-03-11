@@ -1,0 +1,11 @@
+{
+  "study_genes_path": "examples/go0090717/study_genes.txt",
+  "population_genes_path": "examples/go0090717/population_genes.txt",
+  "go_path": "data/go-basic.json",
+  "goa_path": "data/goa_human.gaf",
+  "method": {
+    "method": "frequentist",
+    "topology": "standard",
+    "correction": "bonferroni"
+  }
+}
