@@ -13,9 +13,9 @@ pub trait Proposer<S: State> {
 
     /// Calculates log q(x'|x), up to an additive constant.
     ///
-    /// Constant factors that are identical for the forward and reverse proposals — such as
+    /// Constant factors that are identical for the forward and reverse proposals - such as
     /// normalisation constants, symmetric density terms, or terms depending only on unchanged
-    /// parts of the state — may be omitted, because this value is only used inside
+    /// parts of the state - may be omitted, because this value is only used inside
     /// `log_proposal_ratio` where such terms cancel.
     fn log_proposal(&self, state: &S) -> f64;
 
@@ -52,7 +52,7 @@ impl Proposer<TermState> for TermToggleProposer {
     }
 
     fn log_proposal(&self, state: &TermState) -> f64 {
-        // log q(x'|x) = -ln(N). Exact — no constant factors omitted.
+        // log q(x'|x) = -ln(N). Exact - no constant factors omitted.
         let n_terms = state.n_terms();
         -(n_terms as f64).ln()
     }
@@ -126,7 +126,7 @@ impl Proposer<TermState> for TermToggleSwapProposer {
     }
 
     fn log_proposal(&self, state: &TermState) -> f64 {
-        // log q(x'|x) = -ln(M). Exact — no constant factors omitted.
+        // log q(x'|x) = -ln(M). Exact - no constant factors omitted.
         let n_terms = state.n_terms();
         let n_active = state.n_active();
         let n_inactive = state.n_inactive();

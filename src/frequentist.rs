@@ -1,10 +1,10 @@
 mod algorithm;
 pub mod analysis;
+mod background;
 mod correction;
 mod distribution;
 mod measure;
-mod topology;
 
 pub use correction::Correction;
 
-pub use topology::Topology;
+pub use background::Background;

@@ -30,7 +30,7 @@ rand = "0.10.0"
 rand_distr = "0.6.0"
 flate2 = "1.1.9"
 ureq = "3.2.0"
-chrono = "0.4.44"
+chrono = "^0.4"
 
 [dev-dependencies]
 rstest = "0.26.1"

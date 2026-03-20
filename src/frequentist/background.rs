@@ -18,24 +18,23 @@ pub trait Restrict {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "lowercase")]
-pub enum Topology {
+pub enum Background {
     Standard,
     ParentUnion,
     ParentIntersection,
 }
 
-impl Topology {
-    pub fn all() -> &'static [Topology] {
+impl Background {
+    pub fn all() -> &'static [Background] {
         &[
-            Topology::Standard,
-            Topology::ParentUnion,
-            Topology::ParentIntersection,
+            Background::Standard,
+            Background::ParentUnion,
+            Background::ParentIntersection,
         ]
     }
 }
 
-impl Restrict for Topology {
+impl Restrict for Background {
     fn restrict(
         &self,
         term_idx: usize,
@@ -43,8 +42,8 @@ impl Restrict for Topology {
         ontology: &FullCsrOntology,
     ) -> IndexSet<usize> {
         match self {
-            Topology::Standard => (0..annotations.get_genes().len()).collect(),
-            Topology::ParentUnion => {
+            Background::Standard => (0..annotations.get_genes().len()).collect(),
+            Background::ParentUnion => {
                 let term_id = annotations.get_term_by_idx(term_idx);
 
                 let parent_gene_sets: Vec<&IndexSet<usize>> = ontology
@@ -63,7 +62,7 @@ impl Restrict for Topology {
                 }
                 union
             }
-            Topology::ParentIntersection => {
+            Background::ParentIntersection => {
                 let term_id = annotations.get_term_by_idx(term_idx);
                 let parent_gene_sets: Vec<&IndexSet<usize>> = ontology
                     .iter_parent_ids(term_id)
@@ -86,9 +85,9 @@ impl Restrict for Topology {
 
     fn name(&self) -> &'static str {
         match self {
-            Topology::Standard => "Standard",
-            Topology::ParentUnion => "Parent Union",
-            Topology::ParentIntersection => "Parent Intersection",
+            Background::Standard => "Standard",
+            Background::ParentUnion => "Parent Union",
+            Background::ParentIntersection => "Parent Intersection",
         }
     }
 }

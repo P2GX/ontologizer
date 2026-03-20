@@ -4,6 +4,6 @@
   "go_path": "data/go-basic.json",
   "goa_path": "data/goa_human.gaf",
   "method": {
-    "method": "frequentist"
+    "method": "Bayesian"
   }
 }

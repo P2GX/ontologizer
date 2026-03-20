@@ -4,8 +4,8 @@
   "go_path": "data/go-basic.json",
   "goa_path": "data/goa_human.gaf",
   "method": {
-    "method": "frequentist",
-    "topology": "standard",
-    "correction": "bonferroni"
+    "method": "Frequentist",
+    "background": "Standard",
+    "correction": "Bonferroni"
   }
 }

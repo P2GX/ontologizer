@@ -32,50 +32,52 @@ cargo run --release
 Or point to a specific example config:
 
 ```bash
-cargo run --release -- examples/yeast/config.json
-cargo run --release -- examples/go0090717/config.json
+cargo run --release -- examples/yeast/yeast_config.json
+cargo run --release -- examples/human/go0090717_config.json
 ```
 
-Results are written to `output/enrichment_result.csv`.
+Results are written to `output/enrichment_result_YYYY_MM_DD_HH_MM_SS.csv`.
 
 ### 3. Build the binary
 
 ```bash
-cargo build --release --features cli
+cargo build --release
 ./target/release/ontologizer examples/yeast/config.json
 ```
 
 ## Configuration
 
-Each example ships with a ready-to-use `config.json`. The schema is:
+Each example comes with a ready-to-use `config.json`. The schema is:
 
 ```json
 {
-  "study_genes_path": "examples/yeast/study_genes.txt",
-  "population_genes_path": "examples/yeast/population_genes.txt",
+  "study_genes_path": "examples/ORGANISM/NAME_study_genes.txt",
+  "population_genes_path": "examples/ORGANISM/NAME_pop_genes.txt",
   "go_path": "data/go-basic.json",
   "goa_path": "data/goa_yeast.gaf",
   "method": {
-    "method": "bayesian"
+    "method": "Bayesian"
   }
 }
 ```
 
-For frequentist analysis:
+**Method otions:** `Bayesian`, `Frequentist`.
+
+For frequentist analysis two further parameters must be passed
 
 ```json
 {
   "method": {
-    "method": "frequentist",
-    "topology": "standard",
-    "correction": "bonferroni"
+    "method": "Frequentist",
+    "background": "Standard",
+    "correction": "Bonferroni"
   }
 }
 ```
 
-**Topology options:** `standard`, `parentUnion`, `parentIntersection`
+**Background options:** `Standard`, `ParentUnion`, `ParentIntersection`
 
-**Correction options:** `bonferroni`, `bonferroniHolm`, `benjaminiHochberg`, `none`
+**Correction options:** `Bonferroni`, `BonferroniHolm`, `BenjaminiHochberg`, `None`
 
 ## Architecture
 

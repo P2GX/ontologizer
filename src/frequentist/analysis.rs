@@ -5,10 +5,10 @@ use crate::core::AnnotationIndex;
 use crate::core::result::AnalysisResult;
 use crate::frequentist;
 use crate::frequentist::algorithm::{OneSidedEnrichmentTest, StatisticalTest};
+use crate::frequentist::background::Restrict;
 use crate::frequentist::correction::Adjustment;
 use crate::frequentist::distribution::{Hypergeometric, LogFactorialCache};
 use crate::frequentist::measure::PValue;
-use crate::frequentist::topology::Restrict;
 use ontolius::ontology::csr::FullCsrOntology;
 
 #[allow(non_snake_case)]
@@ -16,7 +16,7 @@ pub fn analysis(
     ontology: &FullCsrOntology,
     annotations: &AnnotationIndex,
     study_genes: &HashSet<String>,
-    topology: &frequentist::Topology,
+    topology: &frequentist::Background,
     correction: &frequentist::Correction,
 ) -> AnalysisResult {
     let N_pop = annotations.get_genes().len();
@@ -67,9 +67,9 @@ pub fn analysis(
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::Background;
     use crate::Correction;
     use crate::GeneSet;
-    use crate::Topology;
     use crate::core::result::Measure;
     use csv::Writer;
     use oboannotation::go::{GoAnnotations, GoGafAnnotationLoader};
@@ -192,7 +192,7 @@ mod test {
             &ontology,
             &annotation_index,
             &study_genes.recognized_genes(),
-            &Topology::Standard,
+            &Background::Standard,
             &Correction::None,
         );
 

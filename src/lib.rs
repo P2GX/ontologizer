@@ -5,16 +5,16 @@ mod frequentist;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(tag = "method", rename_all = "lowercase")]
+#[serde(tag = "method")]
 pub enum Method {
     Frequentist {
-        topology: Topology,
+        background: Background,
         correction: Correction,
     },
     Bayesian,
 }
 
-pub use frequentist::{Correction, Topology};
+pub use frequentist::{Background, Correction};
 
 pub use core::{AnalysisResult, AnnotationIndex, EnrichmentItem, GeneSet, Ontology};
 
