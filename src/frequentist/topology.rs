@@ -16,6 +16,7 @@ pub trait Restrict {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "lowercase")]
 pub enum Topology {
     Standard,
     ParentUnion,

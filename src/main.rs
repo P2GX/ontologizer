@@ -4,6 +4,7 @@ use ontolius::io::OntologyLoaderBuilder;
 use ontolius::ontology::csr::FullCsrOntology;
 use ontologizer::{AnalysisResult, AnnotationIndex, GeneSet, Method};
 
+use chrono::Utc;
 use flate2::read::GzDecoder;
 use serde::Deserialize;
 use std::env;
@@ -98,7 +99,9 @@ pub fn main() {
         process::exit(1);
     });
 
-    let output_filename: PathBuf = result_dir.join("enrichment_result.csv");
+    let timestamp = Utc::now().format("%Y_%m_%d_%H_%M_%S");
+    let filename = format!("enrichment_result_{}.csv", timestamp);
+    let output_filename: PathBuf = result_dir.join(filename);
 
     // ------ Default Data Locations ------
     let ontology_path: PathBuf = current_dir.join(&config.go_path);

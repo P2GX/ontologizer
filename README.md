@@ -8,28 +8,6 @@ hypergeometric test) and Bayesian (inference) methods.
 Gene symbols in the study and population gene sets must match the gene symbols in the `.gaf` annotation file —
 specifically column 2 (`DB_Object_Symbol`).
 
-## Project Layout
-
-```
-ontologizer/
-├── examples/                    # Example inputs (tracked in git)
-│   ├── yeast/
-│   │   ├── study_genes.txt      # 493 yeast study genes
-│   │   ├── population_genes.txt # 6010 yeast background genes
-│   │   └── config.json          # Bayesian analysis config
-│   └── go0090717/
-│       ├── study_genes.txt      # Study genes for GO:0090717
-│       ├── population_genes.txt # Background genes
-│       └── config.json          # Frequentist analysis config
-│
-├── data/                        # Downloaded at runtime (gitignored)
-│   ├── go-basic.json            # Auto-downloaded from GO
-│   └── goa_yeast.gaf            # Provide your own annotation file
-│
-└── output/                      # Analysis results (gitignored)
-    └── enrichment_result.csv
-```
-
 ## Quick Start
 
 ### 1. Provide a GO annotation file
@@ -48,14 +26,14 @@ The GO ontology (`data/go-basic.json`) is downloaded automatically on first run.
 Run the yeast Bayesian example (uses `config.json` in the project root by default):
 
 ```bash
-cargo run --release --features cli
+cargo run --release
 ```
 
 Or point to a specific example config:
 
 ```bash
-cargo run --release --features cli -- examples/yeast/config.json
-cargo run --release --features cli -- examples/go0090717/config.json
+cargo run --release -- examples/yeast/config.json
+cargo run --release -- examples/go0090717/config.json
 ```
 
 Results are written to `output/enrichment_result.csv`.
