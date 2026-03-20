@@ -94,28 +94,29 @@ impl AnnotationIndex {
         }
 
         // 4. Build Final Integer Matrices
+        fn to_indices<T, M>(set: Option<&HashSet<T>>, index_map: &IndexSet<M>, msg: &str) -> IndexSet<usize>
+        where
+            T: std::hash::Hash + Eq,
+            M: std::hash::Hash + Eq + std::borrow::Borrow<T>,
+        {
+            match set {
+                Some(s) => {
+                    let mut idxs: IndexSet<usize> =
+                        s.iter().map(|v| index_map.get_index_of(v).expect(msg)).collect();
+                    idxs.sort_unstable();
+                    idxs
+                }
+                None => IndexSet::new(),
+            }
+        }
+
         // A. Term Matrices (Iterate term_map)
         let mut term_to_gene_dense = Vec::with_capacity(term_map.len());
         let mut term_to_gene_sparse = Vec::with_capacity(term_map.len());
 
         for term_id in &term_map {
-            // Helper to convert Set<GeneSymbol> -> Sorted Vec<usize>
-            let to_indices = |set: Option<&HashSet<String>>| -> IndexSet<usize> {
-                match set {
-                    Some(s) => {
-                        let mut idxs: IndexSet<usize> = s
-                            .iter()
-                            .map(|g| gene_map.get_index_of(g).expect("Gene index missing"))
-                            .collect();
-                        idxs.sort_unstable();
-                        idxs
-                    }
-                    None => IndexSet::new(), // Term exists in Dense but not Sparse -> Empty list
-                }
-            };
-
-            term_to_gene_dense.push(to_indices(named_term_to_gene_dense.get(term_id)));
-            term_to_gene_sparse.push(to_indices(named_term_to_gene_sparse.get(term_id)));
+            term_to_gene_dense.push(to_indices(named_term_to_gene_dense.get(term_id), &gene_map, "Gene index missing"));
+            term_to_gene_sparse.push(to_indices(named_term_to_gene_sparse.get(term_id), &gene_map, "Gene index missing"));
         }
 
         // B. Gene Matrices (Iterate gene_map)
@@ -123,23 +124,8 @@ impl AnnotationIndex {
         let mut gene_to_term_sparse = Vec::with_capacity(gene_map.len());
 
         for gene_sym in &gene_map {
-            // Helper to convert Set<TermId> -> Sorted Vec<usize>
-            let to_indices = |set: Option<&HashSet<TermId>>| -> IndexSet<usize> {
-                match set {
-                    Some(s) => {
-                        let mut idxs: IndexSet<usize> = s
-                            .iter()
-                            .map(|t| term_map.get_index_of(t).expect("Term index missing"))
-                            .collect();
-                        idxs.sort_unstable();
-                        idxs
-                    }
-                    None => IndexSet::new(),
-                }
-            };
-
-            gene_to_term_dense.push(to_indices(named_gene_to_term_dense.get(gene_sym)));
-            gene_to_term_sparse.push(to_indices(named_gene_to_term_sparse.get(gene_sym)));
+            gene_to_term_dense.push(to_indices(named_gene_to_term_dense.get(gene_sym), &term_map, "Term index missing"));
+            gene_to_term_sparse.push(to_indices(named_gene_to_term_sparse.get(gene_sym), &term_map, "Term index missing"));
         }
 
         Self {
@@ -217,11 +203,11 @@ impl AnnotationIndex {
         &self.gene_map
     }
 
-    pub fn get_gene_by_idx(&self, i: usize) -> &String {
+    pub fn get_gene_by_idx(&self, i: usize) -> &str {
         &self.gene_map[i]
     }
 
-    pub fn get_idx_by_gene(&self, gene: &String) -> Option<usize> {
+    pub fn get_idx_by_gene(&self, gene: &str) -> Option<usize> {
         self.gene_map.get_index_of(gene)
     }
 
@@ -233,7 +219,7 @@ impl AnnotationIndex {
         &self.gene_to_term_dense[i]
     }
 
-    pub fn get_terms_to_genes(&self, dense: bool) -> &Vec<IndexSet<usize>> {
+    pub fn get_terms_to_genes(&self, dense: bool) -> &[IndexSet<usize>] {
         if dense {
             &self.term_to_gene_dense
         } else {
@@ -241,7 +227,7 @@ impl AnnotationIndex {
         }
     }
 
-    pub fn get_genes_to_terms(&self, dense: bool) -> &Vec<IndexSet<usize>> {
+    pub fn get_genes_to_terms(&self, dense: bool) -> &[IndexSet<usize>] {
         if dense {
             &self.gene_to_term_dense
         } else {

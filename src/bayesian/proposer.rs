@@ -30,18 +30,22 @@ pub trait Proposer<S: State> {
 /// A simple proposer that only toggles terms active/inactive.
 ///
 /// It chooses a term uniformly at random and flips its state.
+/// Only used in tests as a simpler baseline for small state spaces.
+#[cfg(test)]
 pub struct TermToggleProposer;
+
+#[cfg(test)]
 impl TermToggleProposer {
     pub fn new() -> Self {
         Self
     }
 }
 
+#[cfg(test)]
 impl Proposer<TermState> for TermToggleProposer {
     /// Draw a random number representing the index to all possible toggles and swaps and propose
     /// the corresponding toggle or swap.
     fn propose<R: Rng>(&self, state: &TermState, rng: &mut R) -> <TermState as State>::Move {
-        // Uniformly select a term inde
         let n_terms = state.n_terms();
         let idx = rng.random_range(0..n_terms);
         ToggleSwap::Toggle(idx)
@@ -53,7 +57,6 @@ impl Proposer<TermState> for TermToggleProposer {
         -(n_terms as f64).ln()
     }
 
-    ///
     fn log_proposal_ratio(
         &self,
         _state: &TermState,
@@ -65,7 +68,7 @@ impl Proposer<TermState> for TermToggleProposer {
     }
 }
 
-// Implement for MgsaState wrapper
+#[cfg(test)]
 impl Proposer<MgsaState> for TermToggleProposer {
     fn propose<R: Rng>(&self, state: &MgsaState, rng: &mut R) -> MgsaMove {
         let m = <Self as Proposer<TermState>>::propose(self, &state.terms, rng);

@@ -1,3 +1,5 @@
+use std::cmp::{max, min};
+
 pub trait DiscreteDistribution {
     /// Probability Mass Function: P(X = k)
     fn pmf(&self, k: usize) -> f64;
@@ -10,15 +12,13 @@ pub trait DiscreteDistribution {
     fn sf(&self, k: usize) -> f64;
 }
 
-use std::cmp::{max, min};
-
 pub struct LogFactorialCache {
     log_factorials: Vec<f64>,
 }
 
 impl LogFactorialCache {
     pub fn new(max_n: usize) -> Self {
-        let mut log_facts = vec![];
+        let mut log_facts = Vec::with_capacity(max_n + 1);
         log_facts.push(0.0); // log(0!)
 
         let mut current = 0.0;

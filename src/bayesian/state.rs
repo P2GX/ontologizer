@@ -261,13 +261,15 @@ impl MgsaState {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn n_terms(&self) -> usize {
         self.terms.n_terms()
     }
-
+    #[allow(dead_code)]
     pub(crate) fn n_terms_active(&self) -> usize {
         self.terms.active_indices.len()
     }
+    #[allow(dead_code)]
     pub(crate) fn n_terms_inactive(&self) -> usize {
         self.terms.inactive_indices.len()
     }

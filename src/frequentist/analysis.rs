@@ -59,8 +59,8 @@ pub fn analysis(
 
     result.with_meta(&[
         ("Method", "Frequentist"),
-        ("Topology:", &topology),
-        ("Correction:", &correction),
+        ("Topology", &topology),
+        ("Correction", &correction),
     ])
 }
 

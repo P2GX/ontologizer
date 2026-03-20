@@ -13,12 +13,10 @@ pub struct GeneSet {
 
 impl GeneSet {
     pub fn from_file(path: &str, annotations: &GoAnnotations) -> Result<Self, String> {
-        // Open File
         let file =
             File::open(path).map_err(|err| format!("Failed to open file '{}': {}", path, err))?;
         let reader = BufReader::new(file);
 
-        // Load Genes from File
         let mut genes: HashSet<String> = HashSet::new();
         for (i, line) in reader.lines().enumerate() {
             let line = line.map_err(|err| format!("Failed to read line {}: {}", i + 1, err))?;

@@ -4,7 +4,10 @@ pub trait Adjustment {
     fn adjust<T, F>(&self, items: &mut [T], extract: F)
     where
         F: Fn(&mut T) -> &mut f64;
+
+    #[allow(dead_code)]
     fn name(&self) -> &'static str;
+    // Used by the Ontologizer frontend
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

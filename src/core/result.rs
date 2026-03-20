@@ -40,7 +40,7 @@ pub struct EnrichmentItem {
     pub diagnostics: Option<String>,
 }
 
-fn serialize_genes<S>(genes: &Vec<String>, serializer: S) -> Result<S::Ok, S::Error>
+fn serialize_genes<S>(genes: &[String], serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
@@ -56,10 +56,10 @@ pub struct AnalysisResult {
 
 impl AnalysisResult {
     pub fn from_measures<M: Measure>(
-        measures: &Vec<M>,
+        measures: &[M],
         ontology: &FullCsrOntology,
         annotation_index: &AnnotationIndex,
-        observed_genes: &Vec<bool>,
+        observed_genes: &[bool],
     ) -> Self {
         let term_map = annotation_index.get_terms();
         let gene_map = annotation_index.get_genes();

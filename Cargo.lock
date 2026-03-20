@@ -836,7 +836,6 @@ name = "ontologizer"
 version = "0.1.1"
 dependencies = [
  "chrono",
- "clap",
  "csv",
  "flate2",
  "float_eq",

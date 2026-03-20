@@ -93,8 +93,8 @@ pub fn analysis(
 
     // --- Model & State Initialization ---
     let model = OrModel::new(
-        terms_to_genes.clone(),
-        obs_genes.clone(),
+        terms_to_genes,
+        &obs_genes,
         p_init,
         alpha_init,
         beta_init,

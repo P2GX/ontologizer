@@ -81,8 +81,8 @@ pub struct OrModel {
 
 impl OrModel {
     pub fn new(
-        terms_to_genes: Vec<IndexSet<usize>>,
-        obs_genes: Vec<bool>,
+        terms_to_genes: &[IndexSet<usize>],
+        obs_genes: &[bool],
         p: f64,
         alpha: f64,
         beta: f64,
@@ -98,8 +98,8 @@ impl OrModel {
         let beta_prior = Self::set_unimodal_beta_prior(beta, VARIANCE_SCALE);
 
         Self {
-            terms_to_genes,
-            obs_genes: obs_genes,
+            terms_to_genes: terms_to_genes.to_vec(),
+            obs_genes: obs_genes.to_vec(),
             p_prior,
             alpha_prior,
             beta_prior,

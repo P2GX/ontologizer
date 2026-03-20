@@ -38,7 +38,7 @@ where
 
     /// Calculates the log proposal ratio: log( q(x'|x) / q(x|x') )
     fn get_log_proposal_ratio(
-        &mut self,
+        &self,
         state: &mut M::State,
         m: &<M::State as State>::Move,
     ) -> f64 {
@@ -56,7 +56,7 @@ where
     }
 
     /// Calculates the log prior ratio: log( P(x') / P(x) )
-    fn get_log_prior_ratio(&mut self, state: &mut M::State, m: &<M::State as State>::Move) -> f64 {
+    fn get_log_prior_ratio(&self, state: &mut M::State, m: &<M::State as State>::Move) -> f64 {
         match self.model.log_prior_ratio(state, &m) {
             Some(log_p_ratio) => log_p_ratio,
             None => {
@@ -71,7 +71,7 @@ where
 
     /// Calculates the log likelihood ratio: log( L(x') / L(x) )
     fn get_log_likelihood_ratio(
-        &mut self,
+        &self,
         state: &mut M::State,
         cache: &mut M::Cache,
         m: &<M::State as State>::Move,
@@ -170,15 +170,15 @@ mod test_parameter_inference {
 
     fn test_parameter_inference(
         terms: Vec<bool>,
-        obs_genes: &Vec<bool>,
-        terms_to_obs_genes: &Vec<IndexSet<usize>>,
+        obs_genes: &[bool],
+        terms_to_obs_genes: &[IndexSet<usize>],
         p: f64,
         alpha: f64,
         beta: f64,
     ) {
         let model = OrModel::new(
-            terms_to_obs_genes.clone(),
-            obs_genes.clone(),
+            terms_to_obs_genes,
+            obs_genes,
             p,
             alpha,
             beta,
@@ -296,14 +296,14 @@ mod test {
 
     fn test_term_inference(
         terms: Vec<bool>,
-        obs_genes: &Vec<bool>,
-        terms_to_genes: &Vec<IndexSet<usize>>,
+        obs_genes: &[bool],
+        terms_to_genes: &[IndexSet<usize>],
         p: f64,
         alpha: f64,
         beta: f64,
         posterior: Vec<f64>,
     ) {
-        let model = OrModel::new(terms_to_genes.clone(), obs_genes.clone(), p, alpha, beta);
+        let model = OrModel::new(&terms_to_genes, &obs_genes, p, alpha, beta);
         let mut state = MgsaState::new(terms, p, alpha, beta);
         let proposer = TermToggleProposer::new();
         let mut algorithm = MetropolisHastings::new(model, proposer, 10_000, 0);
@@ -534,7 +534,7 @@ mod test {
 
         let obs_genes = vec![true, true, true, false, false, false, false];
 
-        let model = OrModel::new(terms_to_genes.clone(), obs_genes.clone(), p, alpha, beta);
+        let model = OrModel::new(&terms_to_genes, &obs_genes, p, alpha, beta);
         let mut state = MgsaState::new(terms, p, alpha, beta);
         let proposer = TermToggleProposer::new();
         let mut algorithm = MetropolisHastings::new(model, proposer, 10_000, 0);
@@ -567,7 +567,7 @@ mod test {
         obs_genes[0] = true;
         terms_to_genes[0] = indexset! {0};
 
-        let model = OrModel::new(terms_to_genes.clone(), obs_genes.clone(), p, alpha, beta);
+        let model = OrModel::new(&terms_to_genes, &obs_genes, p, alpha, beta);
         let mut state = MgsaState::new(terms, p, alpha, beta);
         let proposer = TermToggleSwapProposer::new();
         let mut algorithm = MetropolisHastings::new(model, proposer, 500_000, 100_000);

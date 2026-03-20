@@ -12,7 +12,9 @@ pub trait Restrict {
         ontology: &FullCsrOntology,
     ) -> IndexSet<usize>;
 
+    #[allow(dead_code)]
     fn name(&self) -> &'static str;
+    // Used by the Ontologizer frontend
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -71,10 +73,6 @@ impl Restrict for Topology {
 
                 if parent_gene_sets.is_empty() {
                     return IndexSet::new();
-                }
-
-                if parent_gene_sets.is_empty() {
-                    return (0..annotations.get_genes().len()).collect();
                 }
 
                 let mut intersection = parent_gene_sets[0].clone();
