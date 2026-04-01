@@ -49,12 +49,12 @@ impl AnnotationIndex {
     pub fn new(
         annotations: GoAnnotations,
         ontology: &FullCsrOntology,
-        pop_genes: Option<&HashSet<String>>,
+        pop_genes: &HashSet<String>,
     ) -> Self {
         // 1. Load and filter Annotations (String-based)
         let raw_named_gene_to_term_sparse = get_annotation_map(&annotations);
         let named_gene_to_term_sparse =
-            Self::filter_annotations(raw_named_gene_to_term_sparse, pop_genes);
+            Self::refine_annotations(raw_named_gene_to_term_sparse, pop_genes);
 
         // 2. Build the universe (Indices)
         let (gene_map, term_map) = Self::build_indices(&named_gene_to_term_sparse, ontology);
@@ -94,15 +94,21 @@ impl AnnotationIndex {
         }
 
         // 4. Build Final Integer Matrices
-        fn to_indices<T, M>(set: Option<&HashSet<T>>, index_map: &IndexSet<M>, msg: &str) -> IndexSet<usize>
+        fn to_indices<T, M>(
+            set: Option<&HashSet<T>>,
+            index_map: &IndexSet<M>,
+            msg: &str,
+        ) -> IndexSet<usize>
         where
             T: std::hash::Hash + Eq,
             M: std::hash::Hash + Eq + std::borrow::Borrow<T>,
         {
             match set {
                 Some(s) => {
-                    let mut idxs: IndexSet<usize> =
-                        s.iter().map(|v| index_map.get_index_of(v).expect(msg)).collect();
+                    let mut idxs: IndexSet<usize> = s
+                        .iter()
+                        .map(|v| index_map.get_index_of(v).expect(msg))
+                        .collect();
                     idxs.sort_unstable();
                     idxs
                 }
@@ -115,8 +121,16 @@ impl AnnotationIndex {
         let mut term_to_gene_sparse = Vec::with_capacity(term_map.len());
 
         for term_id in &term_map {
-            term_to_gene_dense.push(to_indices(named_term_to_gene_dense.get(term_id), &gene_map, "Gene index missing"));
-            term_to_gene_sparse.push(to_indices(named_term_to_gene_sparse.get(term_id), &gene_map, "Gene index missing"));
+            term_to_gene_dense.push(to_indices(
+                named_term_to_gene_dense.get(term_id),
+                &gene_map,
+                "Gene index missing",
+            ));
+            term_to_gene_sparse.push(to_indices(
+                named_term_to_gene_sparse.get(term_id),
+                &gene_map,
+                "Gene index missing",
+            ));
         }
 
         // B. Gene Matrices (Iterate gene_map)
@@ -124,8 +138,16 @@ impl AnnotationIndex {
         let mut gene_to_term_sparse = Vec::with_capacity(gene_map.len());
 
         for gene_sym in &gene_map {
-            gene_to_term_dense.push(to_indices(named_gene_to_term_dense.get(gene_sym), &term_map, "Term index missing"));
-            gene_to_term_sparse.push(to_indices(named_gene_to_term_sparse.get(gene_sym), &term_map, "Term index missing"));
+            gene_to_term_dense.push(to_indices(
+                named_gene_to_term_dense.get(gene_sym),
+                &term_map,
+                "Term index missing",
+            ));
+            gene_to_term_sparse.push(to_indices(
+                named_gene_to_term_sparse.get(gene_sym),
+                &term_map,
+                "Term index missing",
+            ));
         }
 
         Self {
@@ -140,23 +162,23 @@ impl AnnotationIndex {
     }
 
     /// Helper: Filter raw annotations to only include genes in the population set.
-    fn filter_annotations(
+    fn refine_annotations(
         raw_map: HashMap<String, HashSet<TermId>>,
-        pop_genes: Option<&HashSet<String>>,
+        pop_genes: &HashSet<String>,
     ) -> HashMap<String, HashSet<TermId>> {
-        match pop_genes {
-            Some(pop) => {
-                let mut filtered_map = HashMap::new();
-                for gene in pop {
-                    // Only create an entry if the gene exists in the source annotations
-                    if let Some(terms) = raw_map.get(gene) {
-                        filtered_map.insert(gene.clone(), terms.clone());
-                    }
+        let mut filtered_map = HashMap::new();
+        for gene in pop_genes {
+            // Only create an entry if the gene exists in the source annotations
+            match raw_map.get(gene) {
+                None => {
+                    filtered_map.insert(gene.clone(), HashSet::new());
                 }
-                filtered_map
+                Some(terms) => {
+                    filtered_map.insert(gene.clone(), terms.clone());
+                }
             }
-            None => raw_map,
         }
+        filtered_map
     }
 
     /// Helper: Collect all unique Genes and Terms (including inferred ancestors) to build IndexSets.

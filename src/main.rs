@@ -4,7 +4,6 @@ use ontolius::io::OntologyLoaderBuilder;
 use ontolius::ontology::csr::FullCsrOntology;
 use ontologizer::{AnalysisResult, AnnotationIndex, GeneSet, Method};
 
-use chrono::Utc;
 use flate2::read::GzDecoder;
 use serde::Deserialize;
 use std::env;
@@ -49,17 +48,18 @@ fn ensure_cached(
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
-    pub study_genes_path: String,
-    pub population_genes_path: String,
-    pub go_path: String,
-    pub goa_path: String,
+    pub study_file: String,
+    pub pop_file: String,
+    pub go_file: String,
+    pub goa_file: String,
+    pub out_file: String,
     pub method: Method,
 }
 
 pub fn main() {
     let args: Vec<String> = env::args().collect();
 
-    let config_path = if args.len() > 1 {
+    let config_file = if args.len() > 1 {
         &args[1]
     } else {
         println!("No config file provided. Loading from 'config.json'");
@@ -67,8 +67,8 @@ pub fn main() {
     };
 
     // Open the configuration file
-    let file = File::open(config_path).unwrap_or_else(|err| {
-        eprintln!("Error opening config file '{}': {}", config_path, err);
+    let file = File::open(config_file).unwrap_or_else(|err| {
+        eprintln!("Error opening config file '{}': {}", config_file, err);
         eprintln!("Usage: cargo run -- [path/to/config.json]");
         process::exit(1);
     });
@@ -84,28 +84,27 @@ pub fn main() {
         eprintln!("Failed to determine current directory: {}", err);
         process::exit(1);
     });
-    let data_dir: PathBuf = current_dir.join("data");
-    fs::create_dir_all(&data_dir).unwrap_or_else(|err| {
-        eprintln!("Failed to create data directory at {:?}: {}", data_dir, err);
-        process::exit(1);
-    });
 
-    let result_dir: PathBuf = current_dir.join("output");
-    fs::create_dir_all(&result_dir).unwrap_or_else(|err| {
+    let out_file: PathBuf = PathBuf::from(&config.out_file);
+    let out_dir = out_file.parent().unwrap_or_else(|| {
         eprintln!(
-            "Failed to create output directory at {:?}: {}",
-            result_dir, err
+            "No parent directoy for Output file at: {:?}.",
+            &config.out_file
         );
         process::exit(1);
     });
 
-    let timestamp = Utc::now().format("%Y_%m_%d_%H_%M_%S");
-    let filename = format!("enrichment_result_{}.csv", timestamp);
-    let output_filename: PathBuf = result_dir.join(filename);
+    fs::create_dir_all(out_dir).unwrap_or_else(|err| {
+        eprintln!(
+            "Failed to create output directory at {:?}: {}",
+            &config.out_file, err
+        );
+        process::exit(1);
+    });
 
     // ------ Default Data Locations ------
-    let ontology_path: PathBuf = current_dir.join(&config.go_path);
-    let annotation_path: PathBuf = current_dir.join(&config.goa_path);
+    let ontology_path: PathBuf = current_dir.join(&config.go_file);
+    let annotation_path: PathBuf = current_dir.join(&config.goa_file);
 
     // ------ Ensure Gene Ontology exist ------
     ensure_cached(GO_URL, &ontology_path, false).unwrap_or_else(|err| {
@@ -135,27 +134,23 @@ pub fn main() {
         });
 
     // ------ Load Gene Sets ------
-    println!("Loading study gene set from {:?}", config.study_genes_path);
-    let study_genes =
-        GeneSet::from_file(&config.study_genes_path, &annotations).unwrap_or_else(|err| {
-            eprintln!("Error loading study genes: {}", err);
-            process::exit(1);
-        });
+    println!("Loading population gene set from {:?}", config.pop_file);
+    let population_genes = GeneSet::from_file(&config.pop_file, None).unwrap_or_else(|err| {
+        eprintln!("Error loading population genes: {}", err);
+        process::exit(1);
+    });
 
-    println!(
-        "Loading population gene set from {:?}",
-        config.population_genes_path
-    );
-    let population_genes = GeneSet::from_file(&config.population_genes_path, &annotations)
+    println!("Loading study gene set from {:?}", config.study_file);
+    let study_genes = GeneSet::from_file(&config.study_file, Some(&population_genes))
         .unwrap_or_else(|err| {
-            eprintln!("Error loading population genes: {}", err);
+            eprintln!("Error loading study genes: {}", err);
             process::exit(1);
         });
 
     let annotation_index = AnnotationIndex::new(
         annotations,
         &ontology,
-        Some(&population_genes.recognized_genes()),
+        population_genes.recognized_genes(),
     );
 
     println!("Starting enrichment analysis...");
@@ -178,14 +173,12 @@ pub fn main() {
     };
 
     // Serialize to CSV
-    println!("Writing results to: {:?}", output_filename);
+    println!("Writing results to: {:?}", out_file);
 
-    results
-        .save_to_csv(&output_filename, true)
-        .unwrap_or_else(|err| {
-            eprintln!("Error writing output file {:?}: {}", output_filename, err);
-            process::exit(1);
-        });
+    results.save_to_csv(&out_file, true).unwrap_or_else(|err| {
+        eprintln!("Error writing output file {:?}: {}", out_file, err);
+        process::exit(1);
+    });
 
     println!("Done!");
 }

@@ -170,13 +170,13 @@ mod test {
             .load_from_path(gaf_path)
             .expect("Could not load GAF file");
 
-        let study_genes =
-            GeneSet::from_file(study_genes_path, &annotations).unwrap_or_else(|err| {
+        let population_genes =
+            GeneSet::from_file(population_genes_path, None).unwrap_or_else(|err| {
                 eprintln!("Error: {}", err);
                 process::exit(1);
             });
 
-        let population_genes = GeneSet::from_file(population_genes_path, &annotations)
+        let study_genes = GeneSet::from_file(study_genes_path, Some(&population_genes))
             .unwrap_or_else(|err| {
                 eprintln!("Error: {}", err);
                 process::exit(1);
@@ -185,7 +185,7 @@ mod test {
         let annotation_index = AnnotationIndex::new(
             annotations,
             &ontology,
-            Some(&population_genes.recognized_genes()),
+            population_genes.recognized_genes(),
         );
 
         let result = analysis(

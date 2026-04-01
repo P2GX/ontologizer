@@ -92,13 +92,7 @@ pub fn analysis(
         .collect();
 
     // --- Model & State Initialization ---
-    let model = OrModel::new(
-        terms_to_genes,
-        &obs_genes,
-        p_init,
-        alpha_init,
-        beta_init,
-    );
+    let model = OrModel::new(terms_to_genes, &obs_genes, p_init, alpha_init, beta_init);
     let mut state = MgsaState::new(vec![false; n_terms], p_init, alpha_init, beta_init);
 
     // --- Algorithm Setup ---
@@ -167,21 +161,22 @@ mod test {
             .load_from_path(gaf_path)
             .expect("Failed to load GAF");
 
-        let study_genes = GeneSet::from_file(study_path, &annotations).unwrap_or_else(|err| {
+        let population_genes = GeneSet::from_file(pop_path, None).unwrap_or_else(|err| {
             eprintln!("Error: {}", err);
             process::exit(1);
         });
 
-        let population_genes = GeneSet::from_file(pop_path, &annotations).unwrap_or_else(|err| {
-            eprintln!("Error: {}", err);
-            process::exit(1);
-        });
+        let study_genes =
+            GeneSet::from_file(study_path, Some(&population_genes)).unwrap_or_else(|err| {
+                eprintln!("Error: {}", err);
+                process::exit(1);
+            });
 
         // Construct the index
         let annotation_index = AnnotationIndex::new(
             annotations,
             &ontology,
-            Some(&population_genes.recognized_genes()),
+            population_genes.recognized_genes(),
         );
 
         (
