@@ -51,10 +51,11 @@ Each example comes with a ready-to-use `config.json`. The schema is:
 
 ```json
 {
-  "study_genes_path": "examples/ORGANISM/NAME_study_genes.txt",
-  "population_genes_path": "examples/ORGANISM/NAME_pop_genes.txt",
-  "go_path": "data/go-basic.json",
-  "goa_path": "data/goa_yeast.gaf",
+  "study_file": "examples/ORGANISM/NAME_study_genes.txt",
+  "pop_file": "examples/ORGANISM/NAME_pop_genes.txt",
+  "go_file": "data/go-basic.json",
+  "goa_file": "data/goa_yeast.gaf",
+  "out_file": "path/to/output.csv",
   "method": {
     "method": "Bayesian"
   }
