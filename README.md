@@ -34,6 +34,7 @@ Or point to a specific example config:
 ```bash
 cargo run --release -- examples/yeast/yeast_config.json
 cargo run --release -- examples/human/go0090717_config.json
+cargo run --release -- examples/human/SRP247679_239_config.json
 ```
 
 Results are written to `output/enrichment_result_YYYY_MM_DD_HH_MM_SS.csv`.
