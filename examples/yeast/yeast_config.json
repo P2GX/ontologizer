@@ -1,8 +1,9 @@
 {
-  "study_genes_path": "examples/yeast/yeast_study_genes.txt",
-  "population_genes_path": "examples/yeast/yeast_pop_genes.txt",
-  "go_path": "data/go-basic.json",
-  "goa_path": "data/goa_yeast.gaf",
+  "study_file": "examples/yeast/yeast_study_genes.txt",
+  "pop_file": "examples/yeast/yeast_pop_genes.txt",
+  "go_file": "data/go-basic.json",
+  "goa_file": "data/goa_yeast.gaf",
+  "out_file": "examples/yeast/yeast_results_freq.csv",
   "method": {
     "method": "Frequentist",
     "background": "ParentUnion",

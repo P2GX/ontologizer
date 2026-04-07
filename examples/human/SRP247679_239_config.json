@@ -1,8 +1,9 @@
 {
-  "study_genes_path": "examples/human/SRP247679_239-study_genes.txt",
-  "population_genes_path": "examples/human/SRP247679_239-pop_genes.txt",
-  "go_path": "data/go-basic.json",
-  "goa_path": "data/goa_human.gaf",
+  "study_file": "examples/human/SRP247679_239-study_genes.txt",
+  "pop_file": "examples/human/SRP247679_239-pop_genes.txt",
+  "go_file": "data/go-basic.json",
+  "goa_file": "data/goa_human.gaf",
+  "out_file": "examples/human/SRP247679_239_results_bayes.csv",
   "method": {
     "method": "Bayesian"
   }
