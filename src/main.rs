@@ -147,11 +147,8 @@ pub fn main() {
             process::exit(1);
         });
 
-    let annotation_index = AnnotationIndex::new(
-        annotations,
-        &ontology,
-        population_genes.recognized_genes(),
-    );
+    let annotation_index =
+        AnnotationIndex::new(annotations, &ontology, study_genes.recognized_genes());
 
     println!("Starting enrichment analysis...");
     let results: AnalysisResult = match config.method {

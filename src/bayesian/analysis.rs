@@ -74,7 +74,7 @@ pub fn analysis(
 
     let p_init = n_min_terms as f64 / n_terms as f64;
     let alpha_init = 0.05;
-    let beta_init = 0.05;
+    let beta_init = 0.20;
 
     let iterations = annotations.get_terms().len() * 5_000;
     let burn_in = annotations.get_terms().len() * 1_000;
@@ -173,11 +173,8 @@ mod test {
             });
 
         // Construct the index
-        let annotation_index = AnnotationIndex::new(
-            annotations,
-            &ontology,
-            population_genes.recognized_genes(),
-        );
+        let annotation_index =
+            AnnotationIndex::new(annotations, &ontology, population_genes.recognized_genes());
 
         (
             ontology,
