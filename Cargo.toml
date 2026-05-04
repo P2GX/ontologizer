@@ -6,6 +6,14 @@ keywords = ["Ontologizer", "Gene_Ontology", "Enrichment_Analysis"]
 description = "todo"
 license = "MIT"
 readme = "README.md"
+exclude = [
+    "data/goa_*.gaf",
+    "data/go-basic.json",
+    "examples/**/*.csv",
+    "output/",
+    "scripts/",
+    "target/",
+]
 
 
 [lib]
@@ -33,6 +41,8 @@ ureq = "3.2.0"
 
 [dev-dependencies]
 rstest = "0.26.1"
+ontolius = "0.5.4"
+oboannotation = { git = "https://github.com/P2GX/oboannotation.git", tag = "v0.1.2" }
 
 [profile.release]
 debug = true

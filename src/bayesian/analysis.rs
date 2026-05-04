@@ -75,7 +75,7 @@ pub fn analysis(
 
     let p_init = n_min_terms as f64 / n_terms as f64;
     let alpha_init = 0.05;
-    let beta_init = 0.20;
+    let beta_init = 0.25;
 
     let iterations = n_terms * 5_000;
     let burn_in = n_terms * 1_000;
@@ -124,12 +124,19 @@ pub fn analysis(
 
     result.sort_by_score(true); // Sort descending by probability
 
+    let p_prior_str = format!("{:.4}", p_init);
+    let alpha_prior_str = format!("{:.4}", alpha_init);
+    let beta_prior_str = format!("{:.4}", beta_init);
+
     let p_str = format!("{:.4}", parameter[0].score());
     let alpha_str = format!("{:.4}", parameter[1].score());
     let beta_str = format!("{:.4}", parameter[2].score());
 
     result.with_meta(&[
         ("Method", "Bayesian"),
+        ("p_prior", &p_prior_str),
+        ("alpha_prior", &alpha_prior_str),
+        ("beta_prior", &beta_prior_str),
         ("p", &p_str),
         ("alpha", &alpha_str),
         ("beta", &beta_str),

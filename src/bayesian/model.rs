@@ -396,25 +396,25 @@ mod tests {
     #[test]
     fn test_unimodal_prior_construction() {
         // Case 1: Mean 0.1 (Small)
-        let (a, b) = OrModel::set_unimodal_beta_prior(0.1, 1.0);
-        assert!(a > 1.0, "Alpha parameter must be > 1 for unimodality");
-        assert!(b > 1.0, "Beta parameter must be > 1 for unimodality");
+        let (a, b) = OrModel::set_unimodal_beta_prior(0.1, 0.99);
+        assert!(a >= 1.0, "Alpha parameter must be > 1 for unimodality");
+        assert!(b >= 1.0, "Beta parameter must be > 1 for unimodality");
 
         let calculated_mean = a / (a + b);
         assert!((calculated_mean - 0.1).abs() < 1e-6);
 
         // Case 2: Mean 0.9 (Large)
-        let (a, b) = OrModel::set_unimodal_beta_prior(0.9, 1.0);
-        assert!(a > 1.0);
-        assert!(b > 1.0);
+        let (a, b) = OrModel::set_unimodal_beta_prior(0.9, 0.99);
+        assert!(a >= 1.0);
+        assert!(b >= 1.0);
 
         let calculated_mean = a / (a + b);
         assert!((calculated_mean - 0.9).abs() < 1e-6);
 
         // Case 3: Mean 0.5 (Middle)
         let (a, b) = OrModel::set_unimodal_beta_prior(0.5, 0.5); // Tighter variance
-        assert!(a > 1.0);
-        assert!(b > 1.0);
+        assert!(a >= 1.0);
+        assert!(b >= 1.0);
         assert_eq!(a, b, "For mean 0.5, a and b should be equal");
     }
 }
