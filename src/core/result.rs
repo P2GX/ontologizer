@@ -59,6 +59,7 @@ impl AnalysisResult {
         measures: &[M],
         ontology: &FullCsrOntology,
         annotation_index: &AnnotationIndex,
+        term_indices: &[usize],
         observed_genes: &[bool],
     ) -> Self {
         let term_map = annotation_index.get_terms();
@@ -67,11 +68,10 @@ impl AnalysisResult {
 
         let mut items = Vec::new();
 
-        for ((measure, term_id), gene_indices) in measures
-            .iter()
-            .zip(term_map.iter())
-            .zip(terms_to_genes.iter())
-        {
+        for (measure, &term_idx) in measures.iter().zip(term_indices.iter()) {
+            let term_id = term_map.get_index(term_idx).expect("term_idx out of range");
+            let gene_indices = &terms_to_genes[term_idx];
+
             let label = ontology
                 .term_by_id(term_id)
                 .map(|t| t.name().to_string())

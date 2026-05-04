@@ -28,9 +28,11 @@ pub fn analysis(
         .filter_map(|gene| annotations.get_idx_by_gene(gene))
         .collect();
 
-    let mut measures: Vec<PValue> = Vec::new();
+    let term_indices = annotations.terms_annotated_by(&study_indices);
 
-    for (term_idx, _) in annotations.get_terms().iter().enumerate() {
+    let mut measures: Vec<PValue> = Vec::with_capacity(term_indices.len());
+
+    for &term_idx in &term_indices {
         let parent_indices = topology.restrict(term_idx, annotations, ontology);
         let n = study_indices.intersection(&parent_indices).count();
         let N = parent_indices.len();
@@ -50,8 +52,13 @@ pub fn analysis(
 
     let observed_genes: Vec<bool> = (0..N_pop).map(|i| study_indices.contains(&i)).collect();
 
-    let mut result =
-        AnalysisResult::from_measures(&measures, ontology, annotations, &observed_genes);
+    let mut result = AnalysisResult::from_measures(
+        &measures,
+        ontology,
+        annotations,
+        &term_indices,
+        &observed_genes,
+    );
     result.sort_by_score(false);
 
     let topology = format!("{:?}", topology);

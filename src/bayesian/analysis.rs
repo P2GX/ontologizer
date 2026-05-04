@@ -60,30 +60,37 @@ pub fn analysis(
 
     // Init prior probability for term activation by assessing the minimal set of terms required
     // to explain observed genes
-    let n_terms = annotations.get_terms().len();
     let gene_idxs: IndexSet<usize> = study_genes
         .iter()
         .filter_map(|g| annotations.get_idx_by_gene(g))
         .collect();
 
-    let term_idxs: IndexSet<usize> = gene_idxs
-        .iter()
-        .flat_map(|&g| annotations.get_term_idxs_for_gene_idx(g).iter().copied())
-        .collect();
+    // Restrict the term universe to terms annotated by at least one study gene
+    // (with True Path Rule, so ancestors are included). The MCMC operates over this set.
+    let term_indices = annotations.terms_annotated_by(&gene_idxs);
+    let term_idxs: IndexSet<usize> = term_indices.iter().copied().collect();
+    let n_terms = term_indices.len();
+
     let n_min_terms = approximate_minimal_term_cover(&gene_idxs, &term_idxs, annotations).len();
 
     let p_init = n_min_terms as f64 / n_terms as f64;
     let alpha_init = 0.05;
     let beta_init = 0.20;
 
-    let iterations = annotations.get_terms().len() * 5_000;
-    let burn_in = annotations.get_terms().len() * 1_000;
+    let iterations = n_terms * 5_000;
+    let burn_in = n_terms * 1_000;
 
     // --- Data Preparation ---
+    // Population-wide gene universe — needed so the noisy-OR likelihood can attribute
+    // false positives to non-study population genes that the active terms also predict.
     let n_genes = annotations.get_genes().len();
-    let n_terms = annotations.get_terms().len();
 
-    let terms_to_genes = annotations.get_terms_to_genes(true);
+    // Restrict terms_to_genes to the MCMC universe; inner gene indices remain population-wide.
+    let full_terms_to_genes = annotations.get_terms_to_genes(true);
+    let terms_to_genes: Vec<IndexSet<usize>> = term_indices
+        .iter()
+        .map(|&i| full_terms_to_genes[i].clone())
+        .collect();
 
     // Map string-based study genes to the internal boolean observation vector.
     // vec[i] = true if the gene at index i is in the study set.
@@ -92,7 +99,7 @@ pub fn analysis(
         .collect();
 
     // --- Model & State Initialization ---
-    let model = OrModel::new(terms_to_genes, &obs_genes, p_init, alpha_init, beta_init);
+    let model = OrModel::new(&terms_to_genes, &obs_genes, p_init, alpha_init, beta_init);
     let mut state = MgsaState::new(vec![false; n_terms], p_init, alpha_init, beta_init);
 
     // --- Algorithm Setup ---
@@ -107,7 +114,13 @@ pub fn analysis(
     let (measures, parameter) = algorithm.sample::<MgsaRecorder>(&mut state);
 
     // --- Result Generation ---
-    let mut result = AnalysisResult::from_measures(&measures, &ontology, &annotations, &obs_genes);
+    let mut result = AnalysisResult::from_measures(
+        &measures,
+        &ontology,
+        &annotations,
+        &term_indices,
+        &obs_genes,
+    );
 
     result.sort_by_score(true); // Sort descending by probability
 

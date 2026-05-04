@@ -256,4 +256,15 @@ impl AnnotationIndex {
             &self.gene_to_term_sparse
         }
     }
+
+    /// Returns the sorted set of term indices annotated by at least one of the given genes,
+    /// using the dense (ancestor-propagated, True Path Rule) view.
+    pub fn terms_annotated_by(&self, gene_idxs: &IndexSet<usize>) -> Vec<usize> {
+        let mut out: IndexSet<usize> = gene_idxs
+            .iter()
+            .flat_map(|&g| self.gene_to_term_dense[g].iter().copied())
+            .collect();
+        out.sort_unstable();
+        out.into_iter().collect()
+    }
 }
