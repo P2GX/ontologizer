@@ -71,8 +71,35 @@ impl Adjustment for Correction {
                     *p_ref = adj_p;
                 }
             }
+
             Correction::BenjaminHochberg => {
-                todo!("Benjamini-Hochberg correction not yet implemented")
+                let n = items.len();
+                if n == 0 {
+                    return;
+                }
+
+                let mut indices: Vec<usize> = (0..n).collect();
+                let p_values_copy: Vec<f64> = items.iter_mut().map(|item| *extract(item)).collect();
+
+                indices.sort_by(|&a, &b| {
+                    p_values_copy[a]
+                        .partial_cmp(&p_values_copy[b])
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                });
+
+                let m = n as f64;
+                let mut min_prev = 1.0;
+
+                for (rank_minus_1, &idx) in indices.iter().enumerate().rev() {
+                    let rank = rank_minus_1 as f64 + 1.0;
+                    let correction_factor = m / rank;
+                    let p_ref = extract(&mut items[idx]);
+                    let raw_p = *p_ref;
+                    let mut adj_p = (raw_p * correction_factor).min(1.0);
+                    adj_p = adj_p.min(min_prev);
+                    min_prev = adj_p;
+                    *p_ref = adj_p;
+                }
             }
             Correction::None => {}
         }
