@@ -1,0 +1,12 @@
+{
+  "study_file": "examples/human/study_genes_human.txt",
+  "pop_file": "examples/human/population_genes_human.txt",
+  "go_file": "data/go-basic.json",
+  "goa_file": "data/goa_human.gaf",
+  "out_file": "examples/human/results_human_frequentist.csv",
+  "method": {
+    "method": "Frequentist",
+    "background": "Standard",
+    "correction": "BenjaminiHochberg"
+  }
+}

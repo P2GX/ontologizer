@@ -8,43 +8,69 @@ hypergeometric test) and Bayesian (inference) methods.
 Gene symbols in the study and population gene sets must match the gene symbols in the `.gaf` annotation file —
 specifically column 2 (`DB_Object_Symbol`).
 
-## Quick Start
+## Try it
 
-### 1. Provide a GO annotation file
+The `examples/` folder ships ready-to-run study/population gene sets for **human** and **yeast**, with two configs per
+organism — one Frequentist, one Bayesian. The only file you need to provide yourself is the organism-specific GO
+annotation (`.gaf`); the GO ontology JSON is fetched automatically on first run.
 
-Download a `.gaf` file for your organism from
-the [GO Annotation Database](https://current.geneontology.org/products/pages/downloads.html) and place it in `data/`.
-For example:
+> **Heads up:** gene symbols in study/pop files must match column 2 (`DB_Object_Symbol`) of the GAF. Organism mismatch
+> is the most common first-run failure.
 
-- Yeast: `data/goa_yeast.gaf`
-- Human: `data/goa_human.gaf`
+### 1. Build
 
-The GO ontology (`data/go-basic.json`) is downloaded automatically on first run.
+```bash
+cargo build --release
+```
 
-### 2. Run an example
+### 2. Download the GAF for your organism
 
-Run the yeast Bayesian example (uses `config.json` in the project root by default):
+Place the unzipped file in `data/` with the filename the configs expect:
+
+**Human** (`data/goa_human.gaf`):
+
+```bash
+mkdir -p data
+wget https://current.geneontology.org/annotations/goa_human.gaf.gz
+gunzip goa_human.gaf.gz
+mv goa_human.gaf data/
+```
+
+**Yeast** (`data/goa_yeast.gaf` — the SGD-curated yeast GAF, renamed to match the config):
+
+```bash
+mkdir -p data
+wget https://current.geneontology.org/annotations/sgd.gaf.gz
+gunzip sgd.gaf.gz
+mv sgd.gaf data/goa_yeast.gaf
+```
+
+### 3. Run
+
+Pick one (or several) of the four configs:
+
+```bash
+cargo run --release -- examples/human/config_frequentist.json
+cargo run --release -- examples/human/config_bayesian.json
+cargo run --release -- examples/yeast/config_frequentist.json
+cargo run --release -- examples/yeast/config_bayesian.json
+```
+
+Each invocation writes its results next to the inputs, e.g.
+`examples/human/results_human_frequentist.csv`,
+`examples/yeast/results_yeast_bayesian.csv`.
+
+Running with no argument falls back to the project-root `config.json` (yeast Frequentist):
 
 ```bash
 cargo run --release
 ```
 
-Or point to a specific example config:
+### 4. Sanity-check (optional)
 
-```bash
-cargo run --release -- examples/yeast/yeast_config.json
-cargo run --release -- examples/human/go0090717_config.json
-cargo run --release -- examples/human/SRP247679_239_config.json
-```
-
-Results are written to `output/enrichment_result_YYYY_MM_DD_HH_MM_SS.csv`.
-
-### 3. Build the binary
-
-```bash
-cargo build --release
-./target/release/ontologizer examples/yeast/config.json
-```
+Each example folder includes a `solution_{org}.tsv` file mapping known-enriched GO terms to their gene members. It is a
+ground-truth reference, not a results CSV — useful for spot-checking that top hits in your output overlap with these
+terms.
 
 ## Configuration
 
