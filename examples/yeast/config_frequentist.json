@@ -6,7 +6,6 @@
   "out_file": "examples/yeast/results_yeast_frequentist.csv",
   "method": {
     "method": "Frequentist",
-    "background": "Standard",
     "correction": "BenjaminiHochberg"
   }
 }

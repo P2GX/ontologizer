@@ -7,14 +7,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "method")]
 pub enum Method {
-    Frequentist {
-        background: Background,
-        correction: Correction,
-    },
+    Frequentist { correction: Correction },
     Bayesian,
 }
 
-pub use frequentist::{Background, Correction};
+pub use frequentist::Correction;
 
 pub use core::{AnalysisResult, AnnotationIndex, EnrichmentItem, GeneSet, Ontology};
 

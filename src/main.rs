@@ -153,14 +153,10 @@ pub fn main() {
 
     println!("Starting enrichment analysis...");
     let results: AnalysisResult = match config.method {
-        Method::Frequentist {
-            background,
-            correction,
-        } => ontologizer::frequentist_analysis(
+        Method::Frequentist { correction } => ontologizer::frequentist_analysis(
             &ontology,
             &annotation_index,
             &study_genes.recognized_genes(),
-            &background,
             &correction,
         ),
         Method::Bayesian => ontologizer::bayesian_analysis(

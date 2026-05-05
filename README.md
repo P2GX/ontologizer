@@ -80,18 +80,15 @@ Each example comes with a ready-to-use `config.json`. The schema is:
 
 **Method otions:** `Bayesian`, `Frequentist`.
 
-For frequentist analysis two further parameters must be passed
+For frequentist analysis a further parameter must be passed
 
 ```json
 {
   "method": {
     "method": "Frequentist",
-    "background": "Standard",
     "correction": "Bonferroni"
   }
 }
 ```
-
-**Background options:** `Standard`, `ParentUnion`, `ParentIntersection`
 
 **Correction options:** `Bonferroni`, `BonferroniHolm`, `BenjaminiHochberg`, `None`

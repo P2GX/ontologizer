@@ -5,7 +5,6 @@ use crate::core::AnnotationIndex;
 use crate::core::result::AnalysisResult;
 use crate::frequentist;
 use crate::frequentist::algorithm::{OneSidedEnrichmentTest, StatisticalTest};
-use crate::frequentist::background::Restrict;
 use crate::frequentist::correction::Adjustment;
 use crate::frequentist::distribution::{Hypergeometric, LogFactorialCache};
 use crate::frequentist::measure::PValue;
@@ -16,30 +15,26 @@ pub fn analysis(
     ontology: &FullCsrOntology,
     annotations: &AnnotationIndex,
     study_genes: &HashSet<String>,
-    topology: &frequentist::Background,
     correction: &frequentist::Correction,
 ) -> AnalysisResult {
-    let N_pop = annotations.get_genes().len();
-    let cache = LogFactorialCache::new(N_pop);
+    let N = annotations.get_genes().len();
+    let cache = LogFactorialCache::new(N);
     let test = OneSidedEnrichmentTest;
 
     let study_indices: IndexSet<usize> = study_genes
         .iter()
         .filter_map(|gene| annotations.get_idx_by_gene(gene))
         .collect();
+    let n = study_indices.len();
 
     let term_indices = annotations.terms_annotated_by(&study_indices);
 
     let mut measures: Vec<PValue> = Vec::with_capacity(term_indices.len());
 
     for &term_idx in &term_indices {
-        let parent_indices = topology.restrict(term_idx, annotations, ontology);
-        let n = study_indices.intersection(&parent_indices).count();
-        let N = parent_indices.len();
-
         let genes_for_term = annotations.get_gene_idxs_for_term_idx(term_idx);
+        let K = genes_for_term.len();
         let k = study_indices.intersection(genes_for_term).count();
-        let K = genes_for_term.intersection(&parent_indices).count();
 
         let hypergeo = Hypergeometric::new(n, K, N, &cache);
         let raw_p_value = test.calculate(&hypergeo, k);
@@ -50,7 +45,7 @@ pub fn analysis(
 
     correction.adjust(&mut measures, |m| &mut m.pvalue);
 
-    let observed_genes: Vec<bool> = (0..N_pop).map(|i| study_indices.contains(&i)).collect();
+    let observed_genes: Vec<bool> = (0..N).map(|i| study_indices.contains(&i)).collect();
 
     let mut result = AnalysisResult::from_measures(
         &measures,
@@ -61,20 +56,14 @@ pub fn analysis(
     );
     result.sort_by_score(false);
 
-    let topology = format!("{:?}", topology);
     let correction = format!("{:?}", correction);
 
-    result.with_meta(&[
-        ("Method", "Frequentist"),
-        ("Topology", &topology),
-        ("Correction", &correction),
-    ])
+    result.with_meta(&[("Method", "Frequentist"), ("Correction", &correction)])
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::Background;
     use crate::Correction;
     use crate::GeneSet;
     use crate::core::result::Measure;
@@ -199,7 +188,6 @@ mod test {
             &ontology,
             &annotation_index,
             &study_genes.recognized_genes(),
-            &Background::Standard,
             &Correction::None,
         );
 

@@ -22,7 +22,7 @@ use oboannotation::io::AnnotationLoader;
 use ontolius::io::OntologyLoaderBuilder;
 use ontolius::ontology::csr::FullCsrOntology;
 
-use ontologizer::{AnnotationIndex, Background, Correction, GeneSet, frequentist_analysis};
+use ontologizer::{AnnotationIndex, Correction, GeneSet, frequentist_analysis};
 
 const GO_URL: &str = "https://purl.obolibrary.org/obo/go/go-basic.json";
 const GAF_URL: &str = "https://current.geneontology.org/annotations/sgd.gaf.gz";
@@ -100,7 +100,6 @@ fn yeast_frequentist_recovers_truth() {
         &ontology,
         &index,
         study.recognized_genes(),
-        &Background::Standard,
         &Correction::BenjaminiHochberg,
     );
 
