@@ -62,8 +62,9 @@ pub fn main() {
     let config_file = if args.len() > 1 {
         &args[1]
     } else {
-        println!("No config file provided. Loading from 'config.json'");
-        "config.json"
+        eprintln!("Error: no config file provided.");
+        eprintln!("Usage: cargo run -- path/to/config.json");
+        process::exit(1);
     };
 
     // Open the configuration file

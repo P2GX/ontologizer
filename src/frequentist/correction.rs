@@ -14,7 +14,7 @@ pub trait Adjustment {
 pub enum Correction {
     Bonferroni,
     BonferroniHolm,
-    BenjaminHochberg,
+    BenjaminiHochberg,
     None,
 }
 
@@ -23,7 +23,7 @@ impl Correction {
         &[
             Correction::Bonferroni,
             Correction::BonferroniHolm,
-            Correction::BenjaminHochberg,
+            Correction::BenjaminiHochberg,
             Correction::None,
         ]
     }
@@ -72,7 +72,7 @@ impl Adjustment for Correction {
                 }
             }
 
-            Correction::BenjaminHochberg => {
+            Correction::BenjaminiHochberg => {
                 let n = items.len();
                 if n == 0 {
                     return;
@@ -109,7 +109,7 @@ impl Adjustment for Correction {
         match self {
             Correction::Bonferroni => "Bonferroni",
             Correction::BonferroniHolm => "Bonferroni-Holm",
-            Correction::BenjaminHochberg => "Benjamini-Hochberg",
+            Correction::BenjaminiHochberg => "Benjamini-Hochberg",
             Correction::None => "No Correction",
         }
     }

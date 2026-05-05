@@ -1,8 +1,8 @@
 {
   "study_file": "examples/yeast/study_genes_yeast.txt",
   "pop_file": "examples/yeast/population_genes_yeast.txt",
-  "go_file": "data/go-basic.json",
-  "goa_file": "data/goa_yeast.gaf",
+  "go_file": "examples/go-basic.json",
+  "goa_file": "examples/goa_yeast.gaf",
   "out_file": "examples/yeast/results_yeast_frequentist.csv",
   "method": {
     "method": "Frequentist",
