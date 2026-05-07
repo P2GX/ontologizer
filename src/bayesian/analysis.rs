@@ -47,7 +47,6 @@ pub fn approximate_minimal_term_cover(
             None => break,
         }
     }
-
     minimal_terms
 }
 
@@ -71,11 +70,30 @@ pub fn analysis(
     let term_idxs: IndexSet<usize> = term_indices.iter().copied().collect();
     let n_terms = term_indices.len();
 
-    let n_min_terms = approximate_minimal_term_cover(&gene_idxs, &term_idxs, annotations).len();
+    let cover = approximate_minimal_term_cover(&gene_idxs, &term_idxs, annotations);
+    let n_min_terms = cover.len();
 
     let p_init = n_min_terms as f64 / n_terms as f64;
-    let alpha_init = 0.05;
-    let beta_init = 0.25;
+
+    // Prior means anchored to the hidden layer that actually identifies each parameter:
+    // β̂ = FN/(FN+TP) under the cover (cover identifies β);
+    // α̂ = |study|/|population| under the null layer (cover forces FP=0, so α is not identified there).
+    let mut predicted: HashSet<usize> = HashSet::new();
+    for &term_idx in &cover {
+        for &g in annotations.get_gene_idxs_for_term_idx(term_idx) {
+            predicted.insert(g);
+        }
+    }
+    let n_tp = predicted
+        .iter()
+        .filter(|&&g| gene_idxs.contains(&g))
+        .count();
+    let n_fn = predicted.len() - n_tp;
+    let n_study = gene_idxs.len();
+    let n_population = annotations.get_genes().len();
+
+    let alpha_init = n_study as f64 / n_population as f64;
+    let beta_init = n_fn as f64 / (n_tp + n_fn) as f64;
 
     let iterations = n_terms * 5_000;
     let burn_in = n_terms * 1_000;
