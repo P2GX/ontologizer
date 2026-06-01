@@ -1,7 +1,7 @@
 # Ontologizer
 
-Fast and safe implementation of the Ontologizer — a tool for Gene Ontology (GO) enrichment analysis using Frequentist (
-hypergeometric test) and Bayesian (inference) methods.
+Fast and safe implementation of the Ontologizer — a tool for Gene Ontology (GO) enrichment analysis using Frequentist
+(hypergeometric test) or Bayesian (inference) methods.
 
 ## Gene Symbols
 
@@ -10,9 +10,8 @@ specifically column 2 (`DB_Object_Symbol`).
 
 ## Try it
 
-The `examples/` folder ships ready-to-run study/population gene sets for **human** and **yeast**, with two configs per
-organism — one Frequentist, one Bayesian. The only file you need to provide yourself is the organism-specific GO
-annotation (`.gaf`); the GO ontology JSON is fetched automatically on first run.
+The `examples/` folder ships ready-to-run study/population gene sets for **yeast**, **human**, **fly**, **mouse**, and
+**rat**. The GO ontology and the per-organism GAF must be downloaded manually (see step 2).
 
 ### 1. Build
 
@@ -20,42 +19,53 @@ annotation (`.gaf`); the GO ontology JSON is fetched automatically on first run.
 cargo build --release
 ```
 
-### 2. Download the GAF for your organism
+### 2. Download the GO ontology and the GAF for your organism
 
-Place the unzipped file in `examples/` with the filename the configs expect:
-
-**Human** (`examples/goa_human.gaf`):
-
-```bash
-wget https://current.geneontology.org/annotations/goa_human.gaf.gz
-gunzip goa_human.gaf.gz
-mv goa_human.gaf examples/goa_human.gaf
-```
-
-**Yeast** (`examples/goa_yeast.gaf` — the SGD-curated yeast GAF, renamed to match the config):
+Drop the GO ontology and the gzipped GAF into `examples/` under the filenames the config expects — the binary reads
+`.gaf.gz` directly, no unzip step needed.
 
 ```bash
-wget https://current.geneontology.org/annotations/sgd.gaf.gz
-gunzip sgd.gaf.gz
-mv sgd.gaf examples/goa_yeast.gaf
+wget -P examples https://purl.obolibrary.org/obo/go/go-basic.json
 ```
 
-### 3. Run
+| Organism | Target path                 | Source                                                          |
+|----------|-----------------------------|-----------------------------------------------------------------|
+| yeast    | `examples/sgd.gaf.gz`       | `https://current.geneontology.org/annotations/sgd.gaf.gz`       |
+| human    | `examples/goa_human.gaf.gz` | `https://current.geneontology.org/annotations/goa_human.gaf.gz` |
+| fly      | `examples/fb.gaf.gz`        | `https://current.geneontology.org/annotations/fb.gaf.gz`        |
+| mouse    | `examples/mgi.gaf.gz`       | `https://current.geneontology.org/annotations/mgi.gaf.gz`       |
+| rat      | `examples/rgd.gaf.gz`       | `https://current.geneontology.org/annotations/rgd.gaf.gz`       |
 
-Pick one (or several) of the four configs:
+For example:
 
 ```bash
-cargo run --release -- examples/human/config_frequentist.json
-cargo run --release -- examples/human/config_bayesian.json
-cargo run --release -- examples/yeast/config_frequentist.json
-cargo run --release -- examples/yeast/config_bayesian.json
+wget -P examples https://current.geneontology.org/annotations/goa_human.gaf.gz
 ```
 
-Each invocation writes its results next to the inputs, e.g.
-`examples/human/results_human_frequentist.csv`,
-`examples/yeast/results_yeast_bayesian.csv`.
+### 3. Generate a config
 
-### 4. Sanity-check (optional)
+```bash
+python3 examples/generate_config.py <organism> <method> [--correction <correction>]
+```
+
+For example:
+
+```bash
+python3 examples/generate_config.py human bayesian
+python3 examples/generate_config.py yeast frequentist --correction Bonferroni
+```
+
+This writes `examples/<organism>/config.json`.
+
+### 4. Run
+
+```bash
+cargo run --release -- examples/<organism>/config.json
+```
+
+Results are written next to the inputs as `examples/<organism>/results_<organism>.tsv`.
+
+### 5. Sanity-check (optional)
 
 Each example folder includes a `solution_{org}.tsv` file mapping known-enriched GO terms to their gene members. It is a
 ground-truth reference, not a results CSV — useful for spot-checking that top hits in your output overlap with these
@@ -63,15 +73,15 @@ terms.
 
 ## Configuration
 
-Each example comes with a ready-to-use `config.json`. The schema is:
+`examples/generate_config.py` produces a `config.json` per organism. The schema is:
 
 ```json
 {
-  "study_file": "examples/ORGANISM/NAME_study_genes.txt",
-  "pop_file": "examples/ORGANISM/NAME_pop_genes.txt",
+  "study_file": "examples/ORGANISM/study_genes_ORGANISM.txt",
+  "pop_file": "examples/ORGANISM/population_genes_ORGANISM.txt",
   "go_file": "examples/go-basic.json",
-  "goa_file": "examples/goa_yeast.gaf",
-  "out_file": "examples/ORGANISM/results_ORGANISM_bayesian.csv",
+  "goa_file": "examples/GAF_FILENAME.gaf.gz",
+  "out_file": "examples/ORGANISM/results_ORGANISM.tsv",
   "method": {
     "method": "Bayesian"
   }

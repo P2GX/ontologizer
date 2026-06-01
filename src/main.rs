@@ -8,43 +8,9 @@ use flate2::read::GzDecoder;
 use serde::Deserialize;
 use std::env;
 use std::fs::{self, File};
-use std::io::{self, BufReader, BufWriter};
-use std::path::{Path, PathBuf};
+use std::io::{BufReader, Read};
+use std::path::PathBuf;
 use std::process;
-
-// Domain-specific URLs for the Gene Ontology (GO) and Annotations.
-const GO_URL: &str = "https://purl.obolibrary.org/obo/go/go-basic.json";
-
-fn ensure_cached(
-    url: &str,
-    target_path: &Path,
-    is_gzipped: bool,
-) -> Result<(), Box<dyn std::error::Error>> {
-    if target_path.exists() {
-        println!("Using existing file: {:?}", target_path);
-        return Ok(());
-    }
-
-    println!("Downloading {} to {:?}", url, target_path);
-
-    if let Some(parent_dir) = target_path.parent() {
-        fs::create_dir_all(parent_dir)?;
-    }
-
-    let response: ureq::http::Response<ureq::Body> = ureq::get(url).call()?;
-    let mut reader: Box<dyn io::Read> = if is_gzipped {
-        Box::new(GzDecoder::new(response.into_body().into_reader()))
-    } else {
-        Box::new(response.into_body().into_reader())
-    };
-
-    let file: File = File::create(target_path)?;
-    let mut writer: BufWriter<File> = BufWriter::new(file);
-
-    io::copy(&mut reader, &mut writer)?;
-
-    Ok(())
-}
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
@@ -107,12 +73,6 @@ pub fn main() {
     let ontology_path: PathBuf = current_dir.join(&config.go_file);
     let annotation_path: PathBuf = current_dir.join(&config.goa_file);
 
-    // ------ Ensure Gene Ontology exist ------
-    ensure_cached(GO_URL, &ontology_path, false).unwrap_or_else(|err| {
-        eprintln!("Failed to fetch ontology: {}", err);
-        process::exit(1);
-    });
-
     // ------ Load Gene Ontology and Annotations ------
     println!("Processing Ontology and Annotation files...");
     let ontology_loader = OntologyLoaderBuilder::new().obographs_parser().build();
@@ -124,8 +84,17 @@ pub fn main() {
         });
 
     let annotations_loader = GoGafAnnotationLoader;
+    let gaf_file = File::open(&annotation_path).unwrap_or_else(|err| {
+        eprintln!("Could not open GAF file {:?}: {}", annotation_path, err);
+        process::exit(1);
+    });
+    let gaf_reader: Box<dyn Read> = if annotation_path.extension().is_some_and(|e| e == "gz") {
+        Box::new(GzDecoder::new(gaf_file))
+    } else {
+        Box::new(gaf_file)
+    };
     let annotations: GoAnnotations = annotations_loader
-        .load_from_path(&annotation_path)
+        .load_from_read(gaf_reader)
         .unwrap_or_else(|err| {
             eprintln!(
                 "Could not load GAF file from {:?}: {}",
