@@ -29,7 +29,19 @@ jobs:
         with:
           targets: ${{ matrix.target }}
       - run: cargo build --release --locked --target ${{ matrix.target }}
+      - name: Write version file
+        shell: bash
+        run: |
+          {
+            echo "version: $(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')"
+            echo "commit: ${{ github.sha }}"
+            echo "target: ${{ matrix.target }}"
+            echo "rustc: $(rustc --version)"
+            echo "built: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > target/${{ matrix.target }}/release/ontologizer.version
       - uses: actions/upload-artifact@v4
         with:
           name: ontologizer-${{ matrix.target }}
-          path: target/${{ matrix.target }}/release/${{ matrix.artifact }}
+          path: |
+            target/${{ matrix.target }}/release/${{ matrix.artifact }}
+            target/${{ matrix.target }}/release/ontologizer.version
