@@ -1,0 +1,35 @@
+name: Build release binaries
+
+# Manual, one-off build for dropping binaries into the snakemake benchmark
+# workflow. Trigger from the Actions tab; does not run on push/PR.
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: ontologizer
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: ontologizer
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: ontologizer
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: ontologizer.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - run: cargo build --release --locked --target ${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ontologizer-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/${{ matrix.artifact }}
